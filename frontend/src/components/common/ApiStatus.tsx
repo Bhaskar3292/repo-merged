@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Wifi, 
-  WifiOff, 
-  AlertCircle, 
-  CheckCircle, 
-  RefreshCw,
-  Settings
-} from 'lucide-react';
+import { Wifi, WifiOff, CircleAlert as AlertCircle, CircleCheck as CheckCircle, RefreshCw, Settings } from 'lucide-react';
 import { checkApiHealth, debugApiConfig } from '../../api/axios';
 import { ApiDebugger } from '../../utils/apiDebug';
 

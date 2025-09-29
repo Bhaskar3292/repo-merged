@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, AlertTriangle,CheckCircle, Circle as XCircle, Clock, Eye, FileText, Download } from 'lucide-react';
+import { Shield, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, Circle as XCircle, Clock, Eye, FileText, Download } from 'lucide-react';
 import { TabNavigation } from '../common/TabNavigation';
 
 interface ReleaseDetectionProps {

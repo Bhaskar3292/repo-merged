@@ -1,14 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Shield, 
-  Smartphone, 
-  Key, 
-  Copy, 
-  Check, 
-  X,
-  Download,
-  AlertTriangle
-} from 'lucide-react';
+import { Shield, Smartphone, Key, Copy, Check, X, Download, TriangleAlert as AlertTriangle } from 'lucide-react';
 import { apiService } from '../../services/api';
 
 interface TwoFactorAuthProps {
