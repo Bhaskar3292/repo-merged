@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, CreditCard as Edit, Save, X, Trash2, Plus, CircleAlert as AlertCircle } from 'lucide-react';
+import { Building2, CreditCard as Edit, Save, X, Trash2, Plus, AlertCircle } from 'lucide-react';
 import { apiService } from '../../services/api';
 import { useAuthContext } from '../../contexts/AuthContext';
 

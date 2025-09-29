@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Lock, Eye, EyeOff, Smartphone, Key, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, Download } from 'lucide-react';
+import { Shield, Lock, Eye, EyeOff, Smartphone, Key,AlertTriangle,CheckCircle, Download } from 'lucide-react';
 import { TwoFactorAuth } from '../auth/TwoFactorAuth';
 import { apiService } from '../../services/api';
 import { useAuthContext } from '../../contexts/AuthContext';

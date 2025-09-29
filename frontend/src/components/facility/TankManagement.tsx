@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Zap, Thermometer, Gauge, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, Circle as XCircle, Plus, CreditCard as Edit, Eye, Save, X } from 'lucide-react';
+import { Zap, Thermometer, Gauge, AlertTriangle, CheckCircle, Circle as XCircle, Plus, CreditCard as Edit, Eye, Save, X } from 'lucide-react';
 import { TabNavigation } from '../common/TabNavigation';
 
 interface TankManagementProps {
