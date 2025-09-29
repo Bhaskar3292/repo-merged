@@ -316,12 +316,18 @@ class UserListView(generics.ListAPIView):
     """
     serializer_class = UserListSerializer
     permission_classes = [permissions.IsAuthenticated]
-    queryset = User.objects.all().order_by('-created_at')
     
     def get_queryset(self):
-        # Check if user is admin or superuser
         user = self.request.user
         logger.info(f"UserListView accessed by: {user.username} (role: {user.role}, superuser: {user.is_superuser})")
+        
+        # Get all users first to check what exists
+        all_users = User.objects.all()
+        logger.info(f"Total users in database: {all_users.count()}")
+        
+        # Log sample users for debugging
+        for u in all_users[:3]:
+            logger.info(f"  Sample user: {u.username} (role: {u.role}, active: {u.is_active})")
         
         if user.is_superuser or user.role == 'admin':
             queryset = User.objects.all().order_by('-created_at')
@@ -329,7 +335,7 @@ class UserListView(generics.ListAPIView):
             return queryset
         else:
             logger.warning(f"User {user.username} with role {user.role} denied access to user list")
-            # Return empty queryset but don't raise permission error
+            # Return empty queryset for non-admin users
             return User.objects.none()
     
     def list(self, request, *args, **kwargs):

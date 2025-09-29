@@ -121,6 +121,27 @@ export class ApiDebugger {
   }
 
   /**
+   * Test all data endpoints
+   */
+  static async testAllDataEndpoints(): Promise<void> {
+    console.log('🧪 Testing All Data Endpoints...\n');
+    
+    const endpoints = [
+      { path: '/api/health/', method: 'GET', auth: false },
+      { path: '/api/auth/users/', method: 'GET', auth: true },
+      { path: '/api/facilities/locations/', method: 'GET', auth: true },
+      { path: '/api/facilities/tanks/', method: 'GET', auth: true },
+      { path: '/api/facilities/permits/', method: 'GET', auth: true },
+      { path: '/api/facilities/stats/', method: 'GET', auth: true },
+    ];
+    
+    for (const endpoint of endpoints) {
+      console.log(`\n📡 Testing ${endpoint.method} ${endpoint.path}`);
+      await this.testEndpoint(endpoint.path, endpoint.method as any);
+    }
+  }
+
+  /**
    * Monitor API calls in real-time
    */
   static startApiMonitoring(): () => void {

@@ -41,6 +41,12 @@ class LocationListCreateView(generics.ListCreateAPIView):
         for loc in all_locations:
             logger.info(f"  - {loc.name} (active: {loc.is_active}, id: {loc.id})")
         
+        # Debug: Show filtered vs unfiltered
+        active_locations = Location.objects.filter(is_active=True)
+        inactive_locations = Location.objects.filter(is_active=False)
+        logger.info(f"Active locations: {active_locations.count()}")
+        logger.info(f"Inactive locations: {inactive_locations.count()}")
+        
         return queryset
     
     def list(self, request, *args, **kwargs):
