@@ -1,0 +1,139 @@
+INFO 2025-09-26 09:05:23,397 views 3848 10792 Logout request received from user: Madhav
+INFO 2025-09-26 09:05:23,397 views 3848 10792 Request data: {'refresh_token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc1OTUwNzQ5OCwiaWF0IjoxNzU4OTAyNjk4LCJqdGkiOiI2NWVkM2Q0ODlkYWQ0MzkyYTMwZGQyMzYwZDA4ZTI2ZCIsInVzZXJfaWQiOjF9.2GShQuLkgig2RQF92KAoChP3ct8abELVVkCO9UDkvlY'}
+INFO 2025-09-26 09:05:23,398 views 3848 10792 Refresh token received: True
+INFO 2025-09-26 09:05:23,408 views 3848 10792 Refresh token successfully blacklisted
+INFO 2025-09-26 09:05:23,411 views 3848 10792 Logout successful for user: Madhav
+INFO 2025-09-26 09:53:01,502 views 10688 10584 Logout request received from user: bhaskar
+INFO 2025-09-26 09:53:01,506 views 10688 10584 Request data: {'refresh_token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc1OTUxMDEwMywiaWF0IjoxNzU4OTA1MzAzLCJqdGkiOiJiMTVmODZjMmU5NDU0ZTdiYThjNmJhYTVjNTM1ZjA5YyIsInVzZXJfaWQiOjJ9.qfVF_vkB-ZxfVwMTxZpFHebXhFPZDXfgsy406uAyiRM'}
+INFO 2025-09-26 09:53:01,507 views 10688 10584 Refresh token received: True
+INFO 2025-09-26 09:53:01,521 views 10688 10584 Refresh token successfully blacklisted
+INFO 2025-09-26 09:53:01,524 views 10688 10584 Logout successful for user: bhaskar
+INFO 2025-09-26 09:53:12,910 database 10688 5360 AXES: User login failed, running database handler for failure.
+INFO 2025-09-26 09:53:12,911 attempts 10688 5360 AXES: Cleaned up 0 expired access attempts from database that were older than 2025-09-25 10:53:12.836540+00:00
+WARNING 2025-09-26 09:53:12,919 database 10688 5360 AXES: New login failure by {ip_address: "********************", path_info: "/api/auth/login/"}. Created new record in the database.
+INFO 2025-09-26 10:13:38,936 views 14644 5236 Logout request received from user: bhaskar
+INFO 2025-09-26 10:13:38,936 views 14644 5236 Request data: {'refresh_token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc1OTUxMTU5MiwiaWF0IjoxNzU4OTA2NzkyLCJqdGkiOiI2OGExMmZlMDk4YWQ0NDlkYTcxNzQ1ZWU3MzA5ZDRmNSIsInVzZXJfaWQiOjJ9.tTuexGmWxeoJyptfMTLHIkY5IrSoU5Jr22xsIynjWco'}
+INFO 2025-09-26 10:13:38,937 views 14644 5236 Refresh token received: True
+INFO 2025-09-26 10:13:38,961 views 14644 5236 Refresh token successfully blacklisted
+INFO 2025-09-26 10:13:38,964 views 14644 5236 Logout successful for user: bhaskar
+INFO 2025-09-26 10:13:47,307 database 14644 16516 AXES: User login failed, running database handler for failure.
+INFO 2025-09-26 10:13:47,308 attempts 14644 16516 AXES: Cleaned up 0 expired access attempts from database that were older than 2025-09-25 11:13:47.230611+00:00
+WARNING 2025-09-26 10:13:47,318 database 14644 16516 AXES: Repeated login failure by {ip_address: "********************", path_info: "/api/auth/login/"}. Updated existing record in the database.
+INFO 2025-09-26 15:28:22,798 views 13572 15224 Logout request received from user: bhaskar
+INFO 2025-09-26 15:28:22,802 views 13572 15224 Request data: {'refresh_token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc1OTUxOTU5MCwiaWF0IjoxNzU4OTE0NzkwLCJqdGkiOiIwNDk1NzFmOTY5MDQ0NjUxODI0ZTRmNTZjOTkxM2Y3YyIsInVzZXJfaWQiOjJ9.VcbGfW7nmf8jiYEDs08zbjcJ1_nzolE8Vcm6Fe4J4Es'}
+INFO 2025-09-26 15:28:22,802 views 13572 15224 Refresh token received: True
+INFO 2025-09-26 15:28:22,809 views 13572 15224 Refresh token successfully blacklisted
+INFO 2025-09-26 15:28:22,811 views 13572 15224 Logout successful for user: bhaskar
+INFO 2025-09-26 16:28:47,025 views 10572 5880 User creation request from: bhaskar (role: admin)
+INFO 2025-09-26 16:28:47,026 views 10572 5880 Request data: {'username': 'manu', 'password': 'Abcdefghij!2', 'role': 'viewer', 'first_name': 'manu', 'last_name': 'k'}
+INFO 2025-09-26 16:28:47,026 views 10572 5880 Request headers: {'Content-Length': '97', 'Content-Type': 'application/json', 'Host': 'localhost:8000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU4OTE5NzczLCJpYXQiOjE3NTg5MTQ5MTIsImp0aSI6Ijk3ZWQ3MmEwOTBmZTRkZGM4NWZlYWMxZWFlNDcxNDBiIiwidXNlcl9pZCI6Mn0.k9I3uweDaP8foT6kpPqiBlEL5W-ny8mYfm718LbzZkE', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'Accept': 'application/json', 'Sec-Ch-Ua': '"Chromium";v="140", "Not=A?Brand";v="24", "Google Chrome";v="140"', 'Sec-Ch-Ua-Mobile': '?0', 'Origin': 'http://localhost:5173', 'Sec-Fetch-Site': 'same-site', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://localhost:5173/', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'en-US,en;q=0.9'}
+ERROR 2025-09-26 16:28:47,037 views 10572 5880 User creation failed: {'password': [ErrorDetail(string='Password cannot contain common sequential characters.', code='invalid')]}
+INFO 2025-09-26 16:29:10,401 views 10572 5880 User creation request from: bhaskar (role: admin)
+INFO 2025-09-26 16:29:10,402 views 10572 5880 Request data: {'username': 'manu', 'password': 'm@nu!234operation', 'role': 'viewer', 'first_name': 'manu', 'last_name': 'k'}
+INFO 2025-09-26 16:29:10,402 views 10572 5880 Request headers: {'Content-Length': '102', 'Content-Type': 'application/json', 'Host': 'localhost:8000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU4OTE5NzczLCJpYXQiOjE3NTg5MTQ5MTIsImp0aSI6Ijk3ZWQ3MmEwOTBmZTRkZGM4NWZlYWMxZWFlNDcxNDBiIiwidXNlcl9pZCI6Mn0.k9I3uweDaP8foT6kpPqiBlEL5W-ny8mYfm718LbzZkE', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'Accept': 'application/json', 'Sec-Ch-Ua': '"Chromium";v="140", "Not=A?Brand";v="24", "Google Chrome";v="140"', 'Sec-Ch-Ua-Mobile': '?0', 'Origin': 'http://localhost:5173', 'Sec-Fetch-Site': 'same-site', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://localhost:5173/', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'en-US,en;q=0.9'}
+ERROR 2025-09-26 16:29:10,404 views 10572 5880 User creation failed: {'password': [ErrorDetail(string='Password must contain at least one uppercase letter.', code='invalid'), ErrorDetail(string='Password cannot contain common sequential characters.', code='invalid')]}
+INFO 2025-09-26 16:29:36,260 views 10572 5880 User creation request from: bhaskar (role: admin)
+INFO 2025-09-26 16:29:36,261 views 10572 5880 Request data: {'username': 'manu', 'password': 'm@nuMadhav234', 'role': 'viewer', 'first_name': 'manu', 'last_name': 'k'}
+INFO 2025-09-26 16:29:36,262 views 10572 5880 Request headers: {'Content-Length': '98', 'Content-Type': 'application/json', 'Host': 'localhost:8000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU4OTE5NzczLCJpYXQiOjE3NTg5MTQ5MTIsImp0aSI6Ijk3ZWQ3MmEwOTBmZTRkZGM4NWZlYWMxZWFlNDcxNDBiIiwidXNlcl9pZCI6Mn0.k9I3uweDaP8foT6kpPqiBlEL5W-ny8mYfm718LbzZkE', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'Accept': 'application/json', 'Sec-Ch-Ua': '"Chromium";v="140", "Not=A?Brand";v="24", "Google Chrome";v="140"', 'Sec-Ch-Ua-Mobile': '?0', 'Origin': 'http://localhost:5173', 'Sec-Fetch-Site': 'same-site', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://localhost:5173/', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'en-US,en;q=0.9'}
+ERROR 2025-09-26 16:29:36,266 views 10572 5880 User creation failed: {'password': [ErrorDetail(string='Password cannot contain common sequential characters.', code='invalid')]}
+INFO 2025-09-26 16:30:05,523 views 10572 5880 User creation request from: bhaskar (role: admin)
+INFO 2025-09-26 16:30:05,523 views 10572 5880 Request data: {'username': 'manu', 'password': 'Bh@skarreddy1', 'role': 'viewer', 'first_name': 'manu', 'last_name': 'k'}
+INFO 2025-09-26 16:30:05,523 views 10572 5880 Request headers: {'Content-Length': '98', 'Content-Type': 'application/json', 'Host': 'localhost:8000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU4OTE5NzczLCJpYXQiOjE3NTg5MTQ5MTIsImp0aSI6Ijk3ZWQ3MmEwOTBmZTRkZGM4NWZlYWMxZWFlNDcxNDBiIiwidXNlcl9pZCI6Mn0.k9I3uweDaP8foT6kpPqiBlEL5W-ny8mYfm718LbzZkE', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'Accept': 'application/json', 'Sec-Ch-Ua': '"Chromium";v="140", "Not=A?Brand";v="24", "Google Chrome";v="140"', 'Sec-Ch-Ua-Mobile': '?0', 'Origin': 'http://localhost:5173', 'Sec-Fetch-Site': 'same-site', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://localhost:5173/', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'en-US,en;q=0.9'}
+INFO 2025-09-26 16:30:05,621 views 10572 5880 User created successfully: manu
+INFO 2025-09-26 16:49:22,676 views 512 12128 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:49:22,677 views 512 12128 Returning 7 users
+INFO 2025-09-26 16:49:22,679 views 512 12128 Serialized 7 users
+INFO 2025-09-26 16:49:22,727 views 512 12128 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:49:22,728 views 512 12128 Returning 7 users
+INFO 2025-09-26 16:49:22,730 views 512 12128 Serialized 7 users
+INFO 2025-09-26 16:49:22,759 views 512 12128 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:49:22,761 views 512 12128 Returning 7 users
+INFO 2025-09-26 16:49:22,764 views 512 12128 Serialized 7 users
+INFO 2025-09-26 16:49:22,805 views 512 12128 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:49:22,806 views 512 12128 Returning 7 users
+INFO 2025-09-26 16:49:22,809 views 512 12128 Serialized 7 users
+INFO 2025-09-26 16:49:29,338 views 512 12128 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:49:29,339 views 512 12128 Returning 6 users
+INFO 2025-09-26 16:49:29,340 views 512 12128 Serialized 6 users
+INFO 2025-09-26 16:49:31,651 views 512 12128 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:49:31,652 views 512 12128 Returning 5 users
+INFO 2025-09-26 16:49:31,654 views 512 12128 Serialized 5 users
+INFO 2025-09-26 16:49:34,161 views 512 12128 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:49:34,162 views 512 12128 Returning 4 users
+INFO 2025-09-26 16:49:34,163 views 512 12128 Serialized 4 users
+INFO 2025-09-26 16:49:37,126 views 512 12128 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:49:37,127 views 512 12128 Returning 3 users
+INFO 2025-09-26 16:49:37,129 views 512 12128 Serialized 3 users
+INFO 2025-09-26 16:49:42,884 views 512 12128 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:49:42,885 views 512 12128 Returning 2 users
+INFO 2025-09-26 16:49:42,887 views 512 12128 Serialized 2 users
+INFO 2025-09-26 16:49:47,743 views 512 12128 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:49:47,744 views 512 12128 Returning 1 users
+INFO 2025-09-26 16:49:47,746 views 512 12128 Serialized 1 users
+INFO 2025-09-26 16:52:00,228 views 512 14836 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:52:00,229 views 512 14836 Returning 1 users
+INFO 2025-09-26 16:52:00,231 views 512 14836 Serialized 1 users
+INFO 2025-09-26 16:52:00,263 views 512 14836 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:52:00,265 views 512 14836 Returning 1 users
+INFO 2025-09-26 16:52:00,267 views 512 14836 Serialized 1 users
+INFO 2025-09-26 16:52:00,300 views 512 14836 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:52:00,300 views 512 14836 Returning 1 users
+INFO 2025-09-26 16:52:00,302 views 512 14836 Serialized 1 users
+INFO 2025-09-26 16:52:00,347 views 512 14836 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:52:00,348 views 512 14836 Returning 1 users
+INFO 2025-09-26 16:52:00,349 views 512 14836 Serialized 1 users
+INFO 2025-09-26 16:52:55,767 views 512 14836 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:52:55,769 views 512 14836 Returning 1 users
+INFO 2025-09-26 16:52:55,772 views 512 14836 Serialized 1 users
+INFO 2025-09-26 16:52:55,822 views 512 14836 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:52:55,823 views 512 14836 Returning 1 users
+INFO 2025-09-26 16:52:55,825 views 512 14836 Serialized 1 users
+INFO 2025-09-26 16:52:55,860 views 512 14836 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:52:55,861 views 512 14836 Returning 1 users
+INFO 2025-09-26 16:52:55,864 views 512 14836 Serialized 1 users
+INFO 2025-09-26 16:52:55,900 views 512 14836 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:52:55,901 views 512 14836 Returning 1 users
+INFO 2025-09-26 16:52:55,903 views 512 14836 Serialized 1 users
+INFO 2025-09-26 16:55:11,852 views 512 14836 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:55:11,853 views 512 14836 Returning 1 users
+INFO 2025-09-26 16:55:11,855 views 512 14836 Serialized 1 users
+INFO 2025-09-26 16:55:11,889 views 512 14836 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:55:11,891 views 512 14836 Returning 1 users
+INFO 2025-09-26 16:55:11,893 views 512 14836 Serialized 1 users
+INFO 2025-09-26 16:55:11,926 views 512 14836 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:55:11,927 views 512 14836 Returning 1 users
+INFO 2025-09-26 16:55:11,930 views 512 14836 Serialized 1 users
+INFO 2025-09-26 16:55:11,968 views 512 14836 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:55:11,969 views 512 14836 Returning 1 users
+INFO 2025-09-26 16:55:11,971 views 512 14836 Serialized 1 users
+INFO 2025-09-26 16:55:29,676 views 512 13300 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:55:29,677 views 512 13300 Returning 1 users
+INFO 2025-09-26 16:55:29,679 views 512 13300 Serialized 1 users
+INFO 2025-09-26 16:55:29,714 views 512 13300 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:55:29,715 views 512 13300 Returning 1 users
+INFO 2025-09-26 16:55:29,717 views 512 13300 Serialized 1 users
+INFO 2025-09-26 16:55:29,745 views 512 13300 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:55:29,746 views 512 13300 Returning 1 users
+INFO 2025-09-26 16:55:29,748 views 512 13300 Serialized 1 users
+INFO 2025-09-26 16:55:29,775 views 512 13300 UserListView accessed by: bhaskar (role: admin, superuser: True)
+INFO 2025-09-26 16:55:29,776 views 512 13300 Returning 1 users
+INFO 2025-09-26 16:55:29,778 views 512 13300 Serialized 1 users
+INFO 2025-09-29 09:26:33,847 views 6020 7860 User creation request from: bhaskar (role: admin)
+INFO 2025-09-29 09:26:33,851 views 6020 7860 Request data: {'username': 'madmax', 'password': 'm@dmax@90234', 'role': 'viewer', 'first_name': '', 'last_name': ''}
+INFO 2025-09-29 09:26:33,852 views 6020 7860 Request headers: {'Content-Length': '94', 'Content-Type': 'application/json', 'Host': 'localhost:8000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU5MTU0ODE2LCJpYXQiOjE3NTkxNDc4NTYsImp0aSI6IjdiNDJkMzU4ODcwZjQxOWJhOTczM2U3YzU1ODVhZmQ5IiwidXNlcl9pZCI6Mn0.1iU6UZVq6-RIJeOv2jfS7NyjsIuCaih1iVUiTORCFkc', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'Accept': 'application/json', 'Sec-Ch-Ua': '"Chromium";v="140", "Not=A?Brand";v="24", "Google Chrome";v="140"', 'Sec-Ch-Ua-Mobile': '?0', 'Origin': 'http://localhost:5173', 'Sec-Fetch-Site': 'same-site', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://localhost:5173/', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'en-US,en;q=0.9'}
+ERROR 2025-09-29 09:26:33,873 views 6020 7860 User creation failed: {'password': [ErrorDetail(string='Password must contain at least one uppercase letter.', code='invalid'), ErrorDetail(string='Password cannot contain common sequential characters.', code='invalid')]}
+INFO 2025-09-29 09:26:52,585 views 6020 7860 User creation request from: bhaskar (role: admin)
+INFO 2025-09-29 09:26:52,585 views 6020 7860 Request data: {'username': 'madmax', 'password': 'M@dmax@90254', 'role': 'viewer', 'first_name': '', 'last_name': ''}
+INFO 2025-09-29 09:26:52,586 views 6020 7860 Request headers: {'Content-Length': '94', 'Content-Type': 'application/json', 'Host': 'localhost:8000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU5MTU0ODE2LCJpYXQiOjE3NTkxNDc4NTYsImp0aSI6IjdiNDJkMzU4ODcwZjQxOWJhOTczM2U3YzU1ODVhZmQ5IiwidXNlcl9pZCI6Mn0.1iU6UZVq6-RIJeOv2jfS7NyjsIuCaih1iVUiTORCFkc', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'Accept': 'application/json', 'Sec-Ch-Ua': '"Chromium";v="140", "Not=A?Brand";v="24", "Google Chrome";v="140"', 'Sec-Ch-Ua-Mobile': '?0', 'Origin': 'http://localhost:5173', 'Sec-Fetch-Site': 'same-site', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://localhost:5173/', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'en-US,en;q=0.9'}
+INFO 2025-09-29 09:26:52,750 views 6020 7860 User created successfully: madmax
+INFO 2025-09-29 09:27:11,328 views 6020 15792 Logout request received from user: bhaskar
+INFO 2025-09-29 09:27:11,328 views 6020 15792 Request data: {'refresh_token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc1OTc1NjAxNiwiaWF0IjoxNzU5MTUxMjE2LCJqdGkiOiJkZTY3ZDE5NTM1N2M0ZDk5ODUxYTc1NDc2MDI0ZDU2MiIsInVzZXJfaWQiOjJ9.K34cViUQPEVcd-zWqeDl4QFmqbzG9p1VzRwjObtfxqo'}
+INFO 2025-09-29 09:27:11,329 views 6020 15792 Refresh token received: True
+INFO 2025-09-29 09:27:11,342 views 6020 15792 Refresh token successfully blacklisted
+INFO 2025-09-29 09:27:11,344 views 6020 15792 Logout successful for user: bhaskar
+INFO 2025-09-29 09:27:41,721 database 6020 12112 AXES: User login failed, running database handler for failure.
+INFO 2025-09-29 09:27:41,725 attempts 6020 12112 AXES: Cleaned up 1 expired access attempts from database that were older than 2025-09-28 07:27:41.664299+00:00
+WARNING 2025-09-29 09:27:41,731 database 6020 12112 AXES: New login failure by {ip_address: "********************", path_info: "/api/auth/login/"}. Created new record in the database.
+INFO 2025-09-29 09:27:53,986 database 6020 12112 AXES: User login failed, running database handler for failure.
+INFO 2025-09-29 09:27:53,987 attempts 6020 12112 AXES: Cleaned up 0 expired access attempts from database that were older than 2025-09-28 07:27:53.929240+00:00
+WARNING 2025-09-29 09:27:53,993 database 6020 12112 AXES: Repeated login failure by {ip_address: "********************", path_info: "/api/auth/login/"}. Updated existing record in the database.
