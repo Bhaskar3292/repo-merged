@@ -1,23 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, CreditCard as Edit, Trash2, Save, X, UserPlus, Search, Shield, Lock,  AlertTriangle } from 'lucide-react';
-import { apiService } from '../../services/api';
-import { useAuthContext } from '../../contexts/AuthContext';
-
+import { Users, UserPlus, Trash2, AlertTriangle, CheckCircle } from 'lucide-react';
 import { apiService } from '../../services/api';
 import { useAuthContext } from '../../contexts/AuthContext';
 
 interface User {
   id: number;
   username: string;
-  email: string;
-  first_name: string;
-  last_name: string;
   role: 'admin' | 'contributor' | 'viewer';
-  is_active: boolean;
-  created_at: string;
-  two_factor_enabled?: boolean;
-  is_account_locked?: boolean;
-  failed_login_attempts?: number;
 }
 
 export function UserManagement() {
@@ -25,9 +14,10 @@ export function UserManagement() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; user?: User }>({
+    isOpen: false
+  });
   const [formLoading, setFormLoading] = useState(false);
   const [newUser, setNewUser] = useState({
     username: '',
@@ -91,24 +81,12 @@ export function UserManagement() {
         return;
       }
       
-      // Check if user is authenticated
-      if (!currentUser) {
-        setError('Authentication required. Please log in again.');
-        return;
-      }
-      
-      // Check permissions
-      if (!currentUser.is_superuser && !hasPermission('create_users')) {
-        setError('You do not have permission to create users.');
-        return;
-      }
-      
       console.log('Creating user with data:', newUser);
       
       const createdUser = await apiService.createUser(newUser);
       console.log('User created successfully:', createdUser);
       
-      // Reload the entire user list to ensure consistency
+      // Reload the entire user list
       await loadUsers();
       
       setShowCreateModal(false);
@@ -122,8 +100,6 @@ export function UserManagement() {
       });
       
       setSuccess(`User "${newUser.username}" created successfully!`);
-      
-      // Clear success message after 3 seconds
       setTimeout(() => setSuccess(null), 3000);
       
     } catch (error) {
@@ -135,94 +111,43 @@ export function UserManagement() {
     }
   };
 
-  const handleUpdateUser = async (user: User) => {
+  const handleDeleteUser = async (userId: number) => {
     try {
       setError(null);
-      console.log('Updating user:', user);
+      console.log('Deleting user:', userId);
       
-      const updatedUser = await apiService.updateUser(user.id, {
-        username: user.username,
-        email: user.email,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        role: user.role,
-        is_active: user.is_active
-      });
+      await apiService.deleteUser(userId);
+      console.log('User deleted successfully');
       
-      console.log('User updated successfully:', updatedUser);
-      
-      // Reload the entire user list to ensure consistency
+      // Reload the entire user list
       await loadUsers();
-      setEditingUser(null);
-      setSuccess('User updated successfully!');
-      
-      // Clear success message after 3 seconds
+      setDeleteConfirm({ isOpen: false });
+      setSuccess('User deleted successfully!');
       setTimeout(() => setSuccess(null), 3000);
       
     } catch (error) {
-      console.error('Update user error:', error);
-      setError('Failed to update user');
+      console.error('Delete user error:', error);
+      setError('Failed to delete user');
+      setDeleteConfirm({ isOpen: false });
     }
   };
 
-  const handleDeleteUser = async (userId: number, username: string) => {
-    if (window.confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone and will permanently remove the user from the system.`)) {
-      try {
-        setError(null);
-        console.log('Deleting user:', userId);
-        
-        // Use the dedicated delete endpoint
-        const response = await fetch(`http://localhost:8000/api/auth/users/${userId}/delete/`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to delete user');
-        }
-        
-        const result = await response.json();
-        console.log('User deleted successfully');
-        
-        // Reload the entire user list to ensure consistency
-        await loadUsers();
-        setSuccess(result.message || `User "${username}" deleted successfully!`);
-        
-        // Clear success message after 3 seconds
-        setTimeout(() => setSuccess(null), 3000);
-        
-      } catch (error) {
-        console.error('Delete user error:', error);
-        setError('Failed to delete user');
-      }
-    }
+  const openDeleteConfirm = (user: User) => {
+    setDeleteConfirm({ isOpen: true, user });
   };
 
-  const handleUnlockAccount = async (userId: number, username: string) => {
-    try {
-      setError(null);
-      await apiService.unlockUserAccount(userId);
-      await loadUsers(); // Refresh user list
-      setSuccess(`Account "${username}" unlocked successfully!`);
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (error) {
-      console.error('Unlock account error:', error);
-      setError('Failed to unlock account');
-    }
+  const closeDeleteConfirm = () => {
+    setDeleteConfirm({ isOpen: false });
   };
 
-  const filteredUsers = Array.isArray(users) ? users.filter(user =>
-    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    user.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.last_name.toLowerCase().includes(searchTerm.toLowerCase())
-  ) : [];
+  const getRoleDisplayName = (role: string) => {
+    switch (role) {
+      case 'admin': return 'Administrator';
+      case 'contributor': return 'Contributor';
+      case 'viewer': return 'Viewer';
+      default: return role;
+    }
+  };
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -296,7 +221,7 @@ export function UserManagement() {
       {success && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <div className="flex items-center">
-            <Shield className="h-5 w-5 text-green-600 mr-2" />
+            <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
             <span className="text-green-800">{success}</span>
           </div>
         </div>
@@ -312,19 +237,7 @@ export function UserManagement() {
         </div>
       )}
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Search users..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
-
-      {/* Users Table */}
+      {/* Simplified Users Table */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <table className="w-full">
           <thead className="bg-gray-50">
@@ -336,181 +249,31 @@ export function UserManagement() {
                 Role
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Security
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Created
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredUsers.map((user) => (
+            {users.map((user) => (
               <tr key={user.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4">
-                  {editingUser?.id === user.id ? (
-                    <div className="space-y-2">
-                      <input
-                        type="text"
-                        value={editingUser.username}
-                        onChange={(e) => setEditingUser({...editingUser, username: e.target.value})}
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                        placeholder="Username"
-                      />
-                      <input
-                        type="email"
-                        value={editingUser.email}
-                        onChange={(e) => setEditingUser({...editingUser, email: e.target.value})}
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                        placeholder="Email"
-                      />
-                      <div className="grid grid-cols-2 gap-2">
-                        <input
-                          type="text"
-                          value={editingUser.first_name}
-                          onChange={(e) => setEditingUser({...editingUser, first_name: e.target.value})}
-                          className="px-2 py-1 border border-gray-300 rounded text-sm"
-                          placeholder="First name"
-                        />
-                        <input
-                          type="text"
-                          value={editingUser.last_name}
-                          onChange={(e) => setEditingUser({...editingUser, last_name: e.target.value})}
-                          className="px-2 py-1 border border-gray-300 rounded text-sm"
-                          placeholder="Last name"
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{user.username}</div>
-                      {user.email && (
-                        <div className="text-sm text-gray-500">{user.email}</div>
-                      )}
-                      <div className="text-sm text-gray-500">{user.first_name} {user.last_name}</div>
-                    </div>
-                  )}
+                  <div className="text-sm font-medium text-gray-900">{user.username}</div>
                 </td>
                 <td className="px-6 py-4">
-                  {editingUser?.id === user.id ? (
-                    <select
-                      value={editingUser.role}
-                      onChange={(e) => setEditingUser({...editingUser, role: e.target.value as any})}
-                      className="px-2 py-1 border border-gray-300 rounded text-sm"
+                  <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(user.role)}`}>
+                    {getRoleDisplayName(user.role)}
+                  </span>
+                </td>
+                <td className="px-6 py-4">
+                  {user.id !== currentUser.id && (currentUser?.is_superuser || hasPermission('delete_users')) && (
+                    <button
+                      onClick={() => openDeleteConfirm(user)}
+                      className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
+                      title="Delete user"
                     >
-                      <option value="admin">Administrator</option>
-                      <option value="contributor">Contributor</option>
-                      <option value="viewer">Viewer</option>
-                    </select>
-                  ) : (
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(user.role)}`}>
-                      {user.role === 'admin' ? 'Administrator' : user.role === 'contributor' ? 'Contributor' : 'Viewer'}
-                    </span>
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   )}
-                </td>
-                <td className="px-6 py-4">
-                  <div className="space-y-1">
-                    {editingUser?.id === user.id ? (
-                      <select
-                        value={editingUser.is_active ? 'active' : 'inactive'}
-                        onChange={(e) => setEditingUser({...editingUser, is_active: e.target.value === 'active'})}
-                        className="px-2 py-1 border border-gray-300 rounded text-sm"
-                      >
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                      </select>
-                    ) : (
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                        user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {user.is_active ? 'Active' : 'Inactive'}
-                      </span>
-                    )}
-                    {user.is_account_locked && (
-                      <div>
-                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
-                          Locked
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                        user.two_factor_enabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        2FA: {user.two_factor_enabled ? 'On' : 'Off'}
-                      </span>
-                    </div>
-                    {user.failed_login_attempts && user.failed_login_attempts > 0 && (
-                      <div className="text-xs text-yellow-600">
-                        {user.failed_login_attempts} failed attempts
-                      </div>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
-                  {new Date(user.created_at).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center space-x-2">
-                    {editingUser?.id === user.id ? (
-                      <>
-                        <button
-                          onClick={() => handleUpdateUser(editingUser)}
-                          className="text-green-600 hover:text-green-800"
-                          title="Save changes"
-                        >
-                          <Save className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => setEditingUser(null)}
-                          className="text-gray-600 hover:text-gray-800"
-                          title="Cancel edit"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        {user.is_account_locked && (currentUser?.is_superuser || hasPermission('edit_users')) && (
-                          <button
-                            onClick={() => handleUnlockAccount(user.id, user.username)}
-                            className="text-yellow-600 hover:text-yellow-800 text-xs px-2 py-1 border border-yellow-300 rounded"
-                            title="Unlock Account"
-                          >
-                            <Lock className="h-3 w-3 inline mr-1" />
-                            Unlock
-                          </button>
-                        )}
-                        {(currentUser?.is_superuser || hasPermission('edit_users')) && (
-                          <button
-                            onClick={() => setEditingUser(user)}
-                            className="text-blue-600 hover:text-blue-800"
-                            title="Edit user"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </button>
-                        )}
-                        {(currentUser?.is_superuser || hasPermission('delete_users')) && user.id !== currentUser.id && (
-                          <button
-                            onClick={() => handleDeleteUser(user.id, user.username)}
-                            className="text-red-600 hover:text-red-800"
-                            title="Delete user"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        )}
-                      </>
-                    )}
-                  </div>
                 </td>
               </tr>
             ))}
@@ -518,19 +281,12 @@ export function UserManagement() {
         </table>
 
         {/* Empty State */}
-        {filteredUsers.length === 0 && !loading && (
+        {users.length === 0 && !loading && (
           <div className="px-6 py-12 text-center">
             <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {searchTerm ? 'No users found' : 'No users yet'}
-            </h3>
-            <p className="text-gray-500 mb-4">
-              {searchTerm 
-                ? `No users match your search for "${searchTerm}"`
-                : 'Get started by creating your first user.'
-              }
-            </p>
-            {!searchTerm && (currentUser?.is_superuser || hasPermission('create_users')) && (
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No users found</h3>
+            <p className="text-gray-500 mb-4">Get started by creating your first user.</p>
+            {(currentUser?.is_superuser || hasPermission('create_users')) && (
               <button
                 onClick={() => setShowCreateModal(true)}
                 className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mx-auto"
@@ -564,7 +320,7 @@ export function UserManagement() {
                 }}
                 className="text-gray-400 hover:text-gray-600"
               >
-                <X className="h-5 w-5" />
+                ×
               </button>
             </div>
             
@@ -581,9 +337,6 @@ export function UserManagement() {
                   placeholder="Enter username"
                   required
                 />
-                <div className="mt-1 text-xs text-gray-500">
-                  Username must be unique and contain only letters, numbers, and underscores
-                </div>
               </div>
 
               <div>
@@ -697,6 +450,40 @@ export function UserManagement() {
                 ) : (
                   'Create User'
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirm.isOpen && deleteConfirm.user && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex items-center space-x-4 mb-4">
+              <div className="p-3 bg-red-100 rounded-full">
+                <AlertTriangle className="h-6 w-6 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900">Delete User</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Are you sure you want to delete "{deleteConfirm.user.username}"? This action cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={closeDeleteConfirm}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteUser(deleteConfirm.user!.id)}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+              >
+                Delete User
               </button>
             </div>
           </div>

@@ -218,15 +218,8 @@ class CreateUserSerializer(serializers.ModelSerializer):
 
 class UserListSerializer(serializers.ModelSerializer):
     """
-    Serializer for listing users
+    Simplified serializer for listing users - only username and role
     """
-    is_account_locked = serializers.SerializerMethodField()
     
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 
-                 'role', 'is_active', 'created_at', 'last_login', 
-                 'two_factor_enabled', 'is_account_locked', 'failed_login_attempts']
-    
-    def get_is_account_locked(self, obj):
-        return obj.is_account_locked()

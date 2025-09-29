@@ -321,29 +321,18 @@ class UserListView(generics.ListAPIView):
         user = self.request.user
         logger.info(f"UserListView accessed by: {user.username} (role: {user.role}, superuser: {user.is_superuser})")
         
-        # CRITICAL FIX: Ensure we're using the correct User model
-        from django.contrib.auth import get_user_model
-        UserModel = get_user_model()
+        # CRITICAL FIX: Use the correct User model and ensure proper queryset
+        queryset = User.objects.all().order_by('-created_at')
+        logger.info(f"Total users in queryset: {queryset.count()}")
         
-        # Debug: Check if we're using the right model
-        logger.info(f"Using User model: {UserModel.__name__} from {UserModel.__module__}")
-        logger.info(f"Database table: {UserModel._meta.db_table}")
+        # Debug logging
+        for user in queryset[:3]:
+            logger.info(f"  User: {user.username} (role: {user.role}, active: {user.is_active})")
         
-        # Get all users from the correct model
-        all_users = UserModel.objects.all()
-        logger.info(f"Total users in database: {all_users.count()}")
-        
-        # Log sample users for debugging
-        for u in all_users[:3]:
-            logger.info(f"  Sample user: {u.username} (role: {u.role}, active: {u.is_active})")
-        
-        # CRITICAL FIX: Always return users for admin/superuser, don't filter to empty
-        queryset = UserModel.objects.all().order_by('-created_at')
-        logger.info(f"Final queryset count: {queryset.count()}")
         return queryset
     
     def list(self, request, *args, **kwargs):
-        # CRITICAL FIX: Simplified permission check
+        # Simplified permission check
         user = request.user
         logger.info(f"UserListView.list() called by: {user.username} (role: {user.role}, superuser: {user.is_superuser})")
         
@@ -358,24 +347,22 @@ class UserListView(generics.ListAPIView):
         queryset = self.filter_queryset(self.get_queryset())
         logger.info(f"Filtered queryset count: {queryset.count()}")
         
-        # CRITICAL FIX: Log actual data being returned
+        # Log actual data being returned
         if queryset.exists():
             logger.info("Sample users being returned:")
             for user in queryset[:3]:
                 logger.info(f"  - {user.username} ({user.role})")
         else:
-            logger.error("❌ CRITICAL: Queryset is empty but users exist in database!")
+            logger.warning("No users found in queryset")
         
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             logger.info(f"Paginated response: {len(serializer.data)} users")
-            logger.info(f"Sample serialized data: {serializer.data[:1] if serializer.data else 'None'}")
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
         logger.info(f"Full response: {len(serializer.data)} users")
-        logger.info(f"Sample serialized data: {serializer.data[:1] if serializer.data else 'None'}")
         return Response(serializer.data)
 
 
