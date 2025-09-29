@@ -24,47 +24,8 @@ export function PermitsLicenses({ selectedFacility }: PermitsLicensesProps) {
   const [uploadedFiles, setUploadedFiles] = useState<Record<number, string[]>>({});
   const [downloadingPermit, setDownloadingPermit] = useState<number | null>(null);
   const [permits, setPermits] = useState<any[]>([]);
-
-  const handleEditPermit = (permit: any) => {
-    setEditingPermit(permit.id);
-    setEditedPermit({ ...permit });
-  };
-
-  const handleSavePermit = () => {
-    // Update the permit in the state
-    setPermits(prev => 
-      prev.map(permit => 
-        permit.id === editingPermit ? { ...permit, ...editedPermit } : permit
-      )
-    );
-    setEditingPermit(null);
-    setEditedPermit({});
-  };
-
-  const handleAddPermit = () => {
-    const newId = Math.max(...permits.map(p => p.id)) + 1;
-    const permitToAdd = {
-      id: newId,
-      ...newPermit
-    };
-    setPermits(prev => [...prev, permitToAdd]);
-    setNewPermit({
-      facility: '',
-      type: '',
-      number: '',
-      issueDate: '',
-      expiryDate: '',
-      status: 'Active',
-      authority: ''
-    });
-    setShowAddModal(false);
-  };
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (files && selectedPermitForUpload) {
-      const fileNames = Array.from(files).map(file => file.name);
-      setUploadedFiles(prev => ({
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
         ...prev,
         [selectedPermitForUpload]: [
           ...(prev[selectedPermitForUpload] || []),

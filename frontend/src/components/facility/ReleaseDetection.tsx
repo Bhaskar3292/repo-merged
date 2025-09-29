@@ -15,9 +15,10 @@ export function ReleaseDetection({ selectedFacility }: ReleaseDetectionProps) {
     { id: 'reports', label: 'Reports' }
   ];
 
-  const detectionSystems: any[] = [];
-
-  const incidents: any[] = [];
+  const [detectionSystems, setDetectionSystems] = useState<any[]>([]);
+  const [incidents, setIncidents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const getStatusColor = (status: string) => {
     switch (status) {

@@ -16,7 +16,7 @@ export function TankManagement({ selectedFacility }: TankManagementProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
   const [newTankData, setNewTankData] = useState({
     name: '',
-    facility: selectedFacility?.name || '',
+    facility: '',
     product: '',
     capacity: '',
     current: '',
@@ -24,24 +24,13 @@ export function TankManagement({ selectedFacility }: TankManagementProps) {
     temperature: '',
     pressure: '',
     lastInspection: '',
-    tankNumber: '',
-    currentStatus: 'Currently In Use',
-    size: '',
-    tankLined: 'Yes',
-    manifoldedWith: '',
-    pipingMaterial: '',
-    compartment: 'No',
-    tankMaterial: '',
-    releaseDetection: '',
-    atgId: '',
-    pipingManifolded: '',
-    pipingInstalled: '',
-    trackReleaseDetection: 'Yes',
-    installed: '',
-    stpSumpsInstalled: 'Yes',
-    pipingReleaseDetection: ''
+    material: '',
+    installation_date: '',
+    last_inspection: ''
   });
   const [tanks, setTanks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const tabs = [
     { id: 'overview', label: 'Tank Overview' },

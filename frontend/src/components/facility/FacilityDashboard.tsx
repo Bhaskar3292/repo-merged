@@ -37,7 +37,9 @@ export function FacilityDashboard({ selectedFacility }: FacilityDashboardProps) 
     }
   ];
 
-  const recentActivity: any[] = [];
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   return (
     <div className="space-y-6">
