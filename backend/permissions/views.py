@@ -239,39 +239,75 @@ def get_role_permissions_matrix(request):
             status=status.HTTP_403_FORBIDDEN
         )
     
-    categories = PermissionCategory.objects.all().order_by('order')
-    roles = ['admin', 'contributor', 'viewer']
-    
-    matrix = {}
-    
-    for category in categories:
-        matrix[category.name] = {
-            'permissions': []
-        }
-        
-        for permission in category.permissions.all():
-            perm_data = {
-                'id': permission.id,
-                'name': permission.name,
-                'code': permission.code,
-                'type': permission.permission_type,
-                'roles': {}
-            }
-            
-            for role in roles:
-                # Check if there's a role-specific override
-                try:
-                    role_perm = RolePermission.objects.get(role=role, permission=permission)
-                    perm_data['roles'][role] = role_perm.is_granted
-                except RolePermission.DoesNotExist:
-                    # Use default permission
-                    if role == 'admin':
-                        perm_data['roles'][role] = permission.admin_default
-                    elif role == 'contributor':
-                        perm_data['roles'][role] = permission.contributor_default
-                    elif role == 'viewer':
-                        perm_data['roles'][role] = permission.viewer_default
-            
-            matrix[category.name]['permissions'].append(perm_data)
+    from .models import get_role_permissions_matrix
+    matrix = get_role_permissions_matrix()
     
     return Response(matrix)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def update_role_permission(request):
+    """
+    Update a specific role permission
+    """
+    # Check if user is admin or superuser
+    if not (request.user.role == 'admin' or request.user.is_superuser):
+        return Response(
+            {'error': 'Only administrators can update permissions'}, 
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    role = request.data.get('role')
+    permission_id = request.data.get('permission_id')
+    is_granted = request.data.get('is_granted', False)
+    
+    if not role or not permission_id:
+        return Response(
+            {'error': 'Role and permission_id are required'}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        permission = Permission.objects.get(id=permission_id)
+        role_permission, created = RolePermission.objects.get_or_create(
+            role=role,
+            permission=permission,
+            defaults={'is_granted': is_granted}
+        )
+        
+        if not created:
+            role_permission.is_granted = is_granted
+            role_permission.save()
+        
+        # Log permission change
+        log_security_event(
+            user=request.user,
+            action='permission_granted' if is_granted else 'permission_revoked',
+            description=f'Permission {permission.name} {"granted to" if is_granted else "revoked from"} {role} role',
+            ip_address=get_client_ip(request),
+            user_agent=request.META.get('HTTP_USER_AGENT', ''),
+            metadata={
+                'permission_id': permission.id,
+                'permission_code': permission.code,
+                'role': role,
+                'granted': is_granted
+            }
+        )
+        
+        return Response({
+            'message': f'Permission updated for {role} role',
+            'permission': permission.name,
+            'granted': is_granted
+        })
+        
+    except Permission.DoesNotExist:
+        return Response(
+            {'error': 'Permission not found'}, 
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        return Response(
+            {'error': str(e)}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

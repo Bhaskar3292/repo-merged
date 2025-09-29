@@ -364,24 +364,31 @@ class ApiService {
    */
   async getPermissionsMatrix(): Promise<any> {
     try {
+      console.log('🔍 API: Getting permissions matrix...');
       const response = await api.get('/api/permissions/roles/permissions/matrix/');
+      console.log('🔍 API: Permissions matrix response:', response.data);
       return response.data;
     } catch (error: any) {
+      console.error('🔍 API: Get permissions matrix error:', error);
       throw new Error(error.response?.data?.error || error.message || 'Failed to get permissions matrix');
     }
   }
 
   /**
-   * Update role permissions (admin only)
+   * Update single role permission (admin only)
    */
-  async updateRolePermissions(role: string, permissions: any[]): Promise<any> {
+  async updateRolePermission(role: string, permissionId: number, isGranted: boolean): Promise<any> {
     try {
-      const response = await api.post('/api/permissions/roles/permissions/bulk-update/', { 
+      console.log('🔍 API: Updating role permission:', { role, permissionId, isGranted });
+      const response = await api.post('/api/permissions/role-permissions/update/', { 
         role, 
-        permissions 
+        permission_id: permissionId,
+        is_granted: isGranted
       });
+      console.log('🔍 API: Permission update response:', response.data);
       return response.data;
     } catch (error: any) {
+      console.error('🔍 API: Update permission error:', error);
       throw new Error(error.response?.data?.error || error.message || 'Failed to update role permissions');
     }
   }

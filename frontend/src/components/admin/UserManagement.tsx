@@ -3,6 +3,9 @@ import { Users, Plus, CreditCard as Edit, Trash2, Save, X, UserPlus, Search, Shi
 import { apiService } from '../../services/api';
 import { useAuthContext } from '../../contexts/AuthContext';
 
+import { apiService } from '../../services/api';
+import { useAuthContext } from '../../contexts/AuthContext';
+
 interface User {
   id: number;
   username: string;
@@ -163,17 +166,31 @@ export function UserManagement() {
   };
 
   const handleDeleteUser = async (userId: number, username: string) => {
-    if (window.confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
+    if (window.confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone and will permanently remove the user from the system.`)) {
       try {
         setError(null);
         console.log('Deleting user:', userId);
         
-        await apiService.deleteUser(userId);
+        // Use the dedicated delete endpoint
+        const response = await fetch(`http://localhost:8000/api/auth/users/${userId}/delete/`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to delete user');
+        }
+        
+        const result = await response.json();
         console.log('User deleted successfully');
         
         // Reload the entire user list to ensure consistency
         await loadUsers();
-        setSuccess(`User "${username}" deleted successfully!`);
+        setSuccess(result.message || `User "${username}" deleted successfully!`);
         
         // Clear success message after 3 seconds
         setTimeout(() => setSuccess(null), 3000);

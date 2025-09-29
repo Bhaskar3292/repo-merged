@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { TabNavigation } from '../common/TabNavigation';
 import { UserManagement } from './UserManagement';
+import { RolePermissionsTab } from './RolePermissionsTab';
 import { useAuthContext } from '../../contexts/AuthContext';
 
 /**
@@ -23,6 +24,7 @@ export function AdminDashboard() {
 
   const tabs = [
     { id: 'users', label: 'User Management' },
+    { id: 'permissions', label: 'Role Permissions' },
   ];
 
   // Ensure superusers can access admin dashboard
@@ -42,7 +44,10 @@ export function AdminDashboard() {
         return (
           <UserManagement />
         );
-
+      case 'permissions':
+        return (
+          <RolePermissionsTab />
+        );
 
       default:
         return null;

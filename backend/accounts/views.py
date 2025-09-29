@@ -315,34 +315,41 @@ class UserListView(generics.ListAPIView):
     List all users endpoint (admin only)
     """
     serializer_class = UserListSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAdminUser]
     
     def get_queryset(self):
         user = self.request.user
         logger.info(f"UserListView accessed by: {user.username} (role: {user.role}, superuser: {user.is_superuser})")
         
-        # Get all users first to check what exists
-        all_users = User.objects.all()
+        # CRITICAL FIX: Ensure we're using the correct User model
+        from django.contrib.auth import get_user_model
+        UserModel = get_user_model()
+        
+        # Debug: Check if we're using the right model
+        logger.info(f"Using User model: {UserModel.__name__} from {UserModel.__module__}")
+        logger.info(f"Database table: {UserModel._meta.db_table}")
+        
+        # Get all users from the correct model
+        all_users = UserModel.objects.all()
         logger.info(f"Total users in database: {all_users.count()}")
         
         # Log sample users for debugging
         for u in all_users[:3]:
             logger.info(f"  Sample user: {u.username} (role: {u.role}, active: {u.is_active})")
         
-        if user.is_superuser or user.role == 'admin':
-            queryset = User.objects.all().order_by('-created_at')
-            logger.info(f"Returning {queryset.count()} users")
-            return queryset
-        else:
-            logger.warning(f"User {user.username} with role {user.role} denied access to user list")
-            # Return empty queryset for non-admin users
-            return User.objects.none()
+        # CRITICAL FIX: Always return users for admin/superuser, don't filter to empty
+        queryset = UserModel.objects.all().order_by('-created_at')
+        logger.info(f"Final queryset count: {queryset.count()}")
+        return queryset
     
     def list(self, request, *args, **kwargs):
-        # Check permissions first
+        # CRITICAL FIX: Simplified permission check
         user = request.user
+        logger.info(f"UserListView.list() called by: {user.username} (role: {user.role}, superuser: {user.is_superuser})")
+        
+        # Check if user has admin permissions
         if not (user.is_superuser or user.role == 'admin'):
-            logger.warning(f"User {user.username} denied access to user list")
+            logger.warning(f"Access denied for user {user.username} with role {user.role}")
             return Response(
                 {'error': 'Only administrators can view user list'}, 
                 status=status.HTTP_403_FORBIDDEN
@@ -351,14 +358,24 @@ class UserListView(generics.ListAPIView):
         queryset = self.filter_queryset(self.get_queryset())
         logger.info(f"Filtered queryset count: {queryset.count()}")
         
+        # CRITICAL FIX: Log actual data being returned
+        if queryset.exists():
+            logger.info("Sample users being returned:")
+            for user in queryset[:3]:
+                logger.info(f"  - {user.username} ({user.role})")
+        else:
+            logger.error("❌ CRITICAL: Queryset is empty but users exist in database!")
+        
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
-            logger.info(f"Serialized {len(serializer.data)} users")
+            logger.info(f"Paginated response: {len(serializer.data)} users")
+            logger.info(f"Sample serialized data: {serializer.data[:1] if serializer.data else 'None'}")
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
-        logger.info(f"Serialized {len(serializer.data)} users")
+        logger.info(f"Full response: {len(serializer.data)} users")
+        logger.info(f"Sample serialized data: {serializer.data[:1] if serializer.data else 'None'}")
         return Response(serializer.data)
 
 
@@ -438,6 +455,42 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
         
         self.perform_destroy(instance)
         return Response({'message': 'User deleted successfully'})
+
+
+class DeleteUserView(generics.DestroyAPIView):
+    """
+    Delete user endpoint (admin only)
+    """
+    permission_classes = [IsAdminUser]
+    queryset = User.objects.all()
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        # Prevent self-deletion
+        if instance == request.user:
+            return Response(
+                {'error': 'Cannot delete your own account'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Log user deletion
+        log_security_event(
+            user=request.user,
+            action='user_deleted',
+            description=f'Deleted user: {instance.username}',
+            ip_address=get_client_ip(request),
+            user_agent=request.META.get('HTTP_USER_AGENT', ''),
+            metadata={'deleted_user_id': instance.id, 'deleted_user_role': instance.role}
+        )
+        
+        # Actually delete the user
+        username = instance.username
+        self.perform_destroy(instance)
+        
+        return Response({
+            'message': f'User "{username}" deleted successfully'
+        }, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
