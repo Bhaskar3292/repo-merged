@@ -39,6 +39,7 @@ export function UserManagement() {
 
   useEffect(() => {
     if (currentUser) {
+      console.log('🔍 UserManagement: Loading users for user:', currentUser.username, 'role:', currentUser.role);
       loadUsers();
     }
   }, [currentUser]);
@@ -47,12 +48,12 @@ export function UserManagement() {
     try {
       setLoading(true);
       setError(null);
-      console.log('Loading users from API...');
+      console.log('🔍 UserManagement: Calling API to load users...');
       const data = await apiService.getUsers();
-      console.log('Users loaded:', data);
+      console.log('🔍 UserManagement: Received users data:', data);
       setUsers(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Users load error:', error);
+      console.error('🔍 UserManagement: Load users error:', error);
       setError('Failed to load users');
       setUsers([]);
     } finally {

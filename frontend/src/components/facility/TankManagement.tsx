@@ -8,29 +8,39 @@ interface TankManagementProps {
 
 export function TankManagement({ selectedFacility }: TankManagementProps) {
   const [activeTab, setActiveTab] = useState('overview');
-  const [editingTank, setEditingTank] = useState<number | null>(null);
-  const [editingTitle, setEditingTitle] = useState<number | null>(null);
-  const [editedTankData, setEditedTankData] = useState<any>({});
-  const [editedTitleData, setEditedTitleData] = useState<any>({});
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
-  const [newTankData, setNewTankData] = useState({
-    name: '',
-    facility: '',
-    product: '',
-    capacity: '',
-    current: '',
-    status: 'Normal',
-    temperature: '',
-    pressure: '',
-    lastInspection: '',
-    material: '',
-    installation_date: '',
-    last_inspection: ''
-  });
   const [tanks, setTanks] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const { hasPermission, user: currentUser } = useAuthContext();
+
+  useEffect(() => {
+    if (currentUser) {
+      loadTanks();
+    }
+  }, [currentUser, selectedFacility]);
+
+  const loadTanks = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('🔍 TankManagement: Loading tanks...');
+      
+      const data = selectedFacility 
+        ? await apiService.getTanks(selectedFacility.id)
+        : await apiService.getTanks();
+      
+      console.log('🔍 TankManagement: Received tanks data:', data);
+      setTanks(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('🔍 TankManagement: Load tanks error:', error);
+      setError('Failed to load tanks');
+      setTanks([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const tabs = [
     { id: 'overview', label: 'Tank Overview' },

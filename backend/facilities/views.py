@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.utils import timezone
+import logging
 from accounts.permissions import IsAdminUser, IsContributorOrAdmin, CanEditFacility
 from accounts.utils import log_security_event, get_client_ip
 from .models import (
@@ -19,6 +20,7 @@ from .serializers import (
     TankSerializer, PermitSerializer
 )
 
+logger = logging.getLogger(__name__)
 
 class LocationListCreateView(generics.ListCreateAPIView):
     """
@@ -29,11 +31,23 @@ class LocationListCreateView(generics.ListCreateAPIView):
     
     def get_queryset(self):
         queryset = Location.objects.filter(is_active=True).order_by('name')
-        # Add logging for debugging
-        import logging
-        logger = logging.getLogger(__name__)
         logger.info(f"LocationListCreateView queryset count: {queryset.count()}")
+        logger.info(f"User: {self.request.user.username if self.request.user.is_authenticated else 'Anonymous'}")
+        logger.info(f"User role: {getattr(self.request.user, 'role', 'None')}")
+        
+        # Debug: Show actual locations in database
+        all_locations = Location.objects.all()
+        logger.info(f"Total locations in DB: {all_locations.count()}")
+        for loc in all_locations:
+            logger.info(f"  - {loc.name} (active: {loc.is_active}, id: {loc.id})")
+        
         return queryset
+    
+    def list(self, request, *args, **kwargs):
+        logger.info(f"LocationListCreateView.list() called by user: {request.user}")
+        response = super().list(request, *args, **kwargs)
+        logger.info(f"Returning {len(response.data)} locations")
+        return response
     
     def perform_create(self, serializer):
         # Only admins and contributors can create locations

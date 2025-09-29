@@ -30,6 +30,7 @@ export function LocationManager({ selectedFacility }: LocationManagerProps) {
 
   useEffect(() => {
     if (currentUser) {
+      console.log('🔍 LocationManager: Loading locations for user:', currentUser.username);
       loadLocations();
     }
   }, [currentUser]);
@@ -38,11 +39,13 @@ export function LocationManager({ selectedFacility }: LocationManagerProps) {
     try {
       setLoading(true);
       setError(null);
+      console.log('🔍 LocationManager: Calling API to load locations...');
       const data = await apiService.getLocations();
+      console.log('🔍 LocationManager: Received locations data:', data);
       setLocations(Array.isArray(data) ? data : []);
     } catch (error) {
+      console.error('🔍 LocationManager: Load locations error:', error);
       setError('Failed to load locations');
-      console.error('Locations load error:', error);
       setLocations([]);
     } finally {
       setLoading(false);

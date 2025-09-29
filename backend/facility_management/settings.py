@@ -259,6 +259,11 @@ LOGGING = {
         },
     },
     'loggers': {
+        'facilities.views': {
+            'handlers': ['file', 'console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
         'accounts.views': {
             'handlers': ['file', 'console'],
             'level': 'DEBUG',

@@ -319,9 +319,6 @@ class UserListView(generics.ListAPIView):
     queryset = User.objects.all().order_by('-created_at')
     
     def get_queryset(self):
-        import logging
-        logger = logging.getLogger(__name__)
-        
         # Check if user is admin or superuser
         user = self.request.user
         logger.info(f"UserListView accessed by: {user.username} (role: {user.role}, superuser: {user.is_superuser})")
@@ -332,11 +329,18 @@ class UserListView(generics.ListAPIView):
             return queryset
         else:
             logger.warning(f"User {user.username} with role {user.role} denied access to user list")
+            # Return empty queryset but don't raise permission error
             return User.objects.none()
     
     def list(self, request, *args, **kwargs):
-        import logging
-        logger = logging.getLogger(__name__)
+        # Check permissions first
+        user = request.user
+        if not (user.is_superuser or user.role == 'admin'):
+            logger.warning(f"User {user.username} denied access to user list")
+            return Response(
+                {'error': 'Only administrators can view user list'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
         
         queryset = self.filter_queryset(self.get_queryset())
         logger.info(f"Filtered queryset count: {queryset.count()}")

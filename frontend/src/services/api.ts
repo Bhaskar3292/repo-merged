@@ -245,10 +245,19 @@ class ApiService {
    */
   async getLocations(): Promise<any[]> {
     try {
+      console.log('🔍 API: Getting locations...');
+      console.log('🔍 API: Base URL:', import.meta.env.VITE_API_URL || 'http://localhost:8000');
+      console.log('🔍 API: Auth token present:', !!tokenManager.getAccessToken());
+      
       const response = await api.get('/api/facilities/locations/');
+      console.log('🔍 API: Locations response status:', response.status);
+      console.log('🔍 API: Locations response data:', response.data);
+      
       return Array.isArray(response.data) ? response.data : [];
     } catch (error: any) {
-      console.error('Get locations error:', error);
+      console.error('🔍 API: Get locations error:', error);
+      console.error('🔍 API: Error response:', error.response?.data);
+      console.error('🔍 API: Error status:', error.response?.status);
       throw new Error(error.response?.data?.error || error.message || 'Failed to get locations');
     }
   }
@@ -382,10 +391,18 @@ class ApiService {
    */
   async getUsers(): Promise<any[]> {
     try {
+      console.log('🔍 API: Getting users...');
+      console.log('🔍 API: Current user:', this.getStoredUser());
+      
       const response = await api.get('/api/auth/users/');
+      console.log('🔍 API: Users response status:', response.status);
+      console.log('🔍 API: Users response data:', response.data);
+      
       return Array.isArray(response.data) ? response.data : [];
     } catch (error: any) {
-      console.error('Get users error:', error);
+      console.error('🔍 API: Get users error:', error);
+      console.error('🔍 API: Error response:', error.response?.data);
+      console.error('🔍 API: Error status:', error.response?.status);
       throw new Error(error.response?.data?.error || error.message || 'Failed to get users');
     }
   }
@@ -468,12 +485,15 @@ class ApiService {
    */
   async getTanks(locationId?: number): Promise<any[]> {
     try {
+      console.log('🔍 API: Getting tanks for location:', locationId);
       const endpoint = locationId 
         ? `/api/facilities/locations/${locationId}/tanks/`
         : '/api/facilities/tanks/';
       const response = await api.get(endpoint);
+      console.log('🔍 API: Tanks response:', response.data);
       return response.data;
     } catch (error: any) {
+      console.error('🔍 API: Get tanks error:', error);
       throw new Error(error.response?.data?.error || error.message || 'Failed to get tanks');
     }
   }
@@ -521,12 +541,15 @@ class ApiService {
    */
   async getPermits(locationId?: number): Promise<any[]> {
     try {
+      console.log('🔍 API: Getting permits for location:', locationId);
       const endpoint = locationId 
         ? `/api/facilities/locations/${locationId}/permits/`
         : '/api/facilities/permits/';
       const response = await api.get(endpoint);
+      console.log('🔍 API: Permits response:', response.data);
       return response.data;
     } catch (error: any) {
+      console.error('🔍 API: Get permits error:', error);
       throw new Error(error.response?.data?.error || error.message || 'Failed to get permits');
     }
   }

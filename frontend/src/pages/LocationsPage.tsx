@@ -55,6 +55,7 @@ export function LocationsPage() {
 
   useEffect(() => {
     if (currentUser) {
+      console.log('🔍 LocationsPage: Loading locations for user:', currentUser.username);
       loadLocations();
     }
   }, [currentUser]);
@@ -63,11 +64,13 @@ export function LocationsPage() {
     try {
       setLoading(true);
       setError(null);
+      console.log('🔍 LocationsPage: Calling API to load locations...');
       const data = await apiService.getLocations();
+      console.log('🔍 LocationsPage: Received locations data:', data);
       setLocations(Array.isArray(data) ? data : []);
     } catch (error) {
+      console.error('🔍 LocationsPage: Load locations error:', error);
       setError('Failed to load locations');
-      console.error('Locations load error:', error);
       setLocations([]);
     } finally {
       setLoading(false);
