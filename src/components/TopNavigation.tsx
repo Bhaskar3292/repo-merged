@@ -7,11 +7,7 @@ import {
   LogOut, 
   User, 
   Settings,
-  Building2,
-  Plus,
-  MapPin,
-  X,
-  Save
+  Building2
 } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
@@ -23,20 +19,6 @@ interface TopNavigationProps {
   refreshKey?: number;
 }
 
-interface NewLocationData {
-  name: string;
-  address: string;
-  city: string;
-  state: string;
-  pincode: string;
-  country: string;
-  phone: string;
-  email: string;
-  manager: string;
-  description: string;
-  facility_type: string;
-}
-
 export function TopNavigation({ selectedFacility, onFacilitySelect, onViewChange, refreshKey }: TopNavigationProps) {
   const navigate = useNavigate();
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -44,7 +26,7 @@ export function TopNavigation({ selectedFacility, onFacilitySelect, onViewChange
   const [showFacilityDropdown, setShowFacilityDropdown] = useState(false);
   const [locations, setLocations] = useState<any[]>([]);
   
-  const { user, logout, hasPermission } = useAuthContext();
+  const { user, logout } = useAuthContext();
 
   useEffect(() => {
     loadLocations();
@@ -80,7 +62,6 @@ export function TopNavigation({ selectedFacility, onFacilitySelect, onViewChange
     setSearchTerm(e.target.value);
     setShowFacilityDropdown(true);
   };
-
 
   return (
     <div>
@@ -208,46 +189,6 @@ export function TopNavigation({ selectedFacility, onFacilitySelect, onViewChange
           />
         )}
       </header>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search and select facility..."
-                value={searchTerm}
-                onChange={handleSearchChange}
-                onFocus={() => setShowFacilityDropdown(true)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-
-              {/* Facility Dropdown */}
-              {showFacilityDropdown && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
-                  {filteredFacilities.length > 0 ? (
-                    filteredFacilities.map((facility) => (
-                      <button
-                        key={facility.id}
-                        onClick={() => handleFacilitySelect(facility)}
-                        className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <Building2 className="h-4 w-4 text-gray-400" />
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">{facility.name}</p>
-                            <p className="text-xs text-gray-500">{facility.address}</p>
-                          </div>
-                        </div>
-                      </button>
-                    ))
-                  ) : searchTerm.length > 0 ? (
-                    <div className="px-4 py-3 text-sm text-gray-500">No matching facilities found.</div>
-                  ) : (
-                    <div className="px-4 py-3 text-sm text-gray-500">Start typing to search facilities...</div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
     </div>
   );
 }
