@@ -318,11 +318,37 @@ class UserListView(generics.ListAPIView):
     queryset = User.objects.all().order_by('-created_at')
     
     def get_queryset(self):
+        import logging
+        logger = logging.getLogger(__name__)
+        
         # Check if user is admin or superuser
         user = self.request.user
+        logger.info(f"UserListView accessed by: {user.username} (role: {user.role}, superuser: {user.is_superuser})")
+        
         if user.is_superuser or user.role == 'admin':
-            return User.objects.all().order_by('-created_at')
-        return User.objects.none()
+            queryset = User.objects.all().order_by('-created_at')
+            logger.info(f"Returning {queryset.count()} users")
+            return queryset
+        else:
+            logger.warning(f"User {user.username} with role {user.role} denied access to user list")
+            return User.objects.none()
+    
+    def list(self, request, *args, **kwargs):
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        queryset = self.filter_queryset(self.get_queryset())
+        logger.info(f"Filtered queryset count: {queryset.count()}")
+        
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            logger.info(f"Serialized {len(serializer.data)} users")
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        logger.info(f"Serialized {len(serializer.data)} users")
+        return Response(serializer.data)
 
 
 class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
