@@ -41,92 +41,7 @@ export function TankManagement({ selectedFacility }: TankManagementProps) {
     stpSumpsInstalled: 'Yes',
     pipingReleaseDetection: ''
   });
-  const [tanks, setTanks] = useState([
-    {
-      id: 1,
-      name: 'Tank A1',
-      facility: 'Downtown Station A',
-      product: 'Regular Gasoline',
-      capacity: 12000,
-      current: 8500,
-      status: 'Normal',
-      temperature: 68,
-      pressure: 14.7,
-      lastInspection: '2024-01-15',
-      tankNumber: 'A1',
-      currentStatus: 'Currently In Use',
-      size: '12,000 gal',
-      tankLined: 'Yes',
-      manifoldedWith: 'Tank A2',
-      pipingMaterial: 'Double Wall Steel',
-      compartment: 'No',
-      tankMaterial: 'Fiberglass',
-      releaseDetection: 'Statistical Inventory Reconciliation',
-      atgId: 'ATG-001',
-      pipingManifolded: 'Tank A2, A3',
-      pipingInstalled: '2020-01-15',
-      trackReleaseDetection: 'Yes',
-      installed: '2020-01-10',
-      stpSumpsInstalled: 'Yes',
-      pipingReleaseDetection: 'Monthly line testing with 0.1 GPH sensitivity'
-    },
-    {
-      id: 2,
-      name: 'Tank A2',
-      facility: 'Downtown Station A',
-      product: 'Premium Gasoline',
-      capacity: 10000,
-      current: 3200,
-      status: 'Low Level',
-      temperature: 72,
-      pressure: 14.5,
-      lastInspection: '2024-01-15',
-      tankNumber: 'A2',
-      currentStatus: 'Currently In Use',
-      size: '10,000 gal',
-      tankLined: 'Yes',
-      manifoldedWith: 'Tank A1',
-      pipingMaterial: 'Single Wall Steel',
-      compartment: 'No',
-      tankMaterial: 'Steel',
-      releaseDetection: 'Interstitial Monitoring',
-      atgId: 'ATG-002',
-      pipingManifolded: 'Tank A1, A3',
-      pipingInstalled: '2020-02-01',
-      trackReleaseDetection: 'Yes',
-      installed: '2020-01-25',
-      stpSumpsInstalled: 'Yes',
-      pipingReleaseDetection: 'Continuous interstitial monitoring'
-    },
-    {
-      id: 3,
-      name: 'Tank B1',
-      facility: 'Highway 101 Facility',
-      product: 'Diesel',
-      capacity: 15000,
-      current: 12800,
-      status: 'Normal',
-      temperature: 65,
-      pressure: 14.8,
-      lastInspection: '2024-01-10',
-      tankNumber: 'B1',
-      currentStatus: 'Currently In Use',
-      size: '15,000 gal',
-      tankLined: 'No',
-      manifoldedWith: 'None',
-      pipingMaterial: 'Double Wall Fiberglass',
-      compartment: 'Yes - 2 compartments',
-      tankMaterial: 'Fiberglass',
-      releaseDetection: 'Groundwater Monitoring',
-      atgId: 'ATG-003',
-      pipingManifolded: 'None',
-      pipingInstalled: '2019-12-15',
-      trackReleaseDetection: 'Yes',
-      installed: '2019-12-10',
-      stpSumpsInstalled: 'No',
-      pipingReleaseDetection: 'Quarterly groundwater monitoring'
-    }
-  ]);
+  const [tanks, setTanks] = useState<any[]>([]);
 
   const tabs = [
     { id: 'overview', label: 'Tank Overview' },
@@ -137,7 +52,7 @@ export function TankManagement({ selectedFacility }: TankManagementProps) {
 
   // Filter tanks by selected facility
   const filteredTanks = selectedFacility 
-    ? tanks.filter(tank => tank.facility === selectedFacility.name)
+    ? tanks.filter(tank => tank.location_name === selectedFacility.name)
     : tanks;
 
   const handleAddTank = () => {
@@ -502,8 +417,8 @@ export function TankManagement({ selectedFacility }: TankManagementProps) {
                             />
                             <input
                               type="text"
-                              value={editedTitleData.product || tank.product}
-                              onChange={(e) => updateTitleField('product', e.target.value)}
+                              value={editedTitleData.tank_type || tank.tank_type}
+                              onChange={(e) => updateTitleField('tank_type', e.target.value)}
                               className="text-sm text-gray-500 bg-white border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
                               placeholder="Product Type"
                             />
@@ -514,7 +429,7 @@ export function TankManagement({ selectedFacility }: TankManagementProps) {
                               <h3 className="text-lg font-semibold text-gray-900">
                                 {tank.name}
                               </h3>
-                              <p className="text-sm text-gray-500">{tank.product}</p>
+                              <p className="text-sm text-gray-500">{tank.tank_type}</p>
                             </div>
                             <button
                               onClick={() => handleEditTitle(tank)}
@@ -597,36 +512,23 @@ export function TankManagement({ selectedFacility }: TankManagementProps) {
                         <h4 className="text-md font-semibold text-gray-900 border-b border-gray-200 pb-2">
                           Tank Information
                         </h4>
-                        {renderField('Tank Number', 'tankNumber', tank, 'text')}
-                        {renderField('Status', 'currentStatus', tank, 'select-status')}
-                        {renderField('Size', 'size', tank)}
-                        {renderField('Tank Lined?', 'tankLined', tank, 'select-yesno')}
-                        {renderField('Manifolded With', 'manifoldedWith', tank)}
-                        {renderField('Tank Material', 'tankMaterial', tank, 'select-material')}
-                        {renderField('Compartment?', 'compartment', tank)}
-                        {renderField('Installed', 'installed', tank, 'date')}
+                        {renderField('Tank Type', 'tank_type', tank, 'text')}
+                        {renderField('Status', 'status', tank, 'select-status')}
+                        {renderField('Capacity', 'capacity', tank, 'number')}
+                        {renderField('Current Level', 'current_level', tank, 'number')}
+                        {renderField('Material', 'material', tank, 'select-material')}
+                        {renderField('Installation Date', 'installation_date', tank, 'date')}
+                        {renderField('Last Inspection', 'last_inspection', tank, 'date')}
                       </div>
 
-                      {/* Piping Information */}
+                      {/* Additional Information */}
                       <div className="space-y-4">
                         <h4 className="text-md font-semibold text-gray-900 border-b border-gray-200 pb-2">
-                          Piping Information
+                          Additional Information
                         </h4>
-                        {renderField('Piping Material', 'pipingMaterial', tank, 'select-piping')}
-                        {renderField('Piping Manifolded With', 'pipingManifolded', tank)}
-                        {renderField('Piping Installed', 'pipingInstalled', tank, 'date')}
-                        {renderField('STP Sumps Installed?', 'stpSumpsInstalled', tank, 'select-yesno')}
-                      </div>
-
-                      {/* Release Detection */}
-                      <div className="space-y-4">
-                        <h4 className="text-md font-semibold text-gray-900 border-b border-gray-200 pb-2">
-                          Release Detection
-                        </h4>
-                        {renderField('Release Detection', 'releaseDetection', tank, 'select-detection')}
-                        {renderField('ATG ID', 'atgId', tank)}
-                        {renderField('Track Release Detection?', 'trackReleaseDetection', tank, 'select-yesno')}
-                        {renderField('Piping Release Detection', 'pipingReleaseDetection', tank, 'textarea')}
+                        <div className="text-sm text-gray-600">
+                          <p>Additional tank details and specifications can be added here.</p>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -640,34 +542,8 @@ export function TankManagement({ selectedFacility }: TankManagementProps) {
         return (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">ATG Information</h3>
-            <div className="space-y-6">
-              {filteredTanks.map((tank) => (
-                <div key={tank.id} className="border border-gray-200 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-3">{tank.name} - ATG Data</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="text-center p-3 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-gray-600">Product Level</p>
-                      <p className="text-xl font-bold text-blue-600">{tank.current}</p>
-                      <p className="text-xs text-gray-500">gallons</p>
-                    </div>
-                    <div className="text-center p-3 bg-green-50 rounded-lg">
-                      <p className="text-sm text-gray-600">Temperature</p>
-                      <p className="text-xl font-bold text-green-600">{tank.temperature}</p>
-                      <p className="text-xs text-gray-500">°F</p>
-                    </div>
-                    <div className="text-center p-3 bg-purple-50 rounded-lg">
-                      <p className="text-sm text-gray-600">Water Level</p>
-                      <p className="text-xl font-bold text-purple-600">0.0</p>
-                      <p className="text-xs text-gray-500">inches</p>
-                    </div>
-                    <div className="text-center p-3 bg-yellow-50 rounded-lg">
-                      <p className="text-sm text-gray-600">Pressure</p>
-                      <p className="text-xl font-bold text-yellow-600">{tank.pressure}</p>
-                      <p className="text-xs text-gray-500">PSI</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="text-center py-8">
+              <p className="text-gray-500">ATG monitoring data will be displayed here when tanks are configured.</p>
             </div>
           </div>
         );
@@ -676,31 +552,8 @@ export function TankManagement({ selectedFacility }: TankManagementProps) {
         return (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Vapor Recovery Systems</h3>
-            <div className="space-y-6">
-              {tanks.map((tank) => (
-                <div key={tank.id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-medium text-gray-900">{tank.name} - Vapor Recovery</h4>
-                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                      Active
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <p className="font-medium text-gray-700">System Type</p>
-                      <p className="text-gray-600">Stage II Vapor Recovery</p>
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-700">Efficiency</p>
-                      <p className="text-gray-600">95%</p>
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-700">Last Test</p>
-                      <p className="text-gray-600">{new Date(tank.lastInspection).toLocaleDateString()}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="text-center py-8">
+              <p className="text-gray-500">Vapor recovery system information will be displayed here when configured.</p>
             </div>
           </div>
         );
@@ -785,53 +638,52 @@ export function TankManagement({ selectedFacility }: TankManagementProps) {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Facility</label>
-                    <input
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tank Type</label>
                       type="text"
                       value={newTankData.facility}
-                      onChange={(e) => updateNewTankField('facility', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={newTankData.product}
+                    onChange={(e) => updateNewTankField('product', e.target.value)}
                       placeholder="e.g., Downtown Station A"
-                    />
+                    placeholder="e.g., Gasoline, Diesel, Oil"
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Product</label>
-                    <input
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Capacity (gallons)</label>
                       type="text"
-                      value={newTankData.product}
-                      onChange={(e) => updateNewTankField('product', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    type="number"
+                    value={newTankData.capacity}
+                    onChange={(e) => updateNewTankField('capacity', e.target.value)}
                       placeholder="e.g., Regular Gasoline"
-                    />
+                    placeholder="e.g., 12000"
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Tank Number</label>
-                    <input
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Current Level (gallons)</label>
                       type="text"
-                      value={newTankData.tankNumber}
-                      onChange={(e) => updateNewTankField('tankNumber', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    type="number"
+                    value={newTankData.current}
+                    onChange={(e) => updateNewTankField('current', e.target.value)}
                       placeholder="e.g., A1"
-                    />
+                    placeholder="e.g., 8500"
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Capacity (gallons)</label>
-                    <input
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Material</label>
                       type="number"
-                      value={newTankData.capacity}
-                      onChange={(e) => updateNewTankField('capacity', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    type="text"
+                    value={newTankData.tankMaterial}
+                    onChange={(e) => updateNewTankField('tankMaterial', e.target.value)}
                       placeholder="e.g., 12000"
-                    />
+                    placeholder="e.g., Fiberglass, Steel"
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Current Level (gallons)</label>
-                    <input
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Installation Date</label>
                       type="number"
-                      value={newTankData.current}
-                      onChange={(e) => updateNewTankField('current', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    type="date"
+                    value={newTankData.installed}
+                    onChange={(e) => updateNewTankField('installed', e.target.value)}
                       placeholder="e.g., 8500"
-                    />
                   </div>
                 </div>
               </div>

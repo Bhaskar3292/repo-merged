@@ -11,13 +11,13 @@ export function ProfilePanel() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const [formData, setFormData] = useState({
-    firstName: user?.name?.split(' ')[0] || '',
-    lastName: user?.name?.split(' ')[1] || '',
+    firstName: user?.first_name || '',
+    lastName: user?.last_name || '',
     email: user?.email || '',
-    phone: '(555) 123-4567',
+    phone: '',
     organization: user?.organization || '',
     role: user?.role || '',
-    joinDate: '2024-01-15'
+    joinDate: user?.created_at || ''
   });
 
   const [passwordData, setPasswordData] = useState({

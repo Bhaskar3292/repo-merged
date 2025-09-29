@@ -9,64 +9,35 @@ export function FacilityDashboard({ selectedFacility }: FacilityDashboardProps) 
   const stats = [
     {
       title: 'Total Facilities',
-      value: '24',
-      change: '+2.5%',
+      value: '0',
+      change: '0%',
       icon: Building2,
       color: 'blue'
     },
     {
       title: 'Active Tanks',
-      value: '156',
-      change: '+1.2%',
+      value: '0',
+      change: '0%',
       icon: Zap,
       color: 'green'
     },
     {
       title: 'Pending Issues',
-      value: '3',
-      change: '-15.3%',
+      value: '0',
+      change: '0%',
       icon: AlertTriangle,
       color: 'red'
     },
     {
       title: 'Permits Due',
-      value: '8',
-      change: '+4.1%',
+      value: '0',
+      change: '0%',
       icon: FileText,
       color: 'yellow'
     }
   ];
 
-  const recentActivity = [
-    {
-      id: 1,
-      action: 'Tank inspection completed',
-      facility: 'Downtown Station A',
-      time: '2 hours ago',
-      status: 'success'
-    },
-    {
-      id: 2,
-      action: 'Permit renewal reminder',
-      facility: 'Highway 101 Facility',
-      time: '4 hours ago',
-      status: 'warning'
-    },
-    {
-      id: 3,
-      action: 'New facility registered',
-      facility: 'Westside Complex',
-      time: '1 day ago',
-      status: 'info'
-    },
-    {
-      id: 4,
-      action: 'Leak detection alert',
-      facility: 'Industrial Park B',
-      time: '2 days ago',
-      status: 'error'
-    }
-  ];
+  const recentActivity: any[] = [];
 
   return (
     <div className="space-y-6">
@@ -133,28 +104,10 @@ export function FacilityDashboard({ selectedFacility }: FacilityDashboardProps) 
             </h2>
           </div>
           <div className="p-6">
-            <div className="space-y-4">
-              {recentActivity.map((activity) => {
-                const statusColors = {
-                  success: 'bg-green-100 text-green-800',
-                  warning: 'bg-yellow-100 text-yellow-800',
-                  info: 'bg-blue-100 text-blue-800',
-                  error: 'bg-red-100 text-red-800'
-                };
-
-                return (
-                  <div key={activity.id} className="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[activity.status as keyof typeof statusColors]}`}>
-                      {activity.status}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">{activity.action}</p>
-                      <p className="text-sm text-gray-500">{activity.facility}</p>
-                    </div>
-                    <div className="text-xs text-gray-400">{activity.time}</div>
-                  </div>
-                );
-              })}
+            <div className="text-center py-8">
+              <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">No recent activity to display.</p>
+              <p className="text-sm text-gray-400 mt-2">Activity will appear here as you use the system.</p>
             </div>
           </div>
         </div>
@@ -169,19 +122,19 @@ export function FacilityDashboard({ selectedFacility }: FacilityDashboardProps) 
               <button className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-200">
                 <div className="flex items-center space-x-3">
                   <Building2 className="h-5 w-5 text-blue-600" />
-                  <span className="text-sm font-medium">Add New Facility</span>
+                  <span className="text-sm font-medium">Add New Location</span>
                 </div>
               </button>
               <button className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-200">
                 <div className="flex items-center space-x-3">
                   <Zap className="h-5 w-5 text-green-600" />
-                  <span className="text-sm font-medium">Schedule Inspection</span>
+                  <span className="text-sm font-medium">Add Tank</span>
                 </div>
               </button>
               <button className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-200">
                 <div className="flex items-center space-x-3">
                   <FileText className="h-5 w-5 text-purple-600" />
-                  <span className="text-sm font-medium">Generate Report</span>
+                  <span className="text-sm font-medium">Add Permit</span>
                 </div>
               </button>
             </div>
@@ -202,7 +155,7 @@ export function FacilityDashboard({ selectedFacility }: FacilityDashboardProps) 
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Alerts</span>
-                <span className="text-sm font-medium text-yellow-600">3 pending</span>
+                <span className="text-sm font-medium text-green-600">0 pending</span>
               </div>
             </div>
           </div>

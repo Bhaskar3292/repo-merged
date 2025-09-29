@@ -23,48 +23,7 @@ export function PermitsLicenses({ selectedFacility }: PermitsLicensesProps) {
   });
   const [uploadedFiles, setUploadedFiles] = useState<Record<number, string[]>>({});
   const [downloadingPermit, setDownloadingPermit] = useState<number | null>(null);
-  const [permits, setPermits] = useState([
-    {
-      id: 1,
-      facility: 'Downtown Station A',
-      type: 'Operating Permit',
-      number: 'OP-2024-001',
-      issueDate: '2024-01-01',
-      expiryDate: '2024-12-31',
-      status: 'Active',
-      authority: 'State Environmental Agency'
-    },
-    {
-      id: 2,
-      facility: 'Downtown Station A',
-      type: 'Storage Tank Registration',
-      number: 'STR-2023-045',
-      issueDate: '2023-06-15',
-      expiryDate: '2024-06-15',
-      status: 'Expiring Soon',
-      authority: 'Local Fire Department'
-    },
-    {
-      id: 3,
-      facility: 'Highway 101 Facility',
-      type: 'Waste Management License',
-      number: 'WML-2024-012',
-      issueDate: '2024-02-01',
-      expiryDate: '2025-01-31',
-      status: 'Active',
-      authority: 'Environmental Protection Agency'
-    },
-    {
-      id: 4,
-      facility: 'Industrial Park B',
-      type: 'Air Quality Permit',
-      number: 'AQP-2023-089',
-      issueDate: '2023-03-10',
-      expiryDate: '2024-03-10',
-      status: 'Expired',
-      authority: 'State Air Quality Board'
-    }
-  ]);
+  const [permits, setPermits] = useState<any[]>([]);
 
   const handleEditPermit = (permit: any) => {
     setEditingPermit(permit.id);

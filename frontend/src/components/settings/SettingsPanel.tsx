@@ -38,7 +38,7 @@ export function SettingsPanel() {
                   </label>
                   <input
                     type="text"
-                    defaultValue="John"
+                    defaultValue=""
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -48,7 +48,7 @@ export function SettingsPanel() {
                   </label>
                   <input
                     type="text"
-                    defaultValue="Admin"
+                    defaultValue=""
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -60,7 +60,7 @@ export function SettingsPanel() {
                 </label>
                 <input
                   type="email"
-                  defaultValue="admin@facility.com"
+                  defaultValue=""
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -71,7 +71,7 @@ export function SettingsPanel() {
                 </label>
                 <input
                   type="text"
-                  defaultValue="Facility Management Corp"
+                  defaultValue=""
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -82,7 +82,7 @@ export function SettingsPanel() {
                 </label>
                 <input
                   type="tel"
-                  defaultValue="(555) 123-4567"
+                  defaultValue=""
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
