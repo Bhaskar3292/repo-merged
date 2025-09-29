@@ -4,7 +4,7 @@ Signal handlers for accounts app
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.contrib.auth.signals import user_logged_in, user_logged_out, user_login_failed
-from .models import User, AuditLog
+from .models import User
 from .utils import get_client_ip, log_security_event
 
 
@@ -50,7 +50,6 @@ def user_logged_in_handler(sender, request, user, **kwargs):
     Handle successful user login
     """
     ip_address = get_client_ip(request)
-    user_agent = request.META.get('HTTP_USER_AGENT', '')
     
     # Reset failed login attempts
     user.reset_failed_login()

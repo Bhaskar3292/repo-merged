@@ -30,9 +30,6 @@ python manage.py create_dashboard_sections
 ```bash
 # Interactive admin user creation
 python manage.py create_admin_user
-
-# Or create Django superuser
-python manage.py createsuperuser
 ```
 
 ### 4. Start Development Server
@@ -177,9 +174,9 @@ CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 
 ## Development
 
-### Running Tests
+### Running the Server
 ```bash
-python manage.py test
+python manage.py runserver
 ```
 
 ### Database Operations
@@ -190,55 +187,8 @@ python manage.py makemigrations
 # Apply migrations
 python manage.py migrate
 
-# Reset database (development only)
-python manage.py flush
-```
-
-### Debugging
-```bash
 # Django shell
 python manage.py shell
-
-# Check user permissions
-python manage.py list_users --detailed
-
-# View logs
-tail -f logs/security.log
 ```
-
-## Production Deployment
-
-See `SECURITY_DEPLOYMENT.md` for comprehensive production deployment instructions including:
-- SSL/TLS configuration
-- Database security
-- Environment variable management
-- Security monitoring
-- Performance optimization
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Database Connection Error**
-   - Check PostgreSQL is running
-   - Verify database credentials in settings
-   - Ensure database exists
-
-2. **Permission Denied Errors**
-   - Check user role assignments
-   - Verify permission configuration
-   - Review audit logs for details
-
-3. **Authentication Issues**
-   - Check JWT token configuration
-   - Verify CORS settings
-   - Review security logs
-
-### Getting Help
-
-1. Check the logs in `logs/security.log`
-2. Use management commands for debugging
-3. Review Django admin panel for data verification
-4. Check API endpoints with tools like Postman
 
 This backend provides a secure, scalable foundation for facility management with comprehensive security features and clean architecture.
