@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
@@ -35,6 +36,7 @@ INSTALLED_APPS = [
     'permissions',
     'security',
 ]
+SITE_ID=1
 
 MIDDLEWARE = [
     'security.middleware.SecurityMiddleware',
@@ -278,7 +280,6 @@ OTP_TOTP_ISSUER = 'Facility Management System'
 
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Prints to console in development
-DEFAULT_FROM_EMAIL = 'noreply@facility.com'
 
 # For production, use SMTP:
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
