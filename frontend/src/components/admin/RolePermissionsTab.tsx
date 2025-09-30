@@ -1,13 +1,5 @@
 import React, { useState, useEffect } from 'react';
-<<<<<<< HEAD
-<<<<<<< HEAD
-import { Shield, Save, RotateCcw, CircleCheck as CheckCircle, TriangleAlert as AlertTriangle } from 'lucide-react';
-=======
-import { Shield, Save, RotateCcw, CheckCircle, Circle as XCircle,  AlertTriangle } from 'lucide-react';
->>>>>>> 450f2c2 (jksgjlak)
-=======
-import { Shield, Save, RotateCcw, CircleCheck as CheckCircle, TriangleAlert as AlertTriangle } from 'lucide-react';
->>>>>>> 0f02d62fe36c6829110946a5c6f7fb5fb7482452
+import { Shield, Save, RotateCcw,  CheckCircle, AlertTriangle } from 'lucide-react';
 import { apiService } from '../../services/api';
 import { useAuthContext } from '../../contexts/AuthContext';
 

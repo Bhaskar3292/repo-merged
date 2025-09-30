@@ -1,13 +1,6 @@
 import React, { useState, useEffect } from 'react';
-<<<<<<< HEAD
-<<<<<<< HEAD
-import { Users, UserPlus, Trash2, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle } from 'lucide-react';
-=======
-import { Users, Plus, CreditCard as Edit, Trash2, Save, X, UserPlus, Search, Shield, Lock,  AlertTriangle } from 'lucide-react';
->>>>>>> 450f2c2 (jksgjlak)
-=======
-import { Users, UserPlus, Trash2, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle } from 'lucide-react';
->>>>>>> 0f02d62fe36c6829110946a5c6f7fb5fb7482452
+
+import { Users, Plus, CreditCard as Edit, Trash2, Save, X, UserPlus, Search, Shield, Lock,  AlertTriangle,CheckCircle } from 'lucide-react';
 import { apiService } from '../../services/api';
 import { useAuthContext } from '../../contexts/AuthContext';
 
@@ -52,7 +45,7 @@ export function UserManagement() {
       console.log('🔍 UserManagement: Calling API to load users...');
       const data = await apiService.getUsers();
       console.log('🔍 UserManagement: Received users data:', data);
-      setUsers(Array.isArray(data) ? data : []);
+      setUsers(data.results || []);
     } catch (error) {
       console.error('🔍 UserManagement: Load users error:', error);
       setError('Failed to load users');
