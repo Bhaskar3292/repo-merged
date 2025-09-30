@@ -269,7 +269,7 @@ class PasswordResetView(generics.GenericAPIView):
                 action='password_reset',
                 description=f'Password reset requested for {email}',
                 ip_address=get_client_ip(request),
-                user_agent=request.META.get('HTTP_USER_AGENT', '')
+                user_agent=request.META.get('HTTP_USER_AGENT', ''),
                 metadata={'uidb64': uidb64, 'reset_url': reset_url}
             )
             
