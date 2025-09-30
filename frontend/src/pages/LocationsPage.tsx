@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Plus, Building2, Phone, Mail, User, CreditCard as Edit, Trash2, Eye, X, Save } from 'lucide-react';
+import { MapPin, Plus, Building2, Eye, Edit, Trash2, X, Save } from 'lucide-react';
 import { apiService } from '../services/api';
 import { useAuthContext } from '../contexts/AuthContext';
 
 interface Location {
   id: number;
   name: string;
-  address: string;
-  description: string;
+  street_address: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  country: string;
+  facility_type: string;
   created_by_username: string;
   created_at: string;
   is_active: boolean;
@@ -17,15 +21,11 @@ interface Location {
 
 interface NewLocationData {
   name: string;
-  address: string;
+  street_address: string;
   city: string;
   state: string;
-  pincode: string;
+  zip_code: string;
   country: string;
-  phone: string;
-  email: string;
-  manager: string;
-  description: string;
   facility_type: string;
 }
 
@@ -39,15 +39,11 @@ export function LocationsPage() {
   
   const [newLocation, setNewLocation] = useState<NewLocationData>({
     name: '',
-    address: '',
+    street_address: '',
     city: '',
     state: '',
-    pincode: '',
+    zip_code: '',
     country: 'United States',
-    phone: '',
-    email: '',
-    manager: '',
-    description: '',
     facility_type: 'gas_station'
   });
   
@@ -64,7 +60,7 @@ export function LocationsPage() {
       setLoading(true);
       setError(null);
       const data = await apiService.getLocations();
-      setLocations(Array.isArray(data) ? data : []);
+      setLocations(Array.isArray(data) ? data : data.results || []);
     } catch (error) {
       setError('Failed to load locations');
       setLocations([]);
@@ -83,42 +79,27 @@ export function LocationsPage() {
         return;
       }
 
-      // Combine address fields for backend
-      const fullAddress = [
-        newLocation.address,
-        newLocation.city,
-        newLocation.state,
-        newLocation.pincode,
-        newLocation.country
-      ].filter(Boolean).join(', ');
-
       const locationData = {
         name: newLocation.name.trim(),
-        address: fullAddress,
-        description: [
-          newLocation.description,
-          newLocation.manager ? `Manager: ${newLocation.manager}` : '',
-          newLocation.phone ? `Phone: ${newLocation.phone}` : '',
-          newLocation.email ? `Email: ${newLocation.email}` : '',
-          `Type: ${newLocation.facility_type.replace('_', ' ')}`
-        ].filter(Boolean).join('\n')
+        street_address: newLocation.street_address.trim(),
+        city: newLocation.city.trim(),
+        state: newLocation.state,
+        zip_code: newLocation.zip_code.trim(),
+        country: newLocation.country,
+        facility_type: newLocation.facility_type,
+        description: `${newLocation.facility_type.replace('_', ' ')} facility`
       };
       
-      const createdLocation = await apiService.createLocation(locationData);
+      await apiService.createLocation(locationData);
       
-      // Reload locations to get fresh data
       await loadLocations();
       
       setShowAddModal(false);
       resetForm();
       
-      // Notify parent components about the new location
-      window.dispatchEvent(new CustomEvent('location:created', { 
-        detail: createdLocation 
-      }));
+      window.dispatchEvent(new CustomEvent('location:created'));
       
     } catch (error) {
-      console.error('Create location error:', error);
       setError('Failed to create location');
     } finally {
       setFormLoading(false);
@@ -127,14 +108,18 @@ export function LocationsPage() {
 
   const handleUpdateLocation = async (location: Location) => {
     try {
-      const updatedLocation = await apiService.updateLocation(location.id, {
+      await apiService.updateLocation(location.id, {
         name: location.name,
-        address: location.address,
-        description: location.description
+        street_address: location.street_address,
+        city: location.city,
+        state: location.state,
+        zip_code: location.zip_code,
+        country: location.country,
+        facility_type: location.facility_type
       });
       
       setLocations(prev => prev.map(loc => 
-        loc.id === location.id ? updatedLocation : loc
+        loc.id === location.id ? location : loc
       ));
       setEditingLocation(null);
     } catch (error) {
@@ -156,15 +141,11 @@ export function LocationsPage() {
   const resetForm = () => {
     setNewLocation({
       name: '',
-      address: '',
+      street_address: '',
       city: '',
       state: '',
-      pincode: '',
+      zip_code: '',
       country: 'United States',
-      phone: '',
-      email: '',
-      manager: '',
-      description: '',
       facility_type: 'gas_station'
     });
     setError(null);
@@ -255,15 +236,19 @@ export function LocationsPage() {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">{location.name}</h3>
-                  <p className="text-sm text-gray-500">Created by {location.created_by_username}</p>
+                  <p className="text-sm text-gray-500 capitalize">
+                    {location.facility_type.replace('_', ' ')}
+                  </p>
                 </div>
               </div>
               
               <div className="flex items-center space-x-1">
                 <button
-                  onClick={() => console.log('View location', location.id)}
+                  onClick={() => window.dispatchEvent(new CustomEvent('facility:select', { 
+                    detail: location 
+                  }))}
                   className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                  title="View location"
+                  title="Select location"
                 >
                   <Eye className="h-4 w-4" />
                 </button>
@@ -288,18 +273,17 @@ export function LocationsPage() {
               </div>
             </div>
 
-            {location.address && (
-              <div className="flex items-start space-x-2 mb-3">
+            <div className="space-y-2 mb-4">
+              <div className="flex items-start space-x-2">
                 <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
-                <p className="text-sm text-gray-600">{location.address}</p>
+                <div className="text-sm text-gray-600">
+                  <p>{location.street_address}</p>
+                  <p>{location.city}, {location.state} {location.zip_code}</p>
+                  <p>{location.country}</p>
+                </div>
               </div>
-            )}
+            </div>
 
-            {location.description && (
-              <p className="text-sm text-gray-600 mb-4">{location.description}</p>
-            )}
-
-            {/* Statistics */}
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="text-center p-3 bg-blue-50 rounded-lg">
                 <p className="text-lg font-bold text-blue-600">{location.tank_count || 0}</p>
@@ -314,6 +298,9 @@ export function LocationsPage() {
             <div className="flex items-center justify-between">
               <span className="text-xs text-gray-500">
                 Created {new Date(location.created_at).toLocaleDateString()}
+              </span>
+              <span className="text-xs text-gray-500">
+                by {location.created_by_username}
               </span>
             </div>
           </div>
@@ -337,7 +324,7 @@ export function LocationsPage() {
         </div>
       )}
 
-      {/* Add Location Modal */}
+      {/* Simplified Add Location Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -416,8 +403,8 @@ export function LocationsPage() {
                     </label>
                     <input
                       type="text"
-                      value={newLocation.address}
-                      onChange={(e) => updateNewLocationField('address', e.target.value)}
+                      value={newLocation.street_address}
+                      onChange={(e) => updateNewLocationField('street_address', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                       placeholder="e.g., 123 Main Street"
                     />
@@ -454,12 +441,12 @@ export function LocationsPage() {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      PIN Code / ZIP
+                      ZIP Code
                     </label>
                     <input
                       type="text"
-                      value={newLocation.pincode}
-                      onChange={(e) => updateNewLocationField('pincode', e.target.value)}
+                      value={newLocation.zip_code}
+                      onChange={(e) => updateNewLocationField('zip_code', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                       placeholder="e.g., 90210"
                       pattern="[0-9]{5}(-[0-9]{4})?"
@@ -509,6 +496,155 @@ export function LocationsPage() {
                 ) : (
                   'Create Location'
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Location Modal */}
+      {editingLocation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Edit className="h-6 w-6 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900">Edit Location</h3>
+              </div>
+              <button
+                onClick={() => setEditingLocation(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              {/* Basic Information */}
+              <div>
+                <h4 className="text-lg font-medium text-gray-900 mb-4">Basic Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Location Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={editingLocation.name}
+                      onChange={(e) => setEditingLocation({...editingLocation, name: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Facility Type
+                    </label>
+                    <select
+                      value={editingLocation.facility_type}
+                      onChange={(e) => setEditingLocation({...editingLocation, facility_type: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      {facilityTypes.map(type => (
+                        <option key={type.value} value={type.value}>{type.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Address Information */}
+              <div>
+                <h4 className="text-lg font-medium text-gray-900 mb-4">Address Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Street Address
+                    </label>
+                    <input
+                      type="text"
+                      value={editingLocation.street_address}
+                      onChange={(e) => setEditingLocation({...editingLocation, street_address: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      City
+                    </label>
+                    <input
+                      type="text"
+                      value={editingLocation.city}
+                      onChange={(e) => setEditingLocation({...editingLocation, city: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      State
+                    </label>
+                    <select
+                      value={editingLocation.state}
+                      onChange={(e) => setEditingLocation({...editingLocation, state: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select State</option>
+                      {usStates.map(state => (
+                        <option key={state} value={state}>{state}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      ZIP Code
+                    </label>
+                    <input
+                      type="text"
+                      value={editingLocation.zip_code}
+                      onChange={(e) => setEditingLocation({...editingLocation, zip_code: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Country
+                    </label>
+                    <select
+                      value={editingLocation.country}
+                      onChange={(e) => setEditingLocation({...editingLocation, country: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="United States">United States</option>
+                      <option value="Canada">Canada</option>
+                      <option value="Mexico">Mexico</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Modal Footer */}
+            <div className="flex space-x-3 p-6 border-t border-gray-200">
+              <button
+                onClick={() => setEditingLocation(null)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleUpdateLocation(editingLocation)}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+              >
+                <div className="flex items-center justify-center space-x-2">
+                  <Save className="h-4 w-4" />
+                  <span>Save Changes</span>
+                </div>
               </button>
             </div>
           </div>

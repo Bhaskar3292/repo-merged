@@ -13,7 +13,23 @@ class Location(models.Model):
     Location model representing different facility locations
     """
     name = models.CharField(max_length=200, unique=True)
-    address = models.TextField(blank=True)
+    street_address = models.CharField(max_length=255, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=50, blank=True)
+    zip_code = models.CharField(max_length=10, blank=True)
+    country = models.CharField(max_length=100, default='United States')
+    facility_type = models.CharField(
+        max_length=50,
+        choices=[
+            ('gas_station', 'Gas Station'),
+            ('truck_stop', 'Truck Stop'),
+            ('storage_facility', 'Storage Facility'),
+            ('distribution_center', 'Distribution Center'),
+            ('terminal', 'Terminal'),
+            ('convenience_store', 'Convenience Store'),
+        ],
+        default='gas_station'
+    )
     description = models.TextField(blank=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_locations')
     created_at = models.DateTimeField(auto_now_add=True)

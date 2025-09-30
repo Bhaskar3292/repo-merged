@@ -266,6 +266,40 @@ class ApiService {
   }
 
   /**
+   * Create new location
+   */
+  async createLocation(data: any): Promise<any> {
+    try {
+      const response = await api.post('/api/facilities/locations/', data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to create location');
+    }
+  }
+
+  /**
+   * Update location
+   */
+  async updateLocation(id: number, data: any): Promise<any> {
+    try {
+      const response = await api.patch(`/api/facilities/locations/${id}/`, data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to update location');
+    }
+  }
+
+  /**
+   * Delete location
+   */
+  async deleteLocation(id: number): Promise<void> {
+    try {
+      await api.delete(`/api/facilities/locations/${id}/`);
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to delete location');
+    }
+  }
+  /**
    * Get all users (admin only)
    */
   async getUsers(): Promise<PaginatedResponse<User>> {

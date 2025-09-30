@@ -13,20 +13,26 @@ export function Dashboard() {
   const { hasPermission, user } = useAuthContext();
 
   useEffect(() => {
-    // Listen for location creation events
+    // Listen for facility selection events
+    const handleFacilitySelect = (event: CustomEvent) => {
+      setSelectedFacility(event.detail);
+    };
+    
     const handleLocationCreated = () => {
       setRefreshKey(prev => prev + 1);
     };
     
+    window.addEventListener('facility:select', handleFacilitySelect as EventListener);
     window.addEventListener('location:created', handleLocationCreated);
     
     return () => {
+      window.removeEventListener('facility:select', handleFacilitySelect as EventListener);
       window.removeEventListener('location:created', handleLocationCreated);
     };
   }, []);
+  
   const handleFacilitySelect = (facility: any) => {
     setSelectedFacility(facility);
-    // Keep current view but update data for selected facility
   };
 
   return (

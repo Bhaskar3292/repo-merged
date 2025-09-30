@@ -12,12 +12,14 @@ class LocationSerializer(serializers.ModelSerializer):
     created_by_username = serializers.CharField(source='created_by.username', read_only=True)
     tank_count = serializers.SerializerMethodField()
     permit_count = serializers.SerializerMethodField()
+    full_address = serializers.SerializerMethodField()
     
     class Meta:
         model = Location
-        fields = ['id', 'name', 'address', 'description', 'created_by', 
+        fields = ['id', 'name', 'street_address', 'city', 'state', 'zip_code', 
+                 'country', 'facility_type', 'description', 'created_by', 
                  'created_by_username', 'created_at', 'updated_at', 'is_active',
-                 'tank_count', 'permit_count']
+                 'tank_count', 'permit_count', 'full_address']
         read_only_fields = ['created_by', 'created_at', 'updated_at']
     
     def get_tank_count(self, obj):
@@ -25,6 +27,16 @@ class LocationSerializer(serializers.ModelSerializer):
     
     def get_permit_count(self, obj):
         return obj.permits.count()
+    
+    def get_full_address(self, obj):
+        """Return formatted full address"""
+        address_parts = [
+            obj.street_address,
+            obj.city,
+            f"{obj.state} {obj.zip_code}".strip(),
+            obj.country
+        ]
+        return ', '.join(part for part in address_parts if part)
 
 
 class DashboardSectionSerializer(serializers.ModelSerializer):
@@ -105,10 +117,22 @@ class LocationDetailSerializer(serializers.ModelSerializer):
     permits = PermitSerializer(many=True, read_only=True)
     dashboard = LocationDashboardSerializer(read_only=True)
     created_by_username = serializers.CharField(source='created_by.username', read_only=True)
+    full_address = serializers.SerializerMethodField()
     
     class Meta:
         model = Location
-        fields = ['id', 'name', 'address', 'description', 'created_by', 
+        fields = ['id', 'name', 'street_address', 'city', 'state', 'zip_code',
+                 'country', 'facility_type', 'description', 'created_by', 
                  'created_by_username', 'created_at', 'updated_at', 'is_active',
-                 'tanks', 'permits', 'dashboard']
+                 'tanks', 'permits', 'dashboard', 'full_address']
         read_only_fields = ['created_by', 'created_at', 'updated_at']
+    
+    def get_full_address(self, obj):
+        """Return formatted full address"""
+        address_parts = [
+            obj.street_address,
+            obj.city,
+            f"{obj.state} {obj.zip_code}".strip(),
+            obj.country
+        ]
+        return ', '.join(part for part in address_parts if part)

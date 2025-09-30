@@ -25,20 +25,34 @@ export function TopNavigation({ selectedFacility, onFacilitySelect, onViewChange
   const [searchTerm, setSearchTerm] = useState('');
   const [showFacilityDropdown, setShowFacilityDropdown] = useState(false);
   const [locations, setLocations] = useState<any[]>([]);
+  const [loadingLocations, setLoadingLocations] = useState(false);
   
   const { user, logout } = useAuthContext();
 
   useEffect(() => {
     loadLocations();
+    
+    // Listen for location creation events
+    const handleLocationCreated = () => {
+      loadLocations();
+    };
+    
+    window.addEventListener('location:created', handleLocationCreated);
+    
+    return () => {
+      window.removeEventListener('location:created', handleLocationCreated);
+    };
   }, [refreshKey]);
 
   const loadLocations = async () => {
     try {
+      setLoadingLocations(true);
       const data = await apiService.getLocations();
-      setLocations(Array.isArray(data) ? data : []);
+      setLocations(Array.isArray(data) ? data : data.results || []);
     } catch (error) {
-      console.error('Failed to load locations:', error);
       setLocations([]);
+    } finally {
+      setLoadingLocations(false);
     }
   };
 
@@ -47,15 +61,21 @@ export function TopNavigation({ selectedFacility, onFacilitySelect, onViewChange
     navigate('/login', { replace: true });
   };
 
-  const filteredFacilities = locations.filter(facility =>
-    facility.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (facility.address && facility.address.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredLocations = locations.filter(location =>
+    location.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (location.street_address && location.street_address.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (location.city && location.city.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const handleFacilitySelect = (facility: any) => {
-    onFacilitySelect(facility);
+  const handleLocationSelect = (location: any) => {
+    onFacilitySelect(location);
     setSearchTerm('');
     setShowFacilityDropdown(false);
+    
+    // Dispatch event for other components to listen
+    window.dispatchEvent(new CustomEvent('facility:select', { 
+      detail: location 
+    }));
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,36 +103,43 @@ export function TopNavigation({ selectedFacility, onFacilitySelect, onViewChange
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search and select facility..."
+                placeholder="Search and select location..."
                 value={searchTerm}
                 onChange={handleSearchChange}
                 onFocus={() => setShowFacilityDropdown(true)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
 
-              {/* Facility Dropdown */}
+              {/* Location Dropdown */}
               {showFacilityDropdown && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
-                  {filteredFacilities.length > 0 ? (
-                    filteredFacilities.map((facility) => (
+                  {loadingLocations ? (
+                    <div className="px-4 py-3 text-sm text-gray-500 flex items-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                      <span>Loading locations...</span>
+                    </div>
+                  ) : filteredLocations.length > 0 ? (
+                    filteredLocations.map((location) => (
                       <button
-                        key={facility.id}
-                        onClick={() => handleFacilitySelect(facility)}
+                        key={location.id}
+                        onClick={() => handleLocationSelect(location)}
                         className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
                       >
                         <div className="flex items-center space-x-3">
                           <Building2 className="h-4 w-4 text-gray-400" />
                           <div>
-                            <p className="text-sm font-medium text-gray-900">{facility.name}</p>
-                            <p className="text-xs text-gray-500">{facility.address}</p>
+                            <p className="text-sm font-medium text-gray-900">{location.name}</p>
+                            <p className="text-xs text-gray-500">
+                              {location.city}, {location.state}
+                            </p>
                           </div>
                         </div>
                       </button>
                     ))
                   ) : searchTerm.length > 0 ? (
-                    <div className="px-4 py-3 text-sm text-gray-500">No matching facilities found.</div>
+                    <div className="px-4 py-3 text-sm text-gray-500">No matching locations found.</div>
                   ) : (
-                    <div className="px-4 py-3 text-sm text-gray-500">Start typing to search facilities...</div>
+                    <div className="px-4 py-3 text-sm text-gray-500">Start typing to search locations...</div>
                   )}
                 </div>
               )}
@@ -122,7 +149,7 @@ export function TopNavigation({ selectedFacility, onFacilitySelect, onViewChange
           {/* Right - Notifications and User Menu */}
           <div className="flex items-center space-x-4">
             <div className="text-sm text-gray-600">
-              <span className="font-medium truncate">{user?.organization || 'Facility Management'}</span>
+              <span className="font-medium truncate">Facility Management</span>
             </div>
 
             <button className="p-2 rounded-md hover:bg-gray-100 transition-colors relative">
