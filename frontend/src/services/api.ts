@@ -276,52 +276,6 @@ class ApiService {
   }
 
   /**
-   * Create facility contact
-   */
-  async createFacilityContact(locationId: number, data: any): Promise<any> {
-    try {
-      const response = await api.post(`/api/facilities/locations/${locationId}/contacts/`, data);
-      return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.error || error.message || 'Failed to create contact');
-    }
-  }
-
-  /**
-   * Update facility contact
-   */
-  async updateFacilityContact(contactId: number, data: any): Promise<any> {
-    try {
-      const response = await api.patch(`/api/facilities/contacts/${contactId}/`, data);
-      return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.error || error.message || 'Failed to update contact');
-    }
-  }
-
-  /**
-   * Delete facility contact
-   */
-  async deleteFacilityContact(contactId: number): Promise<void> {
-    try {
-      await api.delete(`/api/facilities/contacts/${contactId}/`);
-    } catch (error: any) {
-      throw new Error(error.response?.data?.error || error.message || 'Failed to delete contact');
-    }
-  }
-
-  /**
-   * Update operating hours
-   */
-  async updateOperatingHours(locationId: number, data: any): Promise<any> {
-    try {
-      const response = await api.patch(`/api/facilities/locations/${locationId}/operating-hours/`, data);
-      return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.error || error.message || 'Failed to update operating hours');
-    }
-  }
-  /**
    * Delete location
    */
   async deleteLocation(id: number): Promise<void> {

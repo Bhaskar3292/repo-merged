@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
 import { FacilityDashboard } from '../facility/FacilityDashboard';
 import { LocationsPage } from '../../pages/LocationsPage';
 import { LocationManager } from '../facility/LocationManager';
-import { FacilityInfo } from '../facility/FacilityInfo';
 import { TankManagement } from '../facility/TankManagement';
 import { ReleaseDetection } from '../facility/ReleaseDetection';
 import { PermitsLicenses } from '../facility/PermitsLicenses';
@@ -17,18 +15,7 @@ interface MainContentProps {
 }
 
 export function MainContent({ activeView, selectedFacility, refreshKey }: MainContentProps) {
-  const { pathname } = useLocation();
-  const params = useParams();
-  
-  // Check if we're on a facility-specific route
-  const isFacilityRoute = pathname.startsWith('/facilities/');
-  
   const renderContent = () => {
-    // Handle facility-specific routes
-    if (isFacilityRoute) {
-      return <FacilityInfo />;
-    }
-    
     switch (activeView) {
       case 'dashboard':
         return <FacilityDashboard selectedFacility={selectedFacility} />;

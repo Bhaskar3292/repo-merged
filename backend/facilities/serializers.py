@@ -2,37 +2,7 @@
 Serializers for facility management
 """
 from rest_framework import serializers
-from .models import (
-    Location, LocationDashboard, DashboardSection, DashboardSectionData, 
-    Tank, Permit, FacilityContact, OperatingHours
-)
-
-
-class FacilityContactSerializer(serializers.ModelSerializer):
-    """
-    Serializer for FacilityContact model
-    """
-    contact_type_display = serializers.CharField(source='get_contact_type_display', read_only=True)
-    
-    class Meta:
-        model = FacilityContact
-        fields = ['id', 'contact_type', 'contact_type_display', 'name', 'title', 
-                 'phone', 'email', 'notes', 'created_at', 'updated_at']
-        read_only_fields = ['created_at', 'updated_at']
-
-
-class OperatingHoursSerializer(serializers.ModelSerializer):
-    """
-    Serializer for OperatingHours model
-    """
-    class Meta:
-        model = OperatingHours
-        fields = ['id', 'monday_open', 'monday_close', 'tuesday_open', 'tuesday_close',
-                 'wednesday_open', 'wednesday_close', 'thursday_open', 'thursday_close',
-                 'friday_open', 'friday_close', 'saturday_open', 'saturday_close',
-                 'sunday_open', 'sunday_close', 'holiday_hours', 'notes',
-                 'created_at', 'updated_at']
-        read_only_fields = ['created_at', 'updated_at']
+from .models import Location, LocationDashboard, DashboardSection, DashboardSectionData, Tank, Permit
 
 
 class LocationSerializer(serializers.ModelSerializer):
@@ -42,16 +12,12 @@ class LocationSerializer(serializers.ModelSerializer):
     created_by_username = serializers.CharField(source='created_by.username', read_only=True)
     tank_count = serializers.SerializerMethodField()
     permit_count = serializers.SerializerMethodField()
-    contacts = FacilityContactSerializer(many=True, read_only=True)
-    operating_hours = OperatingHoursSerializer(read_only=True)
     
     class Meta:
         model = Location
-        fields = ['id', 'name', 'address', 'street_address', 'city', 'state', 'county',
-                 'zip_code', 'country', 'facility_type', 'operational_status', 'capacity',
-                 'description', 'created_by', 
+        fields = ['id', 'name', 'address', 'description', 'created_by', 
                  'created_by_username', 'created_at', 'updated_at', 'is_active',
-                 'tank_count', 'permit_count', 'contacts', 'operating_hours']
+                 'tank_count', 'permit_count']
         read_only_fields = ['created_by', 'created_at', 'updated_at']
     
     def get_tank_count(self, obj):

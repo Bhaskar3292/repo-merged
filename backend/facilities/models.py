@@ -14,18 +14,6 @@ class Location(models.Model):
     """
     name = models.CharField(max_length=200, unique=True)
     address = models.TextField(blank=True)
-    street_address = models.CharField(max_length=200, blank=True)
-    city = models.CharField(max_length=100, blank=True)
-    state = models.CharField(max_length=50, blank=True)
-    county = models.CharField(max_length=100, blank=True)
-    zip_code = models.CharField(max_length=10, blank=True)
-    country = models.CharField(max_length=100, default='United States')
-    
-    # Operational Information
-    facility_type = models.CharField(max_length=50, blank=True)
-    operational_status = models.CharField(max_length=50, default='Active')
-    capacity = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    
     description = models.TextField(blank=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_locations')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -37,80 +25,6 @@ class Location(models.Model):
     
     def __str__(self):
         return self.name
-
-
-class FacilityContact(models.Model):
-    """
-    Contact information for facility locations
-    """
-    CONTACT_TYPES = [
-        ('store_manager', 'Store Manager'),
-        ('facility_manager', 'Facility Manager'),
-        ('operations_manager', 'Operations Manager'),
-        ('maintenance_contact', 'Maintenance Contact'),
-        ('emergency_contact', 'Emergency Contact'),
-        ('regulatory_contact', 'Regulatory Contact'),
-    ]
-    
-    location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='contacts')
-    contact_type = models.CharField(max_length=30, choices=CONTACT_TYPES)
-    name = models.CharField(max_length=200)
-    title = models.CharField(max_length=100, blank=True)
-    phone = models.CharField(max_length=20, blank=True)
-    email = models.EmailField(blank=True)
-    notes = models.TextField(blank=True)
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        ordering = ['contact_type', 'name']
-    
-    def __str__(self):
-        return f"{self.location.name} - {self.name} ({self.get_contact_type_display()})"
-
-
-class OperatingHours(models.Model):
-    """
-    Operating hours for facility locations
-    """
-    DAYS_OF_WEEK = [
-        ('monday', 'Monday'),
-        ('tuesday', 'Tuesday'),
-        ('wednesday', 'Wednesday'),
-        ('thursday', 'Thursday'),
-        ('friday', 'Friday'),
-        ('saturday', 'Saturday'),
-        ('sunday', 'Sunday'),
-    ]
-    
-    location = models.OneToOneField(Location, on_delete=models.CASCADE, related_name='operating_hours')
-    
-    # Individual day hours
-    monday_open = models.TimeField(null=True, blank=True)
-    monday_close = models.TimeField(null=True, blank=True)
-    tuesday_open = models.TimeField(null=True, blank=True)
-    tuesday_close = models.TimeField(null=True, blank=True)
-    wednesday_open = models.TimeField(null=True, blank=True)
-    wednesday_close = models.TimeField(null=True, blank=True)
-    thursday_open = models.TimeField(null=True, blank=True)
-    thursday_close = models.TimeField(null=True, blank=True)
-    friday_open = models.TimeField(null=True, blank=True)
-    friday_close = models.TimeField(null=True, blank=True)
-    saturday_open = models.TimeField(null=True, blank=True)
-    saturday_close = models.TimeField(null=True, blank=True)
-    sunday_open = models.TimeField(null=True, blank=True)
-    sunday_close = models.TimeField(null=True, blank=True)
-    
-    # Special notes
-    holiday_hours = models.TextField(blank=True)
-    notes = models.TextField(blank=True)
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    def __str__(self):
-        return f"{self.location.name} - Operating Hours"
 
 
 class DashboardSection(models.Model):

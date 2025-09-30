@@ -23,22 +23,6 @@ function App() {
               } 
             />
             <Route 
-              path="/facilities/:id" 
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/facilities/new" 
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
               path="/" 
               element={
                 <ProtectedRoute>

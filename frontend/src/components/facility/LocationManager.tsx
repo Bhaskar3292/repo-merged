@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Building2, MapPin, Phone, Mail, Calendar, User, Eye, CreditCard as Edit, Trash2 } from 'lucide-react';
 import { apiService } from '../../services/api';
 import { useAuthContext } from '../../contexts/AuthContext';
@@ -22,7 +21,6 @@ interface LocationManagerProps {
 }
 
 export function LocationManager({ selectedFacility }: LocationManagerProps) {
-  const navigate = useNavigate();
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -230,7 +228,7 @@ export function LocationManager({ selectedFacility }: LocationManagerProps) {
                 
                 <div className="flex items-center space-x-1">
                   <button
-                    onClick={() => navigate(`/facilities/${location.id}`)}
+                    onClick={() => console.log('View location', location.id)}
                     className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
                     title="View location"
                   >
@@ -238,7 +236,7 @@ export function LocationManager({ selectedFacility }: LocationManagerProps) {
                   </button>
                   {(currentUser?.is_superuser || hasPermission('edit_locations')) && (
                     <button
-                      onClick={() => navigate(`/facilities/${location.id}`)}
+                      onClick={() => console.log('Edit location', location.id)}
                       className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
                       title="Edit location"
                     >
