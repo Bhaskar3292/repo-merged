@@ -223,7 +223,7 @@ class PasswordResetView(generics.GenericAPIView):
             # Build frontend reset URL
             protocol = 'https' if request.is_secure() else 'http'
             frontend_host = request.get_host().replace(':8000', ':5173')
-            reset_url = f"{protocol}://{frontend_host}/reset-password/{uidb64.decode()}/{token}/"
+            reset_url = f"{protocol}://{frontend_host}/reset-password/{uidb64}/{token}/"
             
             context = {
                 'user': user,

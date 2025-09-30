@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Building2, Lock, Eye, EyeOff, CircleCheck as CheckCircle, TriangleAlert as AlertTriangle } from 'lucide-react';
+import { Building2, Lock, Eye, EyeOff, CheckCircle, AlertTriangle } from 'lucide-react';
 import { apiService } from '../../services/api';
 
 export function PasswordResetConfirm() {

@@ -4,8 +4,8 @@ import { AuthProvider } from './contexts/AuthContext';
 import { Dashboard } from './components/dashboard/Dashboard';
 import { LoginForm } from './components/auth/LoginForm';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
-import { ApiStatus } from './components/common/ApiStatus';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
+import { PasswordResetConfirm } from "./components/auth/PasswordResetConfirm";
 
 function App() {
   return (
@@ -32,7 +32,6 @@ function App() {
               } 
             />
           </Routes>
-          <ApiStatus />
         </div>
       </AuthProvider>
     </ErrorBoundary>
