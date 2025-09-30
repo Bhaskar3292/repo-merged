@@ -191,7 +191,7 @@ class LocationDetailView(generics.RetrieveUpdateDestroyAPIView):
         return super().delete(request, *args, **kwargs)
     
     def get_queryset(self):
-        return Location.objects.filter(is_active=True).prefetch_related('contacts', 'operating_hours')
+        return Location.objects.filter(is_active=True)
     
     def perform_update(self, serializer):
         old_name = self.get_object().name

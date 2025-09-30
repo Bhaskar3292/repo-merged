@@ -1,407 +1,270 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { MapPin, Plus, Building2, Phone, Mail, User, CreditCard as Edit, Trash2, Eye, X, Save } from 'lucide-react';
-import { apiService } from '../services/api';
-import { useAuthContext } from '../contexts/AuthContext';
+"""
+Models for facility management with dynamic dashboards
+"""
+from django.db import models
+from django.contrib.auth import get_user_model
+import json
 
-interface Location {
-  id: number;
-  name: string;
-  address: string;
-  description: string;
-  created_by_username: string;
-  created_at: string;
-  is_active: boolean;
-  tank_count?: number;
-  permit_count?: number;
-}
+User = get_user_model()
 
-interface NewLocationData {
-  name: string;
-  address: string;
-  city: string;
-  state: string;
-  pincode: string;
-  country: string;
-  phone: string;
-  email: string;
-  manager: string;
-  description: string;
-  facility_type: string;
-}
 
-export function LocationsPage() {
-  const navigate = useNavigate();
-  const [locations, setLocations] = useState<Location[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [formLoading, setFormLoading] = useState(false);
-  const [editingLocation, setEditingLocation] = useState<Location | null>(null);
-  
-  const [newLocation, setNewLocation] = useState<NewLocationData>({
-    name: '',
-    address: '',
-    city: '',
-    state: '',
-    pincode: '',
-    country: 'United States',
-    phone: '',
-    email: '',
-    manager: '',
-    description: '',
-    facility_type: 'gas_station'
-  });
-  
-  const { hasPermission, user: currentUser } = useAuthContext();
+class Location(models.Model):
+    """
+    Location model representing different facility locations
+    """
+    name = models.CharField(max_length=200, unique=True)
+    address = models.TextField(blank=True)
+    street_address = models.CharField(max_length=200, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=50, blank=True)
+    county = models.CharField(max_length=100, blank=True)
+    zip_code = models.CharField(max_length=10, blank=True)
+    country = models.CharField(max_length=100, default='United States')
+    
+    # Operational Information
+    facility_type = models.CharField(max_length=50, blank=True)
+    operational_status = models.CharField(max_length=50, default='Active')
+    capacity = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    
+    description = models.TextField(blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_locations')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        ordering = ['name']
+    
+    def __str__(self):
+        return self.name
 
-  useEffect(() => {
-    if (currentUser) {
-      console.log('🔍 LocationsPage: Loading locations for user:', currentUser.username);
-      loadLocations();
-    }
-  }, [currentUser]);
 
-  const loadLocations = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      console.log('🔍 LocationsPage: Calling API to load locations...');
-      const data = await apiService.getLocations();
-      console.log('🔍 LocationsPage: Received locations data:', data);
-      setLocations(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error('🔍 LocationsPage: Load locations error:', error);
-      setError('Failed to load locations');
-      setLocations([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+class FacilityContact(models.Model):
+    """
+    Contact information for facility locations
+    """
+    CONTACT_TYPES = [
+        ('store_manager', 'Store Manager'),
+        ('facility_manager', 'Facility Manager'),
+        ('operations_manager', 'Operations Manager'),
+        ('maintenance_contact', 'Maintenance Contact'),
+        ('emergency_contact', 'Emergency Contact'),
+        ('regulatory_contact', 'Regulatory Contact'),
+    ]
+    
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='contacts')
+    contact_type = models.CharField(max_length=30, choices=CONTACT_TYPES)
+    name = models.CharField(max_length=200)
+    title = models.CharField(max_length=100, blank=True)
+    phone = models.CharField(max_length=20, blank=True)
+    email = models.EmailField(blank=True)
+    notes = models.TextField(blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['contact_type', 'name']
+    
+    def __str__(self):
+        return f"{self.location.name} - {self.name} ({self.get_contact_type_display()})"
 
-  const handleCreateLocation = async () => {
-    try {
-      setFormLoading(true);
-      setError(null);
-      
-      if (!newLocation.name.trim()) {
-        setError('Location name is required');
-        return;
-      }
 
-      // Combine address fields for backend
-      const fullAddress = [
-        newLocation.address,
-        newLocation.city,
-        newLocation.state,
-        newLocation.pincode,
-        newLocation.country
-      ].filter(Boolean).join(', ');
+class OperatingHours(models.Model):
+    """
+    Operating hours for facility locations
+    """
+    DAYS_OF_WEEK = [
+        ('monday', 'Monday'),
+        ('tuesday', 'Tuesday'),
+        ('wednesday', 'Wednesday'),
+        ('thursday', 'Thursday'),
+        ('friday', 'Friday'),
+        ('saturday', 'Saturday'),
+        ('sunday', 'Sunday'),
+    ]
+    
+    location = models.OneToOneField(Location, on_delete=models.CASCADE, related_name='operating_hours')
+    
+    # Individual day hours
+    monday_open = models.TimeField(null=True, blank=True)
+    monday_close = models.TimeField(null=True, blank=True)
+    tuesday_open = models.TimeField(null=True, blank=True)
+    tuesday_close = models.TimeField(null=True, blank=True)
+    wednesday_open = models.TimeField(null=True, blank=True)
+    wednesday_close = models.TimeField(null=True, blank=True)
+    thursday_open = models.TimeField(null=True, blank=True)
+    thursday_close = models.TimeField(null=True, blank=True)
+    friday_open = models.TimeField(null=True, blank=True)
+    friday_close = models.TimeField(null=True, blank=True)
+    saturday_open = models.TimeField(null=True, blank=True)
+    saturday_close = models.TimeField(null=True, blank=True)
+    sunday_open = models.TimeField(null=True, blank=True)
+    sunday_close = models.TimeField(null=True, blank=True)
+    
+    # Special notes
+    holiday_hours = models.TextField(blank=True)
+    notes = models.TextField(blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.location.name} - Operating Hours"
 
-      const locationData = {
-        name: newLocation.name.trim(),
-        address: fullAddress,
-        description: [
-          newLocation.description,
-          newLocation.manager ? `Manager: ${newLocation.manager}` : '',
-          newLocation.phone ? `Phone: ${newLocation.phone}` : '',
-          newLocation.email ? `Email: ${newLocation.email}` : '',
-          `Type: ${newLocation.facility_type.replace('_', ' ')}`
-        ].filter(Boolean).join('\n')
-      };
-      
-      const createdLocation = await apiService.createLocation(locationData);
-      
-      // Reload locations to get fresh data
-      await loadLocations();
-      
-      setShowAddModal(false);
-      resetForm();
-      
-      // Notify parent components about the new location
-      window.dispatchEvent(new CustomEvent('location:created', { 
-        detail: createdLocation 
-      }));
-      
-    } catch (error) {
-      console.error('Create location error:', error);
-      setError('Failed to create location');
-    } finally {
-      setFormLoading(false);
-    }
-  };
 
-  const handleUpdateLocation = async (location: Location) => {
-    try {
-      const updatedLocation = await apiService.updateLocation(location.id, {
-        name: location.name,
-        address: location.address,
-        description: location.description
-      });
-      
-      setLocations(prev => prev.map(loc => 
-        loc.id === location.id ? updatedLocation : loc
-      ));
-      setEditingLocation(null);
-    } catch (error) {
-      setError('Failed to update location');
-    }
-  };
+class DashboardSection(models.Model):
+    """
+    Dashboard section template defining structure
+    """
+    SECTION_TYPES = [
+        ('info', 'Information'),
+        ('metrics', 'Metrics'),
+        ('status', 'Status'),
+        ('controls', 'Controls'),
+        ('reports', 'Reports'),
+    ]
+    
+    name = models.CharField(max_length=100)
+    section_type = models.CharField(max_length=20, choices=SECTION_TYPES)
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    
+    # JSON field to store field definitions
+    field_schema = models.JSONField(default=dict, help_text="Field definitions for this section")
+    
+    class Meta:
+        ordering = ['order', 'name']
+    
+    def __str__(self):
+        return f"{self.name} ({self.get_section_type_display()})"
 
-  const handleDeleteLocation = async (locationId: number) => {
-    if (window.confirm('Are you sure you want to delete this location?')) {
-      try {
-        await apiService.deleteLocation(locationId);
-        setLocations(prev => prev.filter(loc => loc.id !== locationId));
-      } catch (error) {
-        setError('Failed to delete location');
-      }
-    }
-  };
 
-  const resetForm = () => {
-    setNewLocation({
-      name: '',
-      address: '',
-      city: '',
-      state: '',
-      pincode: '',
-      country: 'United States',
-      phone: '',
-      email: '',
-      manager: '',
-      description: '',
-      facility_type: 'gas_station'
-    });
-    setError(null);
-  };
+class LocationDashboard(models.Model):
+    """
+    Location-specific dashboard instance
+    """
+    location = models.OneToOneField(Location, on_delete=models.CASCADE, related_name='dashboard')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"Dashboard for {self.location.name}"
 
-  const updateNewLocationField = (field: keyof NewLocationData, value: string) => {
-    setNewLocation(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
 
-  const facilityTypes = [
-    { value: 'gas_station', label: 'Gas Station' },
-    { value: 'truck_stop', label: 'Truck Stop' },
-    { value: 'storage_facility', label: 'Storage Facility' },
-    { value: 'distribution_center', label: 'Distribution Center' },
-    { value: 'terminal', label: 'Terminal' },
-    { value: 'convenience_store', label: 'Convenience Store' }
-  ];
+class DashboardSectionData(models.Model):
+    """
+    Location-specific data for dashboard sections
+    """
+    dashboard = models.ForeignKey(LocationDashboard, on_delete=models.CASCADE, related_name='sections')
+    section = models.ForeignKey(DashboardSection, on_delete=models.CASCADE)
+    
+    # JSON field to store actual data values
+    data = models.JSONField(default=dict, help_text="Actual data values for this section")
+    
+    last_updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['dashboard', 'section']
+    
+    def __str__(self):
+        return f"{self.dashboard.location.name} - {self.section.name}"
 
-  const usStates = [
-    'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware',
-    'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky',
-    'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi',
-    'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico',
-    'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania',
-    'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont',
-    'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming'
-  ];
 
-  if (!currentUser) {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-        <MapPin className="h-12 w-12 text-red-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-red-900 mb-2">Authentication Required</h3>
-        <p className="text-red-700">Please log in to view locations.</p>
-      </div>
-    );
-  }
+class Tank(models.Model):
+    """
+    Tank model for facility management
+    """
+    TANK_TYPES = [
+        ('gasoline', 'Gasoline'),
+        ('diesel', 'Diesel'),
+        ('oil', 'Oil'),
+        ('water', 'Water'),
+        ('chemical', 'Chemical'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('maintenance', 'Maintenance'),
+        ('inactive', 'Inactive'),
+        ('decommissioned', 'Decommissioned'),
+    ]
+    
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='tanks')
+    name = models.CharField(max_length=100)
+    tank_type = models.CharField(max_length=20, choices=TANK_TYPES)
+    capacity = models.DecimalField(max_digits=10, decimal_places=2, help_text="Capacity in gallons")
+    current_level = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Current level in gallons")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    
+    # Technical specifications
+    material = models.CharField(max_length=50, blank=True)
+    installation_date = models.DateField(null=True, blank=True)
+    last_inspection = models.DateField(null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['location', 'name']
+        ordering = ['location', 'name']
+    
+    def __str__(self):
+        return f"{self.location.name} - {self.name}"
+    
+    @property
+    def fill_percentage(self):
+        if self.capacity > 0:
+            return (self.current_level / self.capacity) * 100
+        return 0
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2">Loading locations...</span>
-      </div>
-    );
-  }
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <MapPin className="h-6 w-6 text-blue-600" />
-          <h2 className="text-2xl font-bold text-gray-900">Locations</h2>
-        </div>
-        
-        {(currentUser?.is_superuser || hasPermission('create_locations')) && (
-          <button
-            onClick={() => navigate('/facilities/new')}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Add New Location</span>
-          </button>
-        )}
-      </div>
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex items-center">
-            <X className="h-5 w-5 text-red-600 mr-2" />
-            <span className="text-red-800">{error}</span>
-          </div>
-        </div>
-      )}
-
-      {/* Locations Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {locations.map((location) => (
-          <div key={location.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Building2 className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{location.name}</h3>
-                  <p className="text-sm text-gray-500">Created by {location.created_by_username}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-1">
-                <button
-                  onClick={() => navigate(`/facilities/${location.id}`)}
-                  className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                  title="View location"
-                >
-                  <Eye className="h-4 w-4" />
-                </button>
-                {(currentUser?.is_superuser || hasPermission('edit_locations')) && (
-                  <button
-                    onClick={() => navigate(`/facilities/${location.id}`)}
-                    className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                    title="Edit location"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </button>
-                )}
-                {(currentUser?.is_superuser || hasPermission('delete_locations')) && (
-                  <button
-                    onClick={() => handleDeleteLocation(location.id)}
-                    className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
-                    title="Delete location"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {location.address && (
-              <div className="flex items-start space-x-2 mb-3">
-                <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
-                <p className="text-sm text-gray-600">{location.address}</p>
-              </div>
-            )}
-
-            {location.description && (
-              <p className="text-sm text-gray-600 mb-4">{location.description}</p>
-            )}
-
-            {/* Statistics */}
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="text-center p-3 bg-blue-50 rounded-lg">
-                <p className="text-lg font-bold text-blue-600">{location.tank_count || 0}</p>
-                <p className="text-xs text-gray-600">Tanks</p>
-              </div>
-              <div className="text-center p-3 bg-green-50 rounded-lg">
-                <p className="text-lg font-bold text-green-600">{location.permit_count || 0}</p>
-                <p className="text-xs text-gray-600">Permits</p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500">
-                Created {new Date(location.created_at).toLocaleDateString()}
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {locations.length === 0 && !loading && (
-        <div className="text-center py-12">
-          <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No locations found</h3>
-          <p className="text-gray-500 mb-4">Get started by creating your first location.</p>
-          {(currentUser?.is_superuser || hasPermission('create_locations')) && (
-            <button
-              onClick={() => navigate('/facilities/new')}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mx-auto"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Add First Location</span>
-            </button>
-          )}
-        </div>
-      )}
-
-                    <input
-                      type="email"
-                      value={newLocation.email}
-                      onChange={(e) => updateNewLocationField('email', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                      placeholder="e.g., manager@facility.com"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Additional Details */}
-              <div>
-                <h4 className="text-lg font-medium text-gray-900 mb-4">Additional Details</h4>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    value={newLocation.description}
-                    onChange={(e) => updateNewLocationField('description', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                    rows={4}
-                    placeholder="Enter additional details about this location..."
-                  />
-                </div>
-              </div>
-            </div>
-            
-            {/* Modal Footer */}
-            <div className="flex space-x-3 p-6 border-t border-gray-200">
-              <button
-                onClick={() => {
-                  setShowAddModal(false);
-                  resetForm();
-                }}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-                disabled={formLoading}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateLocation}
-                disabled={formLoading || !newLocation.name.trim()}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {formLoading ? (
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    <span>Creating...</span>
-                  </div>
-                ) : (
-                  'Create Location'
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+class Permit(models.Model):
+    """
+    Permit model for regulatory compliance
+    """
+    PERMIT_TYPES = [
+        ('operating', 'Operating Permit'),
+        ('environmental', 'Environmental Permit'),
+        ('safety', 'Safety Permit'),
+        ('construction', 'Construction Permit'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('pending', 'Pending'),
+        ('expired', 'Expired'),
+        ('suspended', 'Suspended'),
+    ]
+    
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='permits')
+    permit_type = models.CharField(max_length=20, choices=PERMIT_TYPES)
+    permit_number = models.CharField(max_length=100)
+    issuing_authority = models.CharField(max_length=200)
+    issue_date = models.DateField()
+    expiry_date = models.DateField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    
+    description = models.TextField(blank=True)
+    renewal_required = models.BooleanField(default=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['location', 'permit_number']
+        ordering = ['location', 'expiry_date']
+    
+    def __str__(self):
+        return f"{self.location.name} - {self.permit_number}"
+    
+    @property
+    def is_expiring_soon(self):
+        from datetime import date, timedelta
+        return self.expiry_date <= date.today() + timedelta(days=30)
+    
+    @property
+    def is_expired(self):
+        from datetime import date
+        return self.expiry_date < date.today()
