@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Trash2, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle } from 'lucide-react';
+import { Users, Plus, Trash2, AlertTriangle, CheckCircle } from 'lucide-react';
 import { apiService } from '../../services/api';
 import { useAuthContext } from '../../contexts/AuthContext';
 
@@ -44,7 +44,7 @@ export function UserManagement() {
       console.log('🔍 UserManagement: Calling API to load users...');
       const data = await apiService.getUsers();
       console.log('🔍 UserManagement: Received users data:', data);
-      setUsers(Array.isArray(data) ? data : []);
+      setUsers(data.results || []);
     } catch (error) {
       console.error('🔍 UserManagement: Load users error:', error);
       setError('Failed to load users');

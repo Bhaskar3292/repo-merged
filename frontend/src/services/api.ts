@@ -377,7 +377,7 @@ class ApiService {
       console.log('🔍 API: Users response data:', response.data);
       
       // Return the users array directly
-      return Array.isArray(response.data) ? response.data : [];
+      return response.data ;
     } catch (error: any) {
       console.error('🔍 API: Get users error:', error);
       console.error('🔍 API: Error response:', error.response?.data);
