@@ -294,15 +294,6 @@ export function LocationsPage() {
                 <p className="text-xs text-gray-600">Permits</p>
               </div>
             </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500">
-                Created {new Date(location.created_at).toLocaleDateString()}
-              </span>
-              <span className="text-xs text-gray-500">
-                by {location.created_by_username}
-              </span>
-            </div>
           </div>
         ))}
       </div>

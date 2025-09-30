@@ -7,7 +7,7 @@ from .models import Location, LocationDashboard, DashboardSection, DashboardSect
 
 @admin.register(Location)
 class LocationAdmin(admin.ModelAdmin):
-    list_display = ['name', 'address', 'created_by', 'is_active', 'created_at']
+    list_display = ['name', 'created_by', 'is_active', 'created_at']
     list_filter = ['is_active', 'created_at']
     search_fields = ['name', 'address']
     readonly_fields = ['created_at', 'updated_at']
