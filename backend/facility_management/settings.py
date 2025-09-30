@@ -53,7 +53,7 @@ ROOT_URLCONF = 'facility_management.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -275,4 +275,15 @@ LOGGING = {
 
 # Two-Factor Authentication Settings
 OTP_TOTP_ISSUER = 'Facility Management System'
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Email Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Prints to console in development
+DEFAULT_FROM_EMAIL = 'noreply@facility.com'
+
+# For production, use SMTP:
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'your-email@gmail.com'
+# EMAIL_HOST_PASSWORD = 'your-app-password'

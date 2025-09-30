@@ -8,6 +8,12 @@ from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from django.contrib.auth import authenticate
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.contrib.sites.shortcuts import get_current_site
 from django.utils import timezone
 from django.conf import settings
 import logging
@@ -209,6 +215,40 @@ class PasswordResetView(generics.GenericAPIView):
         try:
             user = User.objects.get(email=email)
             
+            # Generate password reset token
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            
+            # Prepare email context
+            context = {
+                'user': user,
+                'token': token,
+                'uidb64': uid,
+                'protocol': 'https' if request.is_secure() else 'http',
+                'domain': request.get_host(),
+                'site_name': 'Facility Management System',
+            }
+            
+            # Render email templates
+            subject = render_to_string('registration/password_reset_subject.txt', context).strip()
+            html_message = render_to_string('registration/password_reset_email.html', context)
+            text_message = render_to_string('registration/password_reset_email.txt', context)
+            
+            # Send email (in development, this will print to console)
+            try:
+                send_mail(
+                    subject=subject,
+                    message=text_message,
+                    html_message=html_message,
+                    from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@facility.com'),
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+                logger.info(f"Password reset email sent to {user.email}")
+            except Exception as email_error:
+                logger.error(f"Failed to send password reset email: {email_error}")
+                # Don't fail the request if email sending fails
+            
             # Log password reset request
             log_security_event(
                 user=user,
@@ -218,18 +258,18 @@ class PasswordResetView(generics.GenericAPIView):
                 user_agent=request.META.get('HTTP_USER_AGENT', '')
             )
             
-            # In a real implementation, you would send an email here
-            # For now, we'll just return a success message
             return Response({
-                'message': 'If an account with this email exists, password reset instructions have been sent.'
+                'message': 'Password reset instructions have been sent to your email address.'
             })
             
         except User.DoesNotExist:
             # Don't reveal whether the email exists or not for security
+            logger.info(f"Password reset requested for non-existent email: {email}")
             return Response({
                 'message': 'If an account with this email exists, password reset instructions have been sent.'
             })
         except Exception as e:
+            logger.error(f"Password reset error: {e}")
             return Response(
                 {'error': 'Password reset request failed'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

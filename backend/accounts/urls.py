@@ -3,6 +3,7 @@ URL patterns for accounts app
 """
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
+from django.contrib.auth import views as auth_views
 from . import views
 
 urlpatterns = [
@@ -12,6 +13,15 @@ urlpatterns = [
     path('password/change/', views.PasswordChangeView.as_view(), name='password_change'),
     path('password/reset/', views.PasswordResetView.as_view(), name='password_reset'),
     path('password/reset/confirm/', views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    
+    # Django's built-in password reset confirm view for email links
+    path('password/reset/confirm/<uidb64>/<token>/', 
+         auth_views.PasswordResetConfirmView.as_view(
+             template_name='registration/password_reset_confirm.html',
+             success_url='/login?reset=success'
+         ), 
+         name='password_reset_confirm'),
+    
     path('email/verify/', views.EmailVerifyView.as_view(), name='email_verify'),
     path('profile/', views.ProfileView.as_view(), name='profile'),
     
