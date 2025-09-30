@@ -68,6 +68,7 @@ export interface PasswordResetRequest {
 }
 
 export interface PasswordResetConfirm {
+  uidb64: string;
   token: string;
   password: string;
   password_confirm: string;

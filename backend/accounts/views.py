@@ -11,6 +11,8 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_str
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.contrib.sites.shortcuts import get_current_site
@@ -212,20 +214,32 @@ class PasswordResetView(generics.GenericAPIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Always return success message for security (don't reveal if email exists)
+        success_message = 'If an account with this email exists, password reset instructions have been sent.'
+        
         try:
             user = User.objects.get(email=email)
             
             # Generate password reset token
             token = default_token_generator.make_token(user)
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+            
+            # Ensure uidb64 is never empty
+            if not uidb64:
+                logger.error(f"Failed to encode user ID {user.pk} for password reset")
+                return Response({'message': success_message}, status=status.HTTP_200_OK)
             
             # Prepare email context
+            frontend_domain = request.get_host().replace(':8000', ':5173')  # Point to frontend
+            reset_url = f"http://{frontend_domain}/reset-password/{uidb64}/{token}/"
+            
             context = {
                 'user': user,
                 'token': token,
-                'uidb64': uid,
-                'protocol': 'https' if request.is_secure() else 'http',
-                'domain': request.get_host(),
+                'uidb64': uidb64,
+                'reset_url': reset_url,
+                'protocol': 'http',  # Use http for development
+                'domain': frontend_domain,
                 'site_name': 'Facility Management System',
             }
             
@@ -256,24 +270,18 @@ class PasswordResetView(generics.GenericAPIView):
                 description=f'Password reset requested for {email}',
                 ip_address=get_client_ip(request),
                 user_agent=request.META.get('HTTP_USER_AGENT', '')
+                metadata={'uidb64': uidb64, 'reset_url': reset_url}
             )
-            
-            return Response({
-                'message': 'Password reset instructions have been sent to your email address.'
-            })
             
         except User.DoesNotExist:
             # Don't reveal whether the email exists or not for security
             logger.info(f"Password reset requested for non-existent email: {email}")
-            return Response({
-                'message': 'If an account with this email exists, password reset instructions have been sent.'
-            })
         except Exception as e:
             logger.error(f"Password reset error: {e}")
-            return Response(
-                {'error': 'Password reset request failed'}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            # Still return success for security
+        
+        # Always return HTTP 200 with success message
+        return Response({'message': success_message}, status=status.HTTP_200_OK)
 
 
 class PasswordResetConfirmView(generics.GenericAPIView):
@@ -283,13 +291,14 @@ class PasswordResetConfirmView(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
     
     def post(self, request):
-        token = request.data.get('token')
+        uidb64 = request.data.get('uidb64') or request.data.get('uid')
+        token = request.data.get('token') 
         password = request.data.get('password')
         password_confirm = request.data.get('password_confirm')
         
-        if not all([token, password, password_confirm]):
+        if not all([uidb64, token, password, password_confirm]):
             return Response(
-                {'error': 'Token, password, and password confirmation are required'}, 
+                {'error': 'UID, token, password, and password confirmation are required'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -299,11 +308,52 @@ class PasswordResetConfirmView(generics.GenericAPIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # In a real implementation, you would validate the token here
-        # For now, we'll just return a success message
-        return Response({
-            'message': 'Password has been reset successfully. You can now log in with your new password.'
-        })
+        try:
+            # Decode the user ID
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+            
+            # Validate the token
+            if not default_token_generator.check_token(user, token):
+                return Response(
+                    {'error': 'Invalid or expired reset token'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Validate password
+            try:
+                validate_password(password, user)
+            except DjangoValidationError as e:
+                return Response(
+                    {'error': list(e.messages)}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Set new password
+            user.set_password(password)
+            user.last_password_change = timezone.now()
+            user.force_password_change = False
+            user.save()
+            
+            # Log password reset completion
+            log_security_event(
+                user=user,
+                action='password_reset',
+                description=f'Password reset completed for {user.email}',
+                ip_address=get_client_ip(request),
+                user_agent=request.META.get('HTTP_USER_AGENT', ''),
+                metadata={'reset_method': 'email_link'}
+            )
+            
+            return Response({
+                'message': 'Password has been reset successfully. You can now log in with your new password.'
+            })
+            
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response(
+                {'error': 'Invalid reset link'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class EmailVerifyView(generics.GenericAPIView):

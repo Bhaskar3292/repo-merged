@@ -14,6 +14,7 @@ function App() {
         <div className="min-h-screen bg-gray-50">
           <Routes>
             <Route path="/login" element={<LoginForm />} />
+            <Route path="/reset-password/:uid/:token" element={<PasswordResetConfirm />} />
             <Route 
               path="/dashboard/*" 
               element={

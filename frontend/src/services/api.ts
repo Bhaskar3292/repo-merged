@@ -109,6 +109,7 @@ class ApiService {
    * Confirm password reset
    */
   async confirmPasswordReset(data: {
+    uidb64: string;
     token: string;
     password: string;
     password_confirm: string;

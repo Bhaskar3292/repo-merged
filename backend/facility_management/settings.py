@@ -278,6 +278,11 @@ LOGGING = {
 # Two-Factor Authentication Settings
 OTP_TOTP_ISSUER = 'Facility Management System'
 
+# REST Auth Configuration
+REST_AUTH = {
+    "PASSWORD_RESET_CONFIRM_URL": "reset-password/{uid}/{token}/"
+}
+
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Prints to console in development
 
