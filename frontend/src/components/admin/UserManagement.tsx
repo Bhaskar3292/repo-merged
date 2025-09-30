@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Trash2, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Users, Plus, Trash2, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle } from 'lucide-react';
 import { apiService } from '../../services/api';
 import { useAuthContext } from '../../contexts/AuthContext';
 

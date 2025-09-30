@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Save, RotateCcw, CheckCircle, AlertTriangle, Lock } from 'lucide-react';
+import { Shield, Save, RotateCcw, CircleCheck as CheckCircle, TriangleAlert as AlertTriangle, Lock } from 'lucide-react';
 import { apiService } from '../../services/api';
 import { useAuthContext } from '../../contexts/AuthContext';
 
