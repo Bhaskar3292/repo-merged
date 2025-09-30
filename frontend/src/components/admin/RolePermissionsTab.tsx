@@ -45,16 +45,13 @@ export function RolePermissionsTab() {
     try {
       setLoading(true);
       setError(null);
-      console.log('🔍 RolePermissions: Loading permissions matrix...');
       
       const data = await apiService.getPermissionsMatrix();
-      console.log('🔍 RolePermissions: Received matrix data:', data);
       
       setMatrix(data);
       setOriginalMatrix(JSON.parse(JSON.stringify(data))); // Deep copy
       setHasChanges(false);
     } catch (error) {
-      console.error('🔍 RolePermissions: Load error:', error);
       setError('Failed to load permissions matrix');
     } finally {
       setLoading(false);
@@ -120,8 +117,6 @@ export function RolePermissionsTab() {
         }
       }
       
-      console.log('🔍 RolePermissions: Saving changes:', changes);
-      
       // Save each change
       for (const change of changes) {
         await apiService.updateRolePermission(change.role, change.permissionId, change.granted);
@@ -135,7 +130,6 @@ export function RolePermissionsTab() {
       setTimeout(() => setSuccess(null), 3000);
       
     } catch (error) {
-      console.error('🔍 RolePermissions: Save error:', error);
       setError('Failed to save permission changes');
     } finally {
       setSaving(false);

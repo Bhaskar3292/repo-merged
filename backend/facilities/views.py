@@ -41,28 +41,10 @@ class LocationListCreateView(generics.ListCreateAPIView):
     
     def get_queryset(self):
         queryset = Location.objects.filter(is_active=True).order_by('name')
-        logger.info(f"LocationListCreateView queryset count: {queryset.count()}")
-        logger.info(f"User: {self.request.user.username if self.request.user.is_authenticated else 'Anonymous'}")
-        logger.info(f"User role: {getattr(self.request.user, 'role', 'None')}")
-        
-        # Debug: Show actual locations in database
-        all_locations = Location.objects.all()
-        logger.info(f"Total locations in DB: {all_locations.count()}")
-        for loc in all_locations:
-            logger.info(f"  - {loc.name} (active: {loc.is_active}, id: {loc.id})")
-        
-        # Debug: Show filtered vs unfiltered
-        active_locations = Location.objects.filter(is_active=True)
-        inactive_locations = Location.objects.filter(is_active=False)
-        logger.info(f"Active locations: {active_locations.count()}")
-        logger.info(f"Inactive locations: {inactive_locations.count()}")
-        
         return queryset
     
     def list(self, request, *args, **kwargs):
-        logger.info(f"LocationListCreateView.list() called by user: {request.user}")
         response = super().list(request, *args, **kwargs)
-        logger.info(f"Returning {len(response.data)} locations")
         return response
     
     def perform_create(self, serializer):

@@ -68,21 +68,9 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    // Log requests in development
-    if (ENABLE_LOGGING) {
-      console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`, {
-        baseURL: config.baseURL,
-        headers: config.headers,
-        data: config.data
-      });
-    }
-
     return config;
   },
   (error) => {
-    if (ENABLE_LOGGING) {
-      console.error('❌ Request Error:', error);
-    }
     return Promise.reject(error);
   }
 );
@@ -92,27 +80,10 @@ api.interceptors.request.use(
  */
 api.interceptors.response.use(
   (response: AxiosResponse) => {
-    // Log successful responses in development
-    if (ENABLE_LOGGING) {
-      console.log(`✅ API Response: ${response.config.method?.toUpperCase()} ${response.config.url}`, {
-        status: response.status,
-        data: response.data
-      });
-    }
     return response;
   },
   async (error: AxiosError) => {
     const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
-
-    // Log errors in development
-    if (ENABLE_LOGGING) {
-      console.error(`❌ API Error: ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url}`, {
-        status: error.response?.status,
-        message: error.message,
-        data: error.response?.data,
-        config: originalRequest
-      });
-    }
 
     // Handle 401 Unauthorized - attempt token refresh
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -121,10 +92,6 @@ api.interceptors.response.use(
       try {
         const refreshToken = tokenManager.getRefreshToken();
         if (refreshToken) {
-          if (ENABLE_LOGGING) {
-            console.log('🔄 Attempting token refresh...');
-          }
-
           // Create a new axios instance for refresh to avoid interceptor loops
           const refreshApi = axios.create({
             baseURL: API_BASE_URL,
@@ -145,17 +112,9 @@ api.interceptors.response.use(
             originalRequest.headers.Authorization = `Bearer ${access}`;
           }
 
-          if (ENABLE_LOGGING) {
-            console.log('✅ Token refreshed successfully, retrying request...');
-          }
-
           return api(originalRequest);
         }
       } catch (refreshError) {
-        if (ENABLE_LOGGING) {
-          console.error('❌ Token refresh failed:', refreshError);
-        }
-        
         // Refresh failed, clear tokens and redirect to login
         tokenManager.clearTokens();
         
@@ -201,8 +160,6 @@ export const startTokenExpiryMonitoring = () => {
         
         // Check if token expires in the next 5 minutes
         if (payload.exp && payload.exp - currentTime < 300) {
-          console.log('🔄 Token expiring soon, attempting refresh...');
-          
           // Try to refresh token
           const refreshToken = tokenManager.getRefreshToken();
           if (refreshToken) {
@@ -210,10 +167,8 @@ export const startTokenExpiryMonitoring = () => {
               .then(response => {
                 const { access, refresh: newRefresh } = response.data;
                 tokenManager.setTokens(access, newRefresh || refreshToken);
-                console.log('✅ Token refreshed successfully');
               })
               .catch(() => {
-                console.log('❌ Token refresh failed, logging out...');
                 tokenManager.clearTokens();
                 window.dispatchEvent(new CustomEvent('auth:logout'));
               });
@@ -222,12 +177,11 @@ export const startTokenExpiryMonitoring = () => {
         
         // Check if token is already expired
         if (payload.exp && payload.exp < currentTime) {
-          console.log('❌ Token expired, logging out...');
           tokenManager.clearTokens();
           window.dispatchEvent(new CustomEvent('auth:logout'));
         }
       } catch (error) {
-        console.error('Error checking token expiry:', error);
+        // Silent error handling
       }
     }
   }, 60000); // Check every minute
@@ -242,23 +196,8 @@ export const checkApiHealth = async (): Promise<boolean> => {
     const response = await axios.get(`${API_BASE_URL}/api/health/`, { timeout: 5000 });
     return response.status === 200;
   } catch (error) {
-    console.error('API health check failed:', error);
     return false;
   }
-};
-
-/**
- * Debug API configuration
- */
-export const debugApiConfig = () => {
-  console.log('🔧 API Configuration Debug:', {
-    baseURL: API_BASE_URL,
-    timeout: API_TIMEOUT,
-    enableLogging: ENABLE_LOGGING,
-    hasAccessToken: !!tokenManager.getAccessToken(),
-    hasRefreshToken: !!tokenManager.getRefreshToken(),
-    isAuthenticated: tokenManager.isAuthenticated()
-  });
 };
 
 export default api;

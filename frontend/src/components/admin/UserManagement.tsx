@@ -32,7 +32,6 @@ export function UserManagement() {
 
   useEffect(() => {
     if (currentUser) {
-      console.log('🔍 UserManagement: Loading users for user:', currentUser.username, 'role:', currentUser.role);
       loadUsers();
     }
   }, [currentUser]);
@@ -41,12 +40,9 @@ export function UserManagement() {
     try {
       setLoading(true);
       setError(null);
-      console.log('🔍 UserManagement: Calling API to load users...');
       const data = await apiService.getUsers();
-      console.log('🔍 UserManagement: Received users data:', data);
       setUsers(data.results || []);
     } catch (error) {
-      console.error('🔍 UserManagement: Load users error:', error);
       setError('Failed to load users');
       setUsers([]);
     } finally {
@@ -81,10 +77,7 @@ export function UserManagement() {
         return;
       }
       
-      console.log('Creating user with data:', newUser);
-      
       const createdUser = await apiService.createUser(newUser);
-      console.log('User created successfully:', createdUser);
       
       // Reload the entire user list
       await loadUsers();
@@ -103,7 +96,6 @@ export function UserManagement() {
       setTimeout(() => setSuccess(null), 3000);
       
     } catch (error) {
-      console.error('Create user error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to create user';
       setError(errorMessage);
     } finally {
@@ -114,10 +106,8 @@ export function UserManagement() {
   const handleDeleteUser = async (userId: number) => {
     try {
       setError(null);
-      console.log('Deleting user:', userId);
       
       await apiService.deleteUser(userId);
-      console.log('User deleted successfully');
       
       // Reload the entire user list
       await loadUsers();
@@ -126,7 +116,6 @@ export function UserManagement() {
       setTimeout(() => setSuccess(null), 3000);
       
     } catch (error) {
-      console.error('Delete user error:', error);
       setError('Failed to delete user');
       setDeleteConfirm({ isOpen: false });
     }

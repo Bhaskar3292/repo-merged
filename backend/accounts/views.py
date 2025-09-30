@@ -13,6 +13,8 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.contrib.sites.shortcuts import get_current_site
@@ -122,28 +124,21 @@ class LogoutView(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]  # Allow both authenticated and unauthenticated users
     
     def post(self, request):
-        logger.info(f"Logout request received from user: {getattr(request.user, 'username', 'Anonymous')}")
-        logger.info(f"Request data: {request.data}")
-        
         try:
             # Get refresh token from request
             refresh_token = request.data.get('refresh_token') or request.data.get('refresh')
-            logger.info(f"Refresh token received: {bool(refresh_token)}")
             
             if refresh_token:
                 try:
                     # Validate and blacklist the refresh token
                     token = RefreshToken(refresh_token)
                     token.blacklist()
-                    logger.info("Refresh token successfully blacklisted")
                 except TokenError as e:
-                    logger.warning(f"Token error during logout: {e}")
                     # Don't fail logout if token is already invalid/expired
+                    pass
                 except Exception as e:
-                    logger.error(f"Unexpected error blacklisting token: {e}")
                     # Don't fail logout for token issues
-            else:
-                logger.warning("No refresh token provided in logout request")
+                    pass
             
             # Log logout event (only if user is authenticated)
             if request.user and request.user.is_authenticated:
@@ -154,9 +149,6 @@ class LogoutView(generics.GenericAPIView):
                     ip_address=get_client_ip(request),
                     user_agent=request.META.get('HTTP_USER_AGENT', '')
                 )
-                logger.info(f"Logout successful for user: {request.user.username}")
-            else:
-                logger.info("Logout request from unauthenticated user")
             
             return Response({
                 'message': 'Logout successful',
@@ -164,7 +156,6 @@ class LogoutView(generics.GenericAPIView):
             }, status=status.HTTP_200_OK)
             
         except Exception as e:
-            logger.error(f"Unexpected error during logout: {e}", exc_info=True)
             # Always return success for logout to prevent client-side issues
             return Response({
                 'message': 'Logout completed',
@@ -205,6 +196,7 @@ class PasswordResetView(generics.GenericAPIView):
     Password reset request endpoint
     """
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [AnonRateThrottle]
     
     def post(self, request):
         email = request.data.get('email')
@@ -226,21 +218,16 @@ class PasswordResetView(generics.GenericAPIView):
             
             # Ensure uidb64 is never empty
             if not uidb64:
-                logger.error(f"Failed to encode user ID {user.pk} for password reset")
                 return Response({'message': success_message}, status=status.HTTP_200_OK)
             
-            # Prepare email context
-            frontend_domain = request.get_host().replace(':8000', ':5173')  # Point to frontend
-            reset_url = f"http://{frontend_domain}/reset-password/{uidb64}/{token}/"
+            # Build frontend reset URL
+            protocol = 'https' if request.is_secure() else 'http'
+            frontend_host = request.get_host().replace(':8000', ':5173')
+            reset_url = f"{protocol}://{frontend_host}/reset-password/{uidb64.decode()}/{token}/"
             
             context = {
                 'user': user,
-                'token': token,
-                'uidb64': uidb64,
                 'reset_url': reset_url,
-                'protocol': 'http',  # Use http for development
-                'domain': frontend_domain,
-                'site_name': 'Facility Management System',
             }
             
             # Render email templates
@@ -249,19 +236,14 @@ class PasswordResetView(generics.GenericAPIView):
             text_message = render_to_string('registration/password_reset_email.txt', context)
             
             # Send email (in development, this will print to console)
-            try:
-                send_mail(
-                    subject=subject,
-                    message=text_message,
-                    html_message=html_message,
-                    from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@facility.com'),
-                    recipient_list=[user.email],
-                    fail_silently=False,
-                )
-                logger.info(f"Password reset email sent to {user.email}")
-            except Exception as email_error:
-                logger.error(f"Failed to send password reset email: {email_error}")
-                # Don't fail the request if email sending fails
+            send_mail(
+                subject=subject,
+                message=text_message,
+                html_message=html_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=True,
+            )
             
             # Log password reset request
             log_security_event(
@@ -270,17 +252,13 @@ class PasswordResetView(generics.GenericAPIView):
                 description=f'Password reset requested for {email}',
                 ip_address=get_client_ip(request),
                 user_agent=request.META.get('HTTP_USER_AGENT', ''),
-                metadata={'uidb64': uidb64, 'reset_url': reset_url}
+                metadata={'reset_url': reset_url}
             )
             
         except User.DoesNotExist:
             # Don't reveal whether the email exists or not for security
-            logger.info(f"Password reset requested for non-existent email: {email}")
-        except Exception as e:
-            logger.error(f"Password reset error: {e}")
-            # Still return success for security
+            pass
         
-        # Always return HTTP 200 with success message
         return Response({'message': success_message}, status=status.HTTP_200_OK)
 
 
@@ -467,19 +445,12 @@ class CreateUserView(generics.CreateAPIView):
         return super().post(request, *args, **kwargs)
     
     def create(self, request, *args, **kwargs):
-        logger.info(f"User creation request from: {request.user.username} (role: {request.user.role})")
-        logger.info(f"Request data: {request.data}")
-        logger.info(f"Request headers: {dict(request.headers)}")
-        
         serializer = self.get_serializer(data=request.data)
         
         try:
             serializer.is_valid(raise_exception=True)
             user = serializer.save()
-            
-            logger.info(f"User created successfully: {user.username}")
         except Exception as e:
-            logger.error(f"User creation failed: {e}")
             return Response(
                 {'error': str(e)}, 
                 status=status.HTTP_400_BAD_REQUEST
@@ -514,51 +485,29 @@ class UserListView(generics.ListAPIView):
         return super().get(request, *args, **kwargs)
     
     def get_queryset(self):
-        user = self.request.user
-        logger.info(f"UserListView accessed by: {user.username} (role: {user.role}, superuser: {user.is_superuser})")
-        
         # CRITICAL FIX: Use the correct User model and ensure proper queryset
         queryset = User.objects.all().order_by('-created_at')
-        logger.info(f"Total users in queryset: {queryset.count()}")
-        
-        # Debug logging
-        for user in queryset[:3]:
-            logger.info(f"  User: {user.username} (role: {user.role}, active: {user.is_active})")
-        
         return queryset
     
     def list(self, request, *args, **kwargs):
         # Simplified permission check
         user = request.user
-        logger.info(f"UserListView.list() called by: {user.username} (role: {user.role}, superuser: {user.is_superuser})")
         
         # Check if user has admin permissions
         if not (user.is_superuser or user.role == 'admin'):
-            logger.warning(f"Access denied for user {user.username} with role {user.role}")
             return Response(
                 {'error': 'Only administrators can view user list'}, 
                 status=status.HTTP_403_FORBIDDEN
             )
         
         queryset = self.filter_queryset(self.get_queryset())
-        logger.info(f"Filtered queryset count: {queryset.count()}")
-        
-        # Log actual data being returned
-        if queryset.exists():
-            logger.info("Sample users being returned:")
-            for user in queryset[:3]:
-                logger.info(f"  - {user.username} ({user.role})")
-        else:
-            logger.warning("No users found in queryset")
         
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
-            logger.info(f"Paginated response: {len(serializer.data)} users")
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
-        logger.info(f"Full response: {len(serializer.data)} users")
         return Response(serializer.data)
 
 
