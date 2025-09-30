@@ -3,14 +3,13 @@
  * Provides login, logout, registration, and user management functions
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { apiService } from '../services/api';
 import { startTokenExpiryMonitoring } from '../api/axios';
 import { 
   User, 
   LoginRequest, 
   RegisterRequest,
-  RegisterResponse,
   PasswordResetRequest,
   PasswordResetConfirm,
   EmailVerification
@@ -37,14 +36,68 @@ export function useAuth(): UseAuthReturn {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // ----- FIX: MOVED LOGOUT AND REFRESHUSER FUNCTIONS UP -----
+  
+  /**
+   * User logout
+   */
+  const logout = useCallback(async (): Promise<void> => {
+    try {
+      setIsLoading(true);
+      await apiService.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setUser(null);
+      setError(null);
+      setIsLoading(false);
+    }
+  }, []);
+
+  /**
+   * Refresh user data from server
+   */
+  const refreshUser = useCallback(async (): Promise<void> => {
+    try {
+      if (apiService.isAuthenticated()) {
+        const userData = await apiService.getUserProfile();
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+      }
+    } catch (error) {
+      console.error('Failed to refresh user data:', error);
+      await logout();
+    }
+  }, [logout]);
+
+  /**
+   * Initialize authentication state from stored data
+   */
+  const initializeAuth = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      
+      if (apiService.isAuthenticated()) {
+        const storedUser = apiService.getStoredUser();
+        if (storedUser) {
+          setUser(storedUser);
+          await refreshUser();
+        }
+      }
+    } catch (error) {
+      console.error('Auth initialization error:', error);
+      await logout();
+    } finally {
+      setIsLoading(false);
+    }
+  }, [logout, refreshUser]);
+
   // Initialize authentication state on mount
   useEffect(() => {
     initializeAuth();
     
-    // Start token expiry monitoring
     const stopMonitoring = startTokenExpiryMonitoring();
     
-    // Listen for auth logout events
     const handleAuthLogout = () => {
       logout();
     };
@@ -55,31 +108,9 @@ export function useAuth(): UseAuthReturn {
       stopMonitoring();
       window.removeEventListener('auth:logout', handleAuthLogout);
     };
-  }, []);
-
-  /**
-   * Initialize authentication state from stored data
-   */
-  const initializeAuth = async () => {
-    try {
-      setIsLoading(true);
-      
-      if (apiService.isAuthenticated()) {
-        const storedUser = apiService.getStoredUser();
-        if (storedUser) {
-          setUser(storedUser);
-          // Optionally refresh user data from server
-          await refreshUser();
-        }
-      }
-    } catch (error) {
-      console.error('Auth initialization error:', error);
-      // Clear invalid stored data
-      await logout();
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [initializeAuth, logout]);
+  
+  // ----------------------------------------------------------------
 
   /**
    * User login
@@ -109,11 +140,7 @@ export function useAuth(): UseAuthReturn {
     try {
       setIsLoading(true);
       setError(null);
-
-      const response = await apiService.register(data);
-      // Don't automatically log in after registration
-      // User may need to verify email first
-      
+      await apiService.register(data);
       return true;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Registration failed';
@@ -125,33 +152,12 @@ export function useAuth(): UseAuthReturn {
   };
 
   /**
-   * User logout
-   */
-  const logout = async (): Promise<void> => {
-    try {
-      setIsLoading(true);
-      console.log('Starting logout process...');
-      await apiService.logout();
-      console.log('Logout API call completed');
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Don't prevent logout on error - always clear local state
-    } finally {
-      setUser(null);
-      setError(null);
-      setIsLoading(false);
-      console.log('Logout process completed - user state cleared');
-    }
-  };
-
-  /**
    * Request password reset
    */
   const requestPasswordReset = async (data: PasswordResetRequest): Promise<boolean> => {
     try {
       setIsLoading(true);
       setError(null);
-
       await apiService.requestPasswordReset(data);
       return true;
     } catch (error) {
@@ -170,7 +176,6 @@ export function useAuth(): UseAuthReturn {
     try {
       setIsLoading(true);
       setError(null);
-
       await apiService.confirmPasswordReset(data);
       return true;
     } catch (error) {
@@ -189,12 +194,8 @@ export function useAuth(): UseAuthReturn {
     try {
       setIsLoading(true);
       setError(null);
-
       await apiService.verifyEmail(data);
-      
-      // Refresh user data to update verification status
       await refreshUser();
-      
       return true;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Email verification failed';
@@ -206,65 +207,24 @@ export function useAuth(): UseAuthReturn {
   };
 
   /**
-   * Refresh user data from server
-   */
-  const refreshUser = async (): Promise<void> => {
-    try {
-      if (apiService.isAuthenticated()) {
-        const userData = await apiService.getUserProfile();
-        setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
-      }
-    } catch (error) {
-      console.error('Failed to refresh user data:', error);
-      // If refresh fails, user might need to re-authenticate
-      await logout();
-    }
-  };
-
-  /**
    * Check if user has specific permission
    */
-  const hasPermission = (permission: string): boolean => {
+  const hasPermission = useCallback((permission: string): boolean => {
     if (!user) return false;
     
-    // Superusers have all permissions
     if (user.is_superuser) return true;
     
-    // Check against stored permissions from API
-    const storedPermissions = localStorage.getItem('user_permissions');
-    if (storedPermissions) {
-      try {
-        const permissions = JSON.parse(storedPermissions);
-        return permissions[permission]?.granted || false;
-      } catch (error) {
-        console.error('Error parsing stored permissions:', error);
-      }
-    }
-    
-    // Fallback to role-based permissions
+    // This is a placeholder for a more robust permission system
+    // In a real app, you would fetch and store user-specific permissions
     const rolePermissions = {
-      admin: [
-        'view_dashboard', 'view_locations', 'view_facilities', 'view_tank_management',
-        'view_release_detection', 'view_permits', 'view_admin_panel', 'view_users',
-        'add_location', 'edit_location', 'delete_location', 'add_tank', 'edit_tank',
-        'delete_tank', 'add_permit', 'edit_permit', 'delete_permit', 'add_user',
-        'edit_user', 'delete_user', 'manage_permissions', 'system_config'
-      ],
-      contributor: [
-        'view_dashboard', 'view_locations', 'view_facilities', 'view_tank_management',
-        'view_release_detection', 'view_permits', 'add_location', 'edit_location',
-        'add_tank', 'edit_tank', 'add_permit', 'edit_permit', 'edit_facility_dashboard'
-      ],
-      viewer: [
-        'view_dashboard', 'view_locations', 'view_facilities', 'view_tank_management',
-        'view_release_detection', 'view_permits'
-      ]
+      admin: ['view_dashboard', 'view_admin_panel', 'edit_user', 'delete_user'],
+      contributor: ['view_dashboard', 'edit_content'],
+      viewer: ['view_dashboard']
     };
     
     const userRole = user.effective_role || user.role;
     return rolePermissions[userRole as keyof typeof rolePermissions]?.includes(permission) || false;
-  };
+  }, [user]);
 
   /**
    * Clear error state

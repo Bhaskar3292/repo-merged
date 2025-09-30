@@ -275,3 +275,4 @@ LOGGING = {
 
 # Two-Factor Authentication Settings
 OTP_TOTP_ISSUER = 'Facility Management System'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
