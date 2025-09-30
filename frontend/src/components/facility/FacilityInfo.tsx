@@ -1,23 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  Building2, 
-  MapPin, 
-  Phone, 
-  Mail, 
-  User, 
-  Clock, 
-  Edit, 
-  Save, 
-  X, 
-  Plus, 
-  Trash2,
-  ChevronDown,
-  ChevronUp,
-  ArrowLeft,
-  AlertTriangle,
-  CheckCircle
-} from 'lucide-react';
+import { Building2, MapPin, Phone, Mail, User, Clock, CreditCard as Edit, Save, X, Plus, Trash2, ChevronDown, ChevronUp, ArrowLeft, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle } from 'lucide-react';
 import { apiService } from '../../services/api';
 import { useAuthContext } from '../../contexts/AuthContext';
 
