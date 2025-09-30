@@ -10,6 +10,9 @@ urlpatterns = [
     path('logout/', views.LogoutView.as_view(), name='logout'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('password/change/', views.PasswordChangeView.as_view(), name='password_change'),
+    path('password/reset/', views.PasswordResetView.as_view(), name='password_reset'),
+    path('password/reset/confirm/', views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path('email/verify/', views.EmailVerifyView.as_view(), name='email_verify'),
     path('profile/', views.ProfileView.as_view(), name='profile'),
     
     # Two-Factor Authentication

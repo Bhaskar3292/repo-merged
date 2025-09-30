@@ -94,6 +94,45 @@ class ApiService {
   }
 
   /**
+   * Request password reset
+   */
+  async requestPasswordReset(data: { email: string }): Promise<{ message: string }> {
+    try {
+      const response = await api.post('/api/auth/password/reset/', data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Password reset request failed');
+    }
+  }
+
+  /**
+   * Confirm password reset
+   */
+  async confirmPasswordReset(data: {
+    token: string;
+    password: string;
+    password_confirm: string;
+  }): Promise<{ message: string }> {
+    try {
+      const response = await api.post('/api/auth/password/reset/confirm/', data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Password reset confirmation failed');
+    }
+  }
+
+  /**
+   * Verify email address
+   */
+  async verifyEmail(data: { token: string }): Promise<{ message: string }> {
+    try {
+      const response = await api.post('/api/auth/email/verify/', data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Email verification failed');
+    }
+  }
+  /**
    * Setup Two-Factor Authentication
    */
   async setup2FA(): Promise<{
@@ -187,6 +226,30 @@ class ApiService {
     return user;
   }
 
+  /**
+   * Check if user is authenticated
+   */
+  isAuthenticated(): boolean {
+    return tokenManager.isAuthenticated();
+  }
+
+  /**
+   * Test API connection
+   */
+  async testConnection(): Promise<{ status: string; message: string }> {
+    try {
+      const response = await api.get('/api/health/');
+      return {
+        status: 'success',
+        message: 'Backend connection successful'
+      };
+    } catch (error: any) {
+      return {
+        status: 'error',
+        message: error.message || 'Backend connection failed'
+      };
+    }
+  }
   // --- FACILITY & USER MANAGEMENT METHODS ---
 
   /**

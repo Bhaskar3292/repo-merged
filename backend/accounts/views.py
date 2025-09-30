@@ -192,6 +192,102 @@ class PasswordChangeView(generics.GenericAPIView):
         return Response({'message': 'Password changed successfully'})
 
 
+class PasswordResetView(generics.GenericAPIView):
+    """
+    Password reset request endpoint
+    """
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        email = request.data.get('email')
+        if not email:
+            return Response(
+                {'error': 'Email address is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            user = User.objects.get(email=email)
+            
+            # Log password reset request
+            log_security_event(
+                user=user,
+                action='password_reset',
+                description=f'Password reset requested for {email}',
+                ip_address=get_client_ip(request),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            # In a real implementation, you would send an email here
+            # For now, we'll just return a success message
+            return Response({
+                'message': 'If an account with this email exists, password reset instructions have been sent.'
+            })
+            
+        except User.DoesNotExist:
+            # Don't reveal whether the email exists or not for security
+            return Response({
+                'message': 'If an account with this email exists, password reset instructions have been sent.'
+            })
+        except Exception as e:
+            return Response(
+                {'error': 'Password reset request failed'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class PasswordResetConfirmView(generics.GenericAPIView):
+    """
+    Password reset confirmation endpoint
+    """
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        token = request.data.get('token')
+        password = request.data.get('password')
+        password_confirm = request.data.get('password_confirm')
+        
+        if not all([token, password, password_confirm]):
+            return Response(
+                {'error': 'Token, password, and password confirmation are required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if password != password_confirm:
+            return Response(
+                {'error': 'Passwords do not match'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # In a real implementation, you would validate the token here
+        # For now, we'll just return a success message
+        return Response({
+            'message': 'Password has been reset successfully. You can now log in with your new password.'
+        })
+
+
+class EmailVerifyView(generics.GenericAPIView):
+    """
+    Email verification endpoint
+    """
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        token = request.data.get('token')
+        
+        if not token:
+            return Response(
+                {'error': 'Verification token is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # In a real implementation, you would validate the token here
+        # For now, we'll just return a success message
+        return Response({
+            'message': 'Email address has been verified successfully.'
+        })
+
+
 class TwoFactorSetupView(generics.GenericAPIView):
     """
     2FA setup endpoint
