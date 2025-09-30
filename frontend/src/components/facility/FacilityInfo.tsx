@@ -14,7 +14,9 @@ import {
   Trash2,
   ChevronDown,
   ChevronUp,
-  ArrowLeft
+  ArrowLeft,
+  AlertTriangle,
+  CheckCircle
 } from 'lucide-react';
 import { apiService } from '../../services/api';
 import { useAuthContext } from '../../contexts/AuthContext';
@@ -115,49 +117,97 @@ export function FacilityInfo() {
     hours: false
   });
   
-  const [counties, setCounties] = useState<Record<string, string[]>>({});
-  
   const isCreateMode = id === 'new';
   const isEditMode = !isCreateMode;
 
+  // Dynamic data loading when facility ID changes
   useEffect(() => {
     if (isEditMode && id) {
       loadFacilityData(parseInt(id));
+    } else if (isCreateMode) {
+      // Reset to empty state for create mode
+      resetToCreateMode();
     }
   }, [id, isEditMode]);
+
+  const resetToCreateMode = () => {
+    const emptyFacility: FacilityData = {
+      name: '',
+      street_address: '',
+      city: '',
+      state: '',
+      county: '',
+      zip_code: '',
+      country: 'United States',
+      facility_type: 'gas_station',
+      operational_status: 'Active',
+      capacity: '',
+      description: '',
+      contacts: [],
+      operating_hours: null
+    };
+    
+    setFacility(emptyFacility);
+    setSectionData({
+      general: { ...emptyFacility },
+      operational: { ...emptyFacility },
+      contacts: [],
+      hours: {}
+    });
+    setEditingSections({
+      general: false,
+      operational: false,
+      contacts: false,
+      hours: false
+    });
+    setError(null);
+    setSuccess(null);
+  };
 
   const loadFacilityData = async (facilityId: number) => {
     try {
       setLoading(true);
       setError(null);
+      console.log(`🏢 Loading facility data for ID: ${facilityId}`);
       
       const data = await apiService.getLocation(facilityId);
+      console.log('🏢 Received facility data:', data);
+      
       setFacility(data);
       
-      // Initialize section data
+      // Initialize section data with loaded data
       setSectionData({
         general: {
-          name: data.name,
-          street_address: data.street_address,
-          city: data.city,
-          state: data.state,
-          county: data.county,
-          zip_code: data.zip_code,
-          country: data.country
+          name: data.name || '',
+          street_address: data.street_address || '',
+          city: data.city || '',
+          state: data.state || '',
+          county: data.county || '',
+          zip_code: data.zip_code || '',
+          country: data.country || 'United States'
         },
         operational: {
-          facility_type: data.facility_type,
-          operational_status: data.operational_status,
-          capacity: data.capacity,
-          description: data.description
+          facility_type: data.facility_type || 'gas_station',
+          operational_status: data.operational_status || 'Active',
+          capacity: data.capacity || '',
+          description: data.description || ''
         },
         contacts: data.contacts || [],
-        hours: data.operating_hours || {}
+        hours: data.operating_hours || {
+          monday_open: '', monday_close: '',
+          tuesday_open: '', tuesday_close: '',
+          wednesday_open: '', wednesday_close: '',
+          thursday_open: '', thursday_close: '',
+          friday_open: '', friday_close: '',
+          saturday_open: '', saturday_close: '',
+          sunday_open: '', sunday_close: '',
+          holiday_hours: '', notes: ''
+        }
       });
       
     } catch (error) {
+      console.error('🏢 Load facility error:', error);
       setError('Failed to load facility data');
-      console.error('Load facility error:', error);
     } finally {
       setLoading(false);
     }
@@ -175,22 +225,26 @@ export function FacilityInfo() {
       setError(null);
       
       if (isCreateMode) {
-        // Create new facility
+        // Create new facility with all data
         const facilityData = {
           ...sectionData.general,
           ...sectionData.operational
         };
         
+        console.log('🏢 Creating facility with data:', facilityData);
         const createdFacility = await apiService.createLocation(facilityData);
+        console.log('🏢 Facility created:', createdFacility);
         
         // Handle contacts and operating hours for new facility
         if (sectionData.contacts.length > 0) {
           for (const contact of sectionData.contacts) {
-            await apiService.createFacilityContact(createdFacility.id, contact);
+            if (contact.name.trim()) {
+              await apiService.createFacilityContact(createdFacility.id, contact);
+            }
           }
         }
         
-        if (Object.keys(sectionData.hours).length > 0) {
+        if (Object.values(sectionData.hours).some(value => value)) {
           await apiService.updateOperatingHours(createdFacility.id, sectionData.hours);
         }
         
@@ -198,31 +252,35 @@ export function FacilityInfo() {
         navigate(`/facilities/${createdFacility.id}`);
         
       } else {
-        // Update existing facility
+        // Update existing facility section
         const facilityId = parseInt(id!);
         
         switch (section) {
           case 'general':
           case 'operational':
+            console.log(`🏢 Updating ${section} section:`, sectionData[section]);
             await apiService.updateLocation(facilityId, sectionData[section]);
             break;
           case 'contacts':
-            // Handle contact updates separately
+            // Handle contact updates - this would need more complex logic
+            console.log('🏢 Contact updates not yet implemented');
             break;
           case 'hours':
+            console.log('🏢 Updating operating hours:', sectionData.hours);
             await apiService.updateOperatingHours(facilityId, sectionData.hours);
             break;
         }
         
         setSuccess(`${section} section updated successfully`);
+        // Reload facility data to get fresh data
         await loadFacilityData(facilityId);
       }
       
       setEditingSections(prev => ({ ...prev, [section]: false }));
       
     } catch (error) {
+      console.error(`🏢 Save ${section} section error:`, error);
       setError(`Failed to save ${section} section`);
-      console.error('Save section error:', error);
     } finally {
       setLoading(false);
     }
@@ -337,13 +395,18 @@ export function FacilityInfo() {
     'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming'
   ];
 
-  // Sample counties by state (simplified for demo)
+  // Dynamic counties by state
   const countiesByState: Record<string, string[]> = {
-    'California': ['Los Angeles', 'Orange', 'San Diego', 'San Francisco', 'Alameda', 'Sacramento'],
-    'Texas': ['Harris', 'Dallas', 'Tarrant', 'Bexar', 'Travis', 'Collin'],
-    'Florida': ['Miami-Dade', 'Broward', 'Palm Beach', 'Orange', 'Hillsborough', 'Pinellas'],
-    'New York': ['New York', 'Kings', 'Queens', 'Suffolk', 'Bronx', 'Nassau'],
-    // Add more as needed
+    'California': ['Los Angeles', 'Orange', 'San Diego', 'San Francisco', 'Alameda', 'Sacramento', 'Riverside', 'San Bernardino'],
+    'Texas': ['Harris', 'Dallas', 'Tarrant', 'Bexar', 'Travis', 'Collin', 'Fort Bend', 'Denton'],
+    'Florida': ['Miami-Dade', 'Broward', 'Palm Beach', 'Orange', 'Hillsborough', 'Pinellas', 'Duval', 'Lee'],
+    'New York': ['New York', 'Kings', 'Queens', 'Suffolk', 'Bronx', 'Nassau', 'Westchester', 'Erie'],
+    'Pennsylvania': ['Philadelphia', 'Allegheny', 'Montgomery', 'Bucks', 'Chester', 'Delaware', 'Lancaster', 'York'],
+    'Illinois': ['Cook', 'DuPage', 'Lake', 'Will', 'Kane', 'McHenry', 'Winnebago', 'Madison'],
+    'Ohio': ['Cuyahoga', 'Franklin', 'Hamilton', 'Montgomery', 'Summit', 'Lucas', 'Stark', 'Butler'],
+    'Georgia': ['Fulton', 'Gwinnett', 'DeKalb', 'Cobb', 'Clayton', 'Cherokee', 'Henry', 'Forsyth'],
+    'North Carolina': ['Mecklenburg', 'Wake', 'Guilford', 'Forsyth', 'Cumberland', 'Durham', 'Union', 'Johnston'],
+    'Michigan': ['Wayne', 'Oakland', 'Macomb', 'Kent', 'Genesee', 'Washtenaw', 'Ottawa', 'Ingham']
   };
 
   const facilityTypes = [
@@ -966,11 +1029,11 @@ export function FacilityInfo() {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <button
-            onClick={() => navigate('/dashboard/facilities')}
+            onClick={() => navigate('/dashboard')}
             className="flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Back to Facilities</span>
+            <span>Back to Dashboard</span>
           </button>
           
           <div>
@@ -988,7 +1051,7 @@ export function FacilityInfo() {
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="flex items-center">
-            <X className="h-5 w-5 text-red-600 mr-2" />
+            <AlertTriangle className="h-5 w-5 text-red-600 mr-2" />
             <span className="text-red-800">{error}</span>
           </div>
         </div>
@@ -997,7 +1060,7 @@ export function FacilityInfo() {
       {success && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <div className="flex items-center">
-            <Save className="h-5 w-5 text-green-600 mr-2" />
+            <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
             <span className="text-green-800">{success}</span>
           </div>
         </div>
@@ -1013,7 +1076,7 @@ export function FacilityInfo() {
       {isCreateMode && (
         <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
           <button
-            onClick={() => navigate('/dashboard/facilities')}
+            onClick={() => navigate('/dashboard')}
             className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
           >
             Cancel

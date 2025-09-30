@@ -137,12 +137,14 @@ class LocationDetailSerializer(serializers.ModelSerializer):
     """
     tanks = TankSerializer(many=True, read_only=True)
     permits = PermitSerializer(many=True, read_only=True)
-    dashboard = LocationDashboardSerializer(read_only=True)
+    contacts = FacilityContactSerializer(many=True, read_only=True)
+    operating_hours = OperatingHoursSerializer(read_only=True)
     created_by_username = serializers.CharField(source='created_by.username', read_only=True)
     
     class Meta:
         model = Location
-        fields = ['id', 'name', 'address', 'description', 'created_by', 
-                 'created_by_username', 'created_at', 'updated_at', 'is_active',
-                 'tanks', 'permits', 'dashboard']
+        fields = ['id', 'name', 'address', 'street_address', 'city', 'state', 'county',
+                 'zip_code', 'country', 'facility_type', 'operational_status', 'capacity',
+                 'description', 'created_by', 'created_by_username', 'created_at', 
+                 'updated_at', 'is_active', 'tanks', 'permits', 'contacts', 'operating_hours']
         read_only_fields = ['created_by', 'created_at', 'updated_at']

@@ -35,7 +35,7 @@ export function MainContent({ activeView, selectedFacility, refreshKey }: MainCo
       case 'locations':
         return <LocationsPage key={refreshKey} />;
       case 'facilities':
-        return <LocationManager selectedFacility={selectedFacility} />;
+        return <FacilityInfo />;
       case 'tanks':
         return <TankManagement selectedFacility={selectedFacility} />;
       case 'releases':

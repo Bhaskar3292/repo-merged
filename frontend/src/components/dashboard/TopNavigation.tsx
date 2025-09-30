@@ -56,6 +56,9 @@ export function TopNavigation({ selectedFacility, onFacilitySelect, onViewChange
     onFacilitySelect(facility);
     setSearchTerm('');
     setShowFacilityDropdown(false);
+    
+    // Navigate to facility-specific page
+    navigate(`/facilities/${facility.id}`);
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
