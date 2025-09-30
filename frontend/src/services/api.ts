@@ -367,7 +367,7 @@ class ApiService {
   /**
    * Get all users (admin only)
    */
-  async getUsers(): Promise<any> { // FIX 1: Changed return type from any[] to any
+  async getUsers(): Promise<User[]> {
     try {
       console.log('🔍 API: Getting users...');
       console.log('🔍 API: Current user:', this.getStoredUser());
@@ -376,8 +376,8 @@ class ApiService {
       console.log('🔍 API: Users response status:', response.status);
       console.log('🔍 API: Users response data:', response.data);
       
-      // FIX 2: Return the entire data object, not an empty array
-      return response.data;
+      // Return the users array directly
+      return Array.isArray(response.data) ? response.data : [];
     } catch (error: any) {
       console.error('🔍 API: Get users error:', error);
       console.error('🔍 API: Error response:', error.response?.data);
@@ -441,6 +441,45 @@ class ApiService {
     }
   }
 
+  /**
+   * Get permissions matrix (admin only)
+   */
+  async getPermissionsMatrix(): Promise<any> {
+    try {
+      const response = await api.get('/api/permissions/roles/permissions/matrix/');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to get permissions matrix');
+    }
+  }
+
+  /**
+   * Update role permission (admin only)
+   */
+  async updateRolePermission(role: string, permissionId: number, isGranted: boolean): Promise<any> {
+    try {
+      const response = await api.post('/api/permissions/role-permissions/update/', { 
+        role, 
+        permission_id: permissionId,
+        is_granted: isGranted
+      });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to update role permissions');
+    }
+  }
+
+  /**
+   * Get user permissions
+   */
+  async getUserPermissions(): Promise<any> {
+    try {
+      const response = await api.get('/api/permissions/user/permissions/');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to get user permissions');
+    }
+  }
   // ... (rest of the file remains the same)
 
 }

@@ -1,5 +1,5 @@
 """
-Models for permission management system
+Comprehensive RBAC models for permission management
 """
 from django.db import models
 from django.contrib.auth import get_user_model
@@ -28,10 +28,11 @@ class Permission(models.Model):
     Individual permission definition
     """
     PERMISSION_TYPES = [
-        ('button', 'Button/Action'),
-        ('field', 'Field Access'),
-        ('section', 'Section Access'),
         ('page', 'Page Access'),
+        ('action', 'Action/Button'),
+        ('view', 'View Data'),
+        ('edit', 'Edit Data'),
+        ('delete', 'Delete Data'),
     ]
     
     category = models.ForeignKey(PermissionCategory, on_delete=models.CASCADE, related_name='permissions')
@@ -49,7 +50,7 @@ class Permission(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        ordering = ['category', 'name']
+        ordering = ['category__order', 'name']
     
     def __str__(self):
         return f"{self.category.name} - {self.name}"
@@ -57,7 +58,7 @@ class Permission(models.Model):
 
 class RolePermission(models.Model):
     """
-    Role-specific permission overrides
+    Role-specific permission assignments
     """
     ROLE_CHOICES = [
         ('admin', 'Administrator'),
@@ -76,7 +77,25 @@ class RolePermission(models.Model):
         unique_together = ['role', 'permission']
     
     def __str__(self):
-        return f"{self.get_role_display()} - {self.permission.name} ({'Granted' if self.is_granted else 'Denied'})"
+        return f"{self.get_role_display()} - {self.permission.name} ({'✓' if self.is_granted else '✗'})"
+
+
+class UserPermission(models.Model):
+    """
+    User-specific permission overrides
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='custom_permissions')
+    permission = models.ForeignKey(Permission, on_delete=models.CASCADE, related_name='user_permissions')
+    is_granted = models.BooleanField(default=False)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['user', 'permission']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.permission.name} ({'✓' if self.is_granted else '✗'})"
 
 
 def get_role_permissions_matrix():
@@ -124,19 +143,40 @@ def get_role_permissions_matrix():
     return matrix
 
 
-class UserPermission(models.Model):
+def check_user_permission(user, permission_code):
     """
-    User-specific permission overrides
+    Check if a user has a specific permission
+    Priority: User-specific > Role-specific > Default
     """
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='custom_permissions')
-    permission = models.ForeignKey(Permission, on_delete=models.CASCADE, related_name='user_permissions')
-    is_granted = models.BooleanField(default=False)
+    # Superusers have all permissions
+    if user.is_superuser:
+        return True
     
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    try:
+        permission = Permission.objects.get(code=permission_code)
+    except Permission.DoesNotExist:
+        return False
     
-    class Meta:
-        unique_together = ['user', 'permission']
+    # Check user-specific permission first
+    try:
+        user_perm = UserPermission.objects.get(user=user, permission=permission)
+        return user_perm.is_granted
+    except UserPermission.DoesNotExist:
+        pass
     
-    def __str__(self):
-        return f"{self.user.username} - {self.permission.name} ({'Granted' if self.is_granted else 'Denied'})"
+    # Check role-specific permission
+    try:
+        role_perm = RolePermission.objects.get(role=user.role, permission=permission)
+        return role_perm.is_granted
+    except RolePermission.DoesNotExist:
+        pass
+    
+    # Fall back to default permission for role
+    if user.role == 'admin':
+        return permission.admin_default
+    elif user.role == 'contributor':
+        return permission.contributor_default
+    elif user.role == 'viewer':
+        return permission.viewer_default
+    
+    return False

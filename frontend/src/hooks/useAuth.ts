@@ -231,16 +231,39 @@ export function useAuth(): UseAuthReturn {
     // Superusers have all permissions
     if (user.is_superuser) return true;
     
-    // Use effective role for permission checks
-    const effectiveRole = user.effective_role || user.role;
+    // Check against stored permissions from API
+    const storedPermissions = localStorage.getItem('user_permissions');
+    if (storedPermissions) {
+      try {
+        const permissions = JSON.parse(storedPermissions);
+        return permissions[permission]?.granted || false;
+      } catch (error) {
+        console.error('Error parsing stored permissions:', error);
+      }
+    }
     
-    const permissions = {
-      admin: ['read', 'write', 'delete', 'manage_users', 'system_config', 'create_users', 'edit_users', 'delete_users', 'view_users'],
-      contributor: ['read', 'write', 'update_records', 'create_locations', 'edit_locations', 'edit_dashboard', 'create_tanks', 'edit_tanks', 'create_permits', 'edit_permits'],
-      viewer: ['read']
+    // Fallback to role-based permissions
+    const rolePermissions = {
+      admin: [
+        'view_dashboard', 'view_locations', 'view_facilities', 'view_tank_management',
+        'view_release_detection', 'view_permits', 'view_admin_panel', 'view_users',
+        'add_location', 'edit_location', 'delete_location', 'add_tank', 'edit_tank',
+        'delete_tank', 'add_permit', 'edit_permit', 'delete_permit', 'add_user',
+        'edit_user', 'delete_user', 'manage_permissions', 'system_config'
+      ],
+      contributor: [
+        'view_dashboard', 'view_locations', 'view_facilities', 'view_tank_management',
+        'view_release_detection', 'view_permits', 'add_location', 'edit_location',
+        'add_tank', 'edit_tank', 'add_permit', 'edit_permit', 'edit_facility_dashboard'
+      ],
+      viewer: [
+        'view_dashboard', 'view_locations', 'view_facilities', 'view_tank_management',
+        'view_release_detection', 'view_permits'
+      ]
     };
     
-    return permissions[effectiveRole as keyof typeof permissions]?.includes(permission) || false;
+    const userRole = user.effective_role || user.role;
+    return rolePermissions[userRole as keyof typeof rolePermissions]?.includes(permission) || false;
   };
 
   /**

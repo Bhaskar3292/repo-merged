@@ -16,6 +16,8 @@ import io
 import base64
 from .utils import get_client_ip, log_security_event
 from .models import User
+from permissions.decorators import require_permission
+from permissions.models import check_user_permission
 from .serializers import (
     UserSerializer, LoginSerializer, CreateUserSerializer, UserListSerializer,
     PasswordChangeSerializer, TwoFactorSetupSerializer,
@@ -272,7 +274,11 @@ class CreateUserView(generics.CreateAPIView):
     Create new user endpoint (admin only)
     """
     serializer_class = CreateUserSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated]
+    
+    @require_permission('add_user')
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
     
     def create(self, request, *args, **kwargs):
         logger.info(f"User creation request from: {request.user.username} (role: {request.user.role})")
@@ -315,7 +321,11 @@ class UserListView(generics.ListAPIView):
     List all users endpoint (admin only)
     """
     serializer_class = UserListSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated]
+    
+    @require_permission('view_users')
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
     
     def get_queryset(self):
         user = self.request.user
@@ -374,20 +384,25 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
     queryset = User.objects.all()
     
+    @require_permission('view_users')
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+    
+    @require_permission('edit_user')
+    def patch(self, request, *args, **kwargs):
+        return super().patch(request, *args, **kwargs)
+    
+    @require_permission('delete_user')
+    def delete(self, request, *args, **kwargs):
+        return super().delete(request, *args, **kwargs)
+    
     def get_queryset(self):
-        # Check if user is admin or superuser
-        if not (self.request.user.role == 'admin' or self.request.user.is_superuser):
+        # Check if user has permission to view users
+        if not check_user_permission(self.request.user, 'view_users'):
             return User.objects.none()
         return User.objects.all()
     
     def update(self, request, *args, **kwargs):
-        # Check if user is admin or superuser
-        if not (request.user.role == 'admin' or request.user.is_superuser):
-            return Response(
-                {'error': 'Only administrators can update users'}, 
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         old_role = instance.role
@@ -416,13 +431,6 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
         })
     
     def destroy(self, request, *args, **kwargs):
-        # Check if user is admin or superuser
-        if not (request.user.role == 'admin' or request.user.is_superuser):
-            return Response(
-                {'error': 'Only administrators can delete users'}, 
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
         instance = self.get_object()
         if instance == request.user:
             return Response(
@@ -448,8 +456,12 @@ class DeleteUserView(generics.DestroyAPIView):
     """
     Delete user endpoint (admin only)
     """
-    permission_classes = [IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated]
     queryset = User.objects.all()
+    
+    @require_permission('delete_user')
+    def delete(self, request, *args, **kwargs):
+        return super().delete(request, *args, **kwargs)
     
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -481,18 +493,11 @@ class DeleteUserView(generics.DestroyAPIView):
 
 
 @api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
+@require_permission('edit_user')
 def unlock_user_account(request, user_id):
     """
     Unlock a user account (admin only)
     """
-    # Check if user is admin or superuser
-    if not (request.user.role == 'admin' or request.user.is_superuser):
-        return Response(
-            {'error': 'Only administrators can unlock accounts'}, 
-            status=status.HTTP_403_FORBIDDEN
-        )
-    
     try:
         user = User.objects.get(id=user_id)
         user.unlock_account()

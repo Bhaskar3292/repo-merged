@@ -12,19 +12,22 @@ interface SidebarProps {
 export function Sidebar({ collapsed, activeView, onViewChange, onToggleSidebar }: SidebarProps) {
   const { hasPermission, user } = useAuthContext();
 
-  const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: Home },
-    { id: 'locations', label: 'Locations', icon: MapPin },
-    { id: 'facilities', label: 'Facilities', icon: Building2 },
-    { id: 'tanks', label: 'Tank Management', icon: Zap },
-    { id: 'releases', label: 'Release Detection', icon: Shield },
-    { id: 'permits', label: 'Permits & Licenses', icon: FileText },
-    { id: 'settings', label: 'Settings', icon: Settings },
+  const allMenuItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: Home, permission: 'view_dashboard' },
+    { id: 'locations', label: 'Locations', icon: MapPin, permission: 'view_locations' },
+    { id: 'facilities', label: 'Facilities', icon: Building2, permission: 'view_facilities' },
+    { id: 'tanks', label: 'Tank Management', icon: Zap, permission: 'view_tank_management' },
+    { id: 'releases', label: 'Release Detection', icon: Shield, permission: 'view_release_detection' },
+    { id: 'permits', label: 'Permits & Licenses', icon: FileText, permission: 'view_permits' },
+    { id: 'settings', label: 'Settings', icon: Settings, permission: 'view_settings' },
   ];
 
-  // Show admin panel for superusers or users with manage_users permission
-  if (user?.is_superuser || hasPermission('manage_users')) {
-    menuItems.push({ id: 'admin', label: 'Admin Panel', icon: Users });
+  // Filter menu items based on permissions
+  const menuItems = allMenuItems.filter(item => hasPermission(item.permission));
+
+  // Show admin panel for users with admin panel access
+  if (hasPermission('view_admin_panel')) {
+    menuItems.push({ id: 'admin', label: 'Admin Panel', icon: Users, permission: 'view_admin_panel' });
   }
 
   return (

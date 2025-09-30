@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Save, RotateCcw,  CheckCircle, AlertTriangle } from 'lucide-react';
+import { Shield, Save, RotateCcw, CheckCircle, AlertTriangle, Lock } from 'lucide-react';
 import { apiService } from '../../services/api';
 import { useAuthContext } from '../../contexts/AuthContext';
 
@@ -62,6 +62,11 @@ export function RolePermissionsTab() {
   };
 
   const handlePermissionChange = (categoryName: string, permissionId: number, role: string, granted: boolean) => {
+    // Don't allow changes to admin role
+    if (role === 'admin') {
+      return;
+    }
+    
     setMatrix(prev => {
       const updated = { ...prev };
       const category = updated[categoryName];
@@ -99,6 +104,9 @@ export function RolePermissionsTab() {
           if (!originalPermission) continue;
           
           for (const [role, granted] of Object.entries(permission.roles)) {
+            // Skip admin role changes
+            if (role === 'admin') continue;
+            
             const originalGranted = originalPermission.roles[role as keyof typeof originalPermission.roles];
             if (granted !== originalGranted) {
               changes.push({
@@ -156,6 +164,17 @@ export function RolePermissionsTab() {
       case 'contributor': return 'text-blue-600';
       case 'viewer': return 'text-green-600';
       default: return 'text-gray-600';
+    }
+  };
+
+  const getPermissionTypeColor = (type: string) => {
+    switch (type) {
+      case 'page': return 'bg-purple-100 text-purple-800';
+      case 'action': return 'bg-blue-100 text-blue-800';
+      case 'view': return 'bg-green-100 text-green-800';
+      case 'edit': return 'bg-yellow-100 text-yellow-800';
+      case 'delete': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -220,12 +239,22 @@ export function RolePermissionsTab() {
         </div>
       )}
 
+      {/* Admin Notice */}
+      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+        <div className="flex items-center space-x-2">
+          <Lock className="h-4 w-4 text-purple-600" />
+          <span className="text-sm font-medium text-purple-800">
+            Administrator permissions are locked and cannot be modified for security reasons.
+          </span>
+        </div>
+      </div>
+
       {/* Permissions Matrix */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">Permissions Matrix</h3>
           <p className="text-sm text-gray-600 mt-1">
-            Check the boxes to grant permissions to each role. Changes are saved when you click "Save Changes".
+            Check the boxes to grant permissions to each role. Administrator permissions are locked for security.
           </p>
         </div>
 
@@ -237,7 +266,10 @@ export function RolePermissionsTab() {
                   Permission
                 </th>
                 <th className="px-4 py-3 text-center text-xs font-medium text-purple-600 uppercase tracking-wider">
-                  Administrator
+                  <div className="flex items-center justify-center space-x-1">
+                    <Lock className="h-3 w-3" />
+                    <span>Administrator</span>
+                  </div>
                 </th>
                 <th className="px-4 py-3 text-center text-xs font-medium text-blue-600 uppercase tracking-wider">
                   Contributor
@@ -268,34 +300,66 @@ export function RolePermissionsTab() {
                     <tr key={permission.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{permission.name}</div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm font-medium text-gray-900">{permission.name}</span>
+                            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getPermissionTypeColor(permission.type)}`}>
+                              {permission.type}
+                            </span>
+                          </div>
                           {permission.description && (
-                            <div className="text-sm text-gray-500">{permission.description}</div>
+                            <div className="text-sm text-gray-500 mt-1">{permission.description}</div>
                           )}
                           <div className="text-xs text-gray-400 mt-1">
-                            Code: {permission.code} | Type: {permission.type}
+                            Code: {permission.code}
                           </div>
                         </div>
                       </td>
                       
-                      {/* Role Checkboxes */}
-                      {['admin', 'contributor', 'viewer'].map((role) => (
-                        <td key={role} className="px-4 py-4 text-center">
-                          <label className="inline-flex items-center">
-                            <input
-                              type="checkbox"
-                              checked={permission.roles[role as keyof typeof permission.roles]}
-                              onChange={(e) => handlePermissionChange(
-                                categoryName, 
-                                permission.id, 
-                                role, 
-                                e.target.checked
-                              )}
-                              className={`rounded border-gray-300 focus:ring-2 focus:ring-blue-500 ${getRoleColor(role)}`}
-                            />
-                          </label>
-                        </td>
-                      ))}
+                      {/* Administrator Column (Locked) */}
+                      <td className="px-4 py-4 text-center">
+                        <div className="flex items-center justify-center">
+                          <input
+                            type="checkbox"
+                            checked={permission.roles.admin}
+                            disabled={true}
+                            className="rounded border-gray-300 text-purple-600 opacity-50 cursor-not-allowed"
+                          />
+                        </div>
+                      </td>
+                      
+                      {/* Contributor Column */}
+                      <td className="px-4 py-4 text-center">
+                        <label className="inline-flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={permission.roles.contributor}
+                            onChange={(e) => handlePermissionChange(
+                              categoryName, 
+                              permission.id, 
+                              'contributor', 
+                              e.target.checked
+                            )}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                          />
+                        </label>
+                      </td>
+                      
+                      {/* Viewer Column */}
+                      <td className="px-4 py-4 text-center">
+                        <label className="inline-flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={permission.roles.viewer}
+                            onChange={(e) => handlePermissionChange(
+                              categoryName, 
+                              permission.id, 
+                              'viewer', 
+                              e.target.checked
+                            )}
+                            className="rounded border-gray-300 text-green-600 focus:ring-2 focus:ring-green-500"
+                          />
+                        </label>
+                      </td>
                     </tr>
                   ))}
                 </React.Fragment>
@@ -315,26 +379,57 @@ export function RolePermissionsTab() {
         )}
       </div>
 
-      {/* Legend */}
+      {/* Permission Type Legend */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="text-sm font-medium text-blue-900 mb-2">Permission Types:</h4>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+        <h4 className="text-sm font-medium text-blue-900 mb-3">Permission Types:</h4>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-blue-500 rounded"></div>
-            <span className="text-blue-800">Button/Action - Controls specific buttons and actions</span>
+            <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">page</span>
+            <span className="text-blue-800">Controls access to entire pages/tabs</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-green-500 rounded"></div>
-            <span className="text-blue-800">Field Access - Controls access to specific data fields</span>
+            <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">action</span>
+            <span className="text-blue-800">Controls specific buttons and actions</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-yellow-500 rounded"></div>
-            <span className="text-blue-800">Section Access - Controls access to entire sections</span>
+            <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">view</span>
+            <span className="text-blue-800">Controls data visibility</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-purple-500 rounded"></div>
-            <span className="text-blue-800">Page Access - Controls access to entire pages</span>
+            <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">edit</span>
+            <span className="text-blue-800">Controls editing capabilities</span>
           </div>
+          <div className="flex items-center space-x-2">
+            <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">delete</span>
+            <span className="text-blue-800">Controls deletion capabilities</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Role Descriptions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <div className="flex items-center space-x-2 mb-2">
+            <Lock className="h-4 w-4 text-purple-600" />
+            <h4 className="font-medium text-purple-900">Administrator</h4>
+          </div>
+          <p className="text-sm text-purple-800">
+            Full system access. All permissions are granted and cannot be modified for security reasons.
+          </p>
+        </div>
+        
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h4 className="font-medium text-blue-900 mb-2">Contributor</h4>
+          <p className="text-sm text-blue-800">
+            Can create and edit facilities, tanks, and permits. Cannot delete or manage users.
+          </p>
+        </div>
+        
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <h4 className="font-medium text-green-900 mb-2">Viewer</h4>
+          <p className="text-sm text-green-800">
+            Read-only access to view facilities, tanks, and permits. Cannot make any changes.
+          </p>
         </div>
       </div>
     </div>

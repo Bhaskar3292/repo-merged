@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
-import { Users, Plus, CreditCard as Edit, Trash2, Save, X, UserPlus, Search, Shield, Lock,  AlertTriangle,CheckCircle } from 'lucide-react';
+import { Users, Plus, Trash2, AlertTriangle, CheckCircle } from 'lucide-react';
 import { apiService } from '../../services/api';
 import { useAuthContext } from '../../contexts/AuthContext';
 
@@ -45,7 +44,7 @@ export function UserManagement() {
       console.log('🔍 UserManagement: Calling API to load users...');
       const data = await apiService.getUsers();
       console.log('🔍 UserManagement: Received users data:', data);
-      setUsers(data.results || []);
+      setUsers(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('🔍 UserManagement: Load users error:', error);
       setError('Failed to load users');
@@ -207,12 +206,12 @@ export function UserManagement() {
           <h2 className="text-2xl font-bold text-gray-900">User Management</h2>
         </div>
         
-        {(currentUser?.is_superuser || hasPermission('create_users')) && (
+        {hasPermission('add_user') && (
           <button
             onClick={() => setShowCreateModal(true)}
             className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
-            <UserPlus className="h-4 w-4" />
+            <Plus className="h-4 w-4" />
             <span>Create User</span>
           </button>
         )}
@@ -266,7 +265,7 @@ export function UserManagement() {
                   </span>
                 </td>
                 <td className="px-6 py-4">
-                  {user.id !== currentUser.id && (currentUser?.is_superuser || hasPermission('delete_users')) && (
+                  {user.id !== currentUser.id && hasPermission('delete_user') && (
                     <button
                       onClick={() => openDeleteConfirm(user)}
                       className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
@@ -287,12 +286,12 @@ export function UserManagement() {
             <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No users found</h3>
             <p className="text-gray-500 mb-4">Get started by creating your first user.</p>
-            {(currentUser?.is_superuser || hasPermission('create_users')) && (
+            {hasPermission('add_user') && (
               <button
                 onClick={() => setShowCreateModal(true)}
                 className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mx-auto"
               >
-                <UserPlus className="h-4 w-4" />
+                <Plus className="h-4 w-4" />
                 <span>Create First User</span>
               </button>
             )}

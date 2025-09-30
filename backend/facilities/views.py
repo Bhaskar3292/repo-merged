@@ -10,6 +10,8 @@ from django.utils import timezone
 import logging
 from accounts.permissions import IsAdminUser, IsContributorOrAdmin, CanEditFacility
 from accounts.utils import log_security_event, get_client_ip
+from permissions.decorators import require_permission, require_any_permission
+from permissions.models import check_user_permission
 from .models import (
     Location, LocationDashboard, DashboardSection, 
     DashboardSectionData, Tank, Permit
@@ -28,6 +30,14 @@ class LocationListCreateView(generics.ListCreateAPIView):
     """
     serializer_class = LocationSerializer
     permission_classes = [permissions.IsAuthenticated]
+    
+    @require_permission('view_locations')
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+    
+    @require_permission('add_location')
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
     
     def get_queryset(self):
         queryset = Location.objects.filter(is_active=True).order_by('name')
@@ -93,7 +103,19 @@ class LocationDetailView(generics.RetrieveUpdateDestroyAPIView):
     Retrieve, update or delete a location
     """
     serializer_class = LocationDetailSerializer
-    permission_classes = [CanEditFacility]
+    permission_classes = [permissions.IsAuthenticated]
+    
+    @require_permission('view_locations')
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+    
+    @require_permission('edit_location')
+    def patch(self, request, *args, **kwargs):
+        return super().patch(request, *args, **kwargs)
+    
+    @require_permission('delete_location')
+    def delete(self, request, *args, **kwargs):
+        return super().delete(request, *args, **kwargs)
     
     def get_queryset(self):
         return Location.objects.filter(is_active=True)
@@ -182,7 +204,15 @@ class TankListCreateView(generics.ListCreateAPIView):
     List tanks for a location or create a new tank
     """
     serializer_class = TankSerializer
-    permission_classes = [CanEditFacility]
+    permission_classes = [permissions.IsAuthenticated]
+    
+    @require_permission('view_tank_data')
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+    
+    @require_permission('add_tank')
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
     
     def get_queryset(self):
         location_id = self.kwargs.get('location_id')
@@ -204,8 +234,20 @@ class TankDetailView(generics.RetrieveUpdateDestroyAPIView):
     Retrieve, update or delete a tank
     """
     serializer_class = TankSerializer
-    permission_classes = [CanEditFacility]
+    permission_classes = [permissions.IsAuthenticated]
     queryset = Tank.objects.all()
+    
+    @require_permission('view_tank_data')
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+    
+    @require_permission('edit_tank')
+    def patch(self, request, *args, **kwargs):
+        return super().patch(request, *args, **kwargs)
+    
+    @require_permission('delete_tank')
+    def delete(self, request, *args, **kwargs):
+        return super().delete(request, *args, **kwargs)
 
 
 class PermitListCreateView(generics.ListCreateAPIView):
@@ -213,7 +255,15 @@ class PermitListCreateView(generics.ListCreateAPIView):
     List permits for a location or create a new permit
     """
     serializer_class = PermitSerializer
-    permission_classes = [CanEditFacility]
+    permission_classes = [permissions.IsAuthenticated]
+    
+    @require_permission('view_permits')
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+    
+    @require_permission('add_permit')
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
     
     def get_queryset(self):
         location_id = self.kwargs.get('location_id')
@@ -235,12 +285,24 @@ class PermitDetailView(generics.RetrieveUpdateDestroyAPIView):
     Retrieve, update or delete a permit
     """
     serializer_class = PermitSerializer
-    permission_classes = [CanEditFacility]
+    permission_classes = [permissions.IsAuthenticated]
     queryset = Permit.objects.all()
+    
+    @require_permission('view_permits')
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+    
+    @require_permission('edit_permit')
+    def patch(self, request, *args, **kwargs):
+        return super().patch(request, *args, **kwargs)
+    
+    @require_permission('delete_permit')
+    def delete(self, request, *args, **kwargs):
+        return super().delete(request, *args, **kwargs)
 
 
 @api_view(['GET'])
-@permission_classes([permissions.IsAuthenticated])
+@require_permission('view_dashboard')
 def dashboard_stats(request):
     """
     Get dashboard statistics
