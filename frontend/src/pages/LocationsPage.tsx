@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MapPin, Plus, Building2, Phone, Mail, User, CreditCard as Edit, Trash2, Eye, X, Save } from 'lucide-react';
 import { apiService } from '../services/api';
 import { useAuthContext } from '../contexts/AuthContext';
@@ -30,6 +31,7 @@ interface NewLocationData {
 }
 
 export function LocationsPage() {
+  const navigate = useNavigate();
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -230,7 +232,7 @@ export function LocationsPage() {
         
         {(currentUser?.is_superuser || hasPermission('create_locations')) && (
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={() => navigate('/facilities/new')}
             className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <Plus className="h-4 w-4" />
@@ -265,7 +267,7 @@ export function LocationsPage() {
               
               <div className="flex items-center space-x-1">
                 <button
-                  onClick={() => console.log('View location', location.id)}
+                  onClick={() => navigate(`/facilities/${location.id}`)}
                   className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
                   title="View location"
                 >
@@ -273,7 +275,7 @@ export function LocationsPage() {
                 </button>
                 {(currentUser?.is_superuser || hasPermission('edit_locations')) && (
                   <button
-                    onClick={() => setEditingLocation(location)}
+                    onClick={() => navigate(`/facilities/${location.id}`)}
                     className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
                     title="Edit location"
                   >

@@ -98,6 +98,79 @@ class LocationListCreateView(generics.ListCreateAPIView):
                 )
 
 
+class FacilityContactListCreateView(generics.ListCreateAPIView):
+    """
+    List contacts for a facility or create a new contact
+    """
+    serializer_class = FacilityContactSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    @require_permission('view_facilities')
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+    
+    @require_permission('edit_location')
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+    
+    def get_queryset(self):
+        location_id = self.kwargs.get('location_id')
+        if location_id:
+            return FacilityContact.objects.filter(location_id=location_id)
+        return FacilityContact.objects.all()
+    
+    def perform_create(self, serializer):
+        location_id = self.kwargs.get('location_id')
+        if location_id:
+            location = get_object_or_404(Location, id=location_id, is_active=True)
+            serializer.save(location=location)
+        else:
+            serializer.save()
+
+
+class FacilityContactDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Retrieve, update or delete a facility contact
+    """
+    serializer_class = FacilityContactSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = FacilityContact.objects.all()
+    
+    @require_permission('view_facilities')
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+    
+    @require_permission('edit_location')
+    def patch(self, request, *args, **kwargs):
+        return super().patch(request, *args, **kwargs)
+    
+    @require_permission('delete_location')
+    def delete(self, request, *args, **kwargs):
+        return super().delete(request, *args, **kwargs)
+
+
+class OperatingHoursDetailView(generics.RetrieveUpdateAPIView):
+    """
+    Retrieve or update operating hours for a facility
+    """
+    serializer_class = OperatingHoursSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    @require_permission('view_facilities')
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+    
+    @require_permission('edit_location')
+    def patch(self, request, *args, **kwargs):
+        return super().patch(request, *args, **kwargs)
+    
+    def get_object(self):
+        location_id = self.kwargs.get('location_id')
+        location = get_object_or_404(Location, id=location_id, is_active=True)
+        operating_hours, created = OperatingHours.objects.get_or_create(location=location)
+        return operating_hours
+
+
 class LocationDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     Retrieve, update or delete a location

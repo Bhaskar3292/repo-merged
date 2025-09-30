@@ -9,6 +9,13 @@ urlpatterns = [
     path('locations/', views.LocationListCreateView.as_view(), name='location_list_create'),
     path('locations/<int:pk>/', views.LocationDetailView.as_view(), name='location_detail'),
     
+    # Facility Contacts
+    path('locations/<int:location_id>/contacts/', views.FacilityContactListCreateView.as_view(), name='facility_contacts'),
+    path('contacts/<int:pk>/', views.FacilityContactDetailView.as_view(), name='facility_contact_detail'),
+    
+    # Operating Hours
+    path('locations/<int:location_id>/operating-hours/', views.OperatingHoursDetailView.as_view(), name='operating_hours'),
+    
     # Dashboard URLs
     path('locations/<int:location_id>/dashboard/', views.LocationDashboardView.as_view(), name='location_dashboard'),
     path('dashboard-sections/', views.DashboardSectionListView.as_view(), name='dashboard_sections'),
