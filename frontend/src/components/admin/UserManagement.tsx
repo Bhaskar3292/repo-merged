@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Trash2, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Users, Plus, Trash2, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle } from 'lucide-react';
 import { apiService } from '../../services/api';
 import { useAuthContext } from '../../contexts/AuthContext';
 
@@ -106,8 +106,10 @@ export function UserManagement() {
   const handleDeleteUser = async (userId: number) => {
     try {
       setError(null);
+      console.log('Deleting user:', userId);
       
       await apiService.deleteUser(userId);
+      console.log('User deleted successfully');
       
       // Reload the entire user list
       await loadUsers();
@@ -116,6 +118,7 @@ export function UserManagement() {
       setTimeout(() => setSuccess(null), 3000);
       
     } catch (error) {
+      console.error('Delete user error:', error);
       setError('Failed to delete user');
       setDeleteConfirm({ isOpen: false });
     }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Save, RotateCcw, CheckCircle, AlertTriangle, Lock } from 'lucide-react';
+import { Shield, Save, RotateCcw, CircleCheck as CheckCircle, TriangleAlert as AlertTriangle, Lock } from 'lucide-react';
 import { apiService } from '../../services/api';
 import { useAuthContext } from '../../contexts/AuthContext';
 
@@ -117,6 +117,8 @@ export function RolePermissionsTab() {
         }
       }
       
+      console.log('🔍 RolePermissions: Saving changes:', changes);
+      
       // Save each change
       for (const change of changes) {
         await apiService.updateRolePermission(change.role, change.permissionId, change.granted);
@@ -130,6 +132,7 @@ export function RolePermissionsTab() {
       setTimeout(() => setSuccess(null), 3000);
       
     } catch (error) {
+      console.error('🔍 RolePermissions: Save error:', error);
       setError('Failed to save permission changes');
     } finally {
       setSaving(false);
