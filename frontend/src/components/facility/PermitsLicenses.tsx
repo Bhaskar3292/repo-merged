@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Calendar,AlertTriangle, CheckCircle, Clock, Download, Upload, Plus, Eye, CreditCard as Edit, Save, X, Paperclip } from 'lucide-react';
+import { FileText, Calendar, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, Clock, Download, Upload, Plus, Eye, CreditCard as Edit, Save, X, Paperclip } from 'lucide-react';
 
 interface PermitsLicensesProps {
   selectedFacility?: any;
@@ -394,8 +394,59 @@ export function PermitsLicenses({ selectedFacility }: PermitsLicensesProps) {
                           className="block w-full mt-1 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="Permit Number"
                         />
-              {/* Description */}
+                      ) : (
                         <p>{permit.number}</p>
+                      )}
+                    </div>
+                    <div>
+                      <span className="font-medium">Issue Date:</span>
+                      {editingPermit === permit.id ? (
+                        <input
+                          type="date"
+                          value={editedPermit.issueDate || permit.issueDate}
+                          onChange={(e) => updateEditedPermit('issueDate', e.target.value)}
+                          className="block w-full mt-1 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      ) : (
+                        <p>{new Date(permit.issueDate).toLocaleDateString()}</p>
+                      )}
+                    </div>
+                    <div>
+                      <span className="font-medium">Expiry Date:</span>
+                      {editingPermit === permit.id ? (
+                        <input
+                          type="date"
+                          value={editedPermit.expiryDate || permit.expiryDate}
+                          onChange={(e) => updateEditedPermit('expiryDate', e.target.value)}
+                          className="block w-full mt-1 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      ) : (
+                        <>
+                          <p>{new Date(permit.expiryDate).toLocaleDateString()}</p>
+                          {daysUntilExpiry > 0 && daysUntilExpiry <= 30 && (
+                            <p className="text-yellow-600 font-medium">({daysUntilExpiry} days remaining)</p>
+                          )}
+                          {daysUntilExpiry < 0 && (
+                            <p className="text-red-600 font-medium">(Expired {Math.abs(daysUntilExpiry)} days ago)</p>
+                          )}
+                        </>
+                      )}
+                    </div>
+                    <div>
+                      <span className="font-medium">Authority:</span>
+                      {editingPermit === permit.id ? (
+                        <input
+                          type="text"
+                          value={editedPermit.authority || permit.authority}
+                          onChange={(e) => updateEditedPermit('authority', e.target.value)}
+                          className="block w-full mt-1 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Issuing Authority"
+                        />
+                      ) : (
+                        <p>{permit.authority}</p>
+                      )}
+                    </div>
+                  </div>
 
                   <div className="flex space-x-2">
                     {editingPermit === permit.id ? (
@@ -418,18 +469,46 @@ export function PermitsLicenses({ selectedFacility }: PermitsLicensesProps) {
                     ) : (
                       <>
                         <button className="flex items-center space-x-1 px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">
-                <h4 className="text-lg font-medium text-gray-900 mb-4">Description</h4>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Permit Description
-                  </label>
-                  <textarea
-                    value={editingPermit.description}
-                    onChange={(e) => setEditingPermit({...editingPermit, description: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    rows={3}
-                    placeholder="Permit description or purpose"
-                  />
+                          <Eye className="h-4 w-4" />
+                          <span>View</span>
+                        </button>
+                        <button
+                          onClick={() => handleEditPermit(permit)}
+                          className="flex items-center space-x-1 px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50"
+                        >
+                          <Edit className="h-4 w-4" />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          onClick={() => handleDownloadPermit(permit.id, permit.number)}
+                          disabled={downloadingPermit === permit.id}
+                          className="flex items-center space-x-1 px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50"
+                        >
+                          <Download className={`h-4 w-4 ${downloadingPermit === permit.id ? 'animate-spin' : ''}`} />
+                          <span>{downloadingPermit === permit.id ? 'Downloading...' : 'Download'}</span>
+                        </button>
+                        <button 
+                          onClick={() => openUploadModal(permit.id)}
+                          className="flex items-center space-x-1 px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50"
+                        >
+                          <Upload className="h-4 w-4" />
+                          <span>Upload</span>
+                        </button>
+                        {permit.status === 'Expiring Soon' && (
+                          <button className="flex items-center space-x-1 px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
+                            <Calendar className="h-4 w-4" />
+                            <span>Renew</span>
+                          </button>
+                        )}
+                        {uploadedFiles[permit.id] && uploadedFiles[permit.id].length > 0 && (
+                          <div className="flex items-center space-x-1 text-xs text-gray-500">
+                            <Paperclip className="h-3 w-3" />
+                            <span>{uploadedFiles[permit.id].length} file(s)</span>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
               );
             })}
