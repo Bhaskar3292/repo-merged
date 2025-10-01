@@ -1,21 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Building2, 
-  ChevronDown, 
-  ChevronRight, 
-  Edit, 
-  Save, 
-  X, 
-  MapPin, 
-  Settings, 
-  Users, 
-  Clock,
-  Phone,
-  Mail,
-  Calendar,
-  Hash,
-  Globe
-} from 'lucide-react';
+import { Building2, ChevronDown, ChevronRight, CreditCard as Edit, Save, X, MapPin, Settings, Users, Clock, Phone, Mail, Calendar, Hash, Globe } from 'lucide-react';
 import { apiService } from '../../services/api';
 import { useAuthContext } from '../../contexts/AuthContext';
 
