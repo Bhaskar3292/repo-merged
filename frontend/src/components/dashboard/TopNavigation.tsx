@@ -7,7 +7,8 @@ import {
   LogOut, 
   User, 
   Settings,
-  Building2
+  Building2,
+  X
 } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { apiService } from '../../services/api';

@@ -18,15 +18,21 @@ export function Dashboard() {
       setSelectedFacility(event.detail);
     };
     
+    const handleFacilityClear = () => {
+      setSelectedFacility(null);
+    };
+    
     const handleLocationCreated = () => {
       setRefreshKey(prev => prev + 1);
     };
     
     window.addEventListener('facility:select', handleFacilitySelect as EventListener);
+    window.addEventListener('facility:clear', handleFacilityClear);
     window.addEventListener('location:created', handleLocationCreated);
     
     return () => {
       window.removeEventListener('facility:select', handleFacilitySelect as EventListener);
+      window.removeEventListener('facility:clear', handleFacilityClear);
       window.removeEventListener('location:created', handleLocationCreated);
     };
   }, []);
