@@ -35,9 +35,9 @@ class DashboardSectionDataAdmin(admin.ModelAdmin):
 
 @admin.register(Tank)
 class TankAdmin(admin.ModelAdmin):
-    list_display = ['name', 'location', 'tank_type', 'capacity', 'current_level', 'status']
-    list_filter = ['tank_type', 'status', 'location']
-    search_fields = ['name', 'location__name']
+    list_display = ['label', 'location', 'product', 'status', 'size', 'tank_material']
+    list_filter = ['status', 'location', 'tank_lined']
+    search_fields = ['label', 'product', 'location__name', 'tank_material']
     readonly_fields = ['created_at', 'updated_at']
 
 

@@ -3,6 +3,7 @@ Models for facility management with dynamic dashboards
 """
 from django.db import models
 from django.contrib.auth import get_user_model
+from datetime import date, timedelta
 import json
 
 User = get_user_model()
@@ -140,6 +141,7 @@ class Tank(models.Model):
         ordering = ['location', 'label']
     
     def __str__(self):
+        return f"{self.location} - {self.label}"
 
 
 class Permit(models.Model):
@@ -183,10 +185,8 @@ class Permit(models.Model):
     
     @property
     def is_expiring_soon(self):
-        from datetime import date, timedelta
         return self.expiry_date <= date.today() + timedelta(days=30)
     
     @property
     def is_expired(self):
-        from datetime import date
         return self.expiry_date < date.today()
