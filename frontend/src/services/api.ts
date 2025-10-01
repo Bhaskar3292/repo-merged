@@ -506,6 +506,39 @@ class ApiService {
       throw new Error(error.response?.data?.error || error.message || 'Failed to update facility profile');
     }
   }
+
+  /**
+   * Get permits by location
+   */
+  async getPermitsByLocation(locationId: number): Promise<PaginatedResponse<any>> {
+    try {
+      console.log('🔍 API: Getting permits for location:', locationId);
+      console.log('🔍 API: Auth token exists:', !!tokenManager.getAccessToken());
+      const response = await api.get(`/api/facilities/locations/${locationId}/permits/`);
+      console.log('🔍 API: Permits response:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('🔍 API: Get permits error:', error);
+      throw new Error(error.response?.data?.error || error.message || 'Failed to get permits');
+    }
+  }
+
+  /**
+   * Create permit
+   */
+  async createPermit(locationId: number, data: any): Promise<any> {
+    try {
+      console.log('🔍 API: Creating permit for location:', locationId);
+      console.log('🔍 API: Permit data:', data);
+      console.log('🔍 API: Auth token exists:', !!tokenManager.getAccessToken());
+      const response = await api.post(`/api/facilities/locations/${locationId}/permits/`, data);
+      console.log('🔍 API: Create permit response:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('🔍 API: Create permit error:', error);
+      throw new Error(error.response?.data?.error || error.message || 'Failed to create permit');
+    }
+  }
 }
 
 export const apiService = new ApiService();
