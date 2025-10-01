@@ -104,50 +104,42 @@ class DashboardSectionData(models.Model):
 
 class Tank(models.Model):
     """
-    Tank model for facility management
+    Tank model for comprehensive facility management
     """
-    TANK_TYPES = [
-        ('gasoline', 'Gasoline'),
-        ('diesel', 'Diesel'),
-        ('oil', 'Oil'),
-        ('water', 'Water'),
-        ('chemical', 'Chemical'),
-    ]
-    
     STATUS_CHOICES = [
         ('active', 'Active'),
-        ('maintenance', 'Maintenance'),
         ('inactive', 'Inactive'),
-        ('decommissioned', 'Decommissioned'),
+        ('maintenance', 'Maintenance'),
+        ('out_of_service', 'Out of Service'),
     ]
     
     location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='tanks')
-    name = models.CharField(max_length=100)
-    tank_type = models.CharField(max_length=20, choices=TANK_TYPES)
-    capacity = models.DecimalField(max_digits=10, decimal_places=2, help_text="Capacity in gallons")
-    current_level = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Current level in gallons")
+    label = models.CharField(max_length=100, help_text="Tank identifier/label")
+    product = models.CharField(max_length=100, blank=True, help_text="Product stored in tank")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
-    
-    # Technical specifications
-    material = models.CharField(max_length=50, blank=True)
-    installation_date = models.DateField(null=True, blank=True)
-    last_inspection = models.DateField(null=True, blank=True)
+    size = models.CharField(max_length=50, blank=True, help_text="Tank size/capacity")
+    tank_lined = models.CharField(max_length=3, choices=[('Yes', 'Yes'), ('No', 'No')], default='Yes')
+    compartment = models.CharField(max_length=3, choices=[('Yes', 'Yes'), ('No', 'No')], default='No')
+    manifolded_with = models.CharField(max_length=200, blank=True, help_text="Other tanks this is manifolded with")
+    piping_manifolded_with = models.CharField(max_length=200, blank=True, help_text="Piping manifold connections")
+    track_release_detection = models.CharField(max_length=3, choices=[('Yes', 'Yes'), ('No', 'No')], default='Yes')
+    tank_material = models.CharField(max_length=100, blank=True, help_text="Tank construction material")
+    release_detection = models.CharField(max_length=200, blank=True, help_text="Release detection method")
+    stp_sumps = models.CharField(max_length=100, blank=True, help_text="STP sumps information")
+    piping_detection = models.CharField(max_length=200, blank=True, help_text="Piping detection method")
+    piping_material = models.CharField(max_length=100, blank=True, help_text="Piping material")
+    atg_id = models.CharField(max_length=50, blank=True, help_text="ATG system identifier")
+    installed = models.CharField(max_length=20, blank=True, help_text="Installation date")
+    piping_installed = models.CharField(max_length=20, blank=True, help_text="Piping installation date")
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        unique_together = ['location', 'name']
-        ordering = ['location', 'name']
+        unique_together = ['location', 'label']
+        ordering = ['location', 'label']
     
     def __str__(self):
-        return f"{self.location.name} - {self.name}"
-    
-    @property
-    def fill_percentage(self):
-        if self.capacity > 0:
-            return (self.current_level / self.capacity) * 100
-        return 0
 
 
 class Permit(models.Model):

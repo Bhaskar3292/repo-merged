@@ -82,13 +82,14 @@ class TankSerializer(serializers.ModelSerializer):
     Serializer for Tank model
     """
     location_name = serializers.CharField(source='location.name', read_only=True)
-    fill_percentage = serializers.ReadOnlyField()
     
     class Meta:
         model = Tank
-        fields = ['id', 'location', 'location_name', 'name', 'tank_type', 'capacity', 
-                 'current_level', 'fill_percentage', 'status', 'material', 
-                 'installation_date', 'last_inspection', 'created_at', 'updated_at']
+        fields = ['id', 'location', 'location_name', 'label', 'product', 'status', 
+                 'size', 'tank_lined', 'compartment', 'manifolded_with', 
+                 'piping_manifolded_with', 'track_release_detection', 'tank_material',
+                 'release_detection', 'stp_sumps', 'piping_detection', 'piping_material',
+                 'atg_id', 'installed', 'piping_installed', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
 
 

@@ -396,7 +396,92 @@ class ApiService {
     }
   }
   
-  // ... (rest of the file with other specific methods like getTanks, getPermits, etc.)
+  // --- TANK MANAGEMENT METHODS ---
+  
+  /**
+   * Get all tanks
+   */
+  async getTanks(): Promise<any[]> {
+    try {
+      const response = await api.get('/api/facilities/tanks/');
+      return response.data.results || response.data || [];
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to get tanks');
+    }
+  }
+
+  /**
+   * Get tanks by facility
+   */
+  async getTanksByFacility(facilityId: number): Promise<any> {
+    try {
+      const response = await api.get(`/api/facilities/locations/${facilityId}/tanks/`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to get facility tanks');
+    }
+  }
+
+  /**
+   * Create new tank
+   */
+  async createTank(data: any): Promise<any> {
+    try {
+      const response = await api.post('/api/facilities/tanks/', data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to create tank');
+    }
+  }
+
+  /**
+   * Update tank
+   */
+  async updateTank(id: number, data: any): Promise<any> {
+    try {
+      const response = await api.patch(`/api/facilities/tanks/${id}/`, data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to update tank');
+    }
+  }
+
+  /**
+   * Delete tank
+   */
+  async deleteTank(id: number): Promise<void> {
+    try {
+      await api.delete(`/api/facilities/tanks/${id}/`);
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to delete tank');
+    }
+  }
+
+  // --- DASHBOARD METHODS ---
+  
+  /**
+   * Get location dashboard
+   */
+  async getLocationDashboard(locationId: number): Promise<any> {
+    try {
+      const response = await api.get(`/api/facilities/locations/${locationId}/dashboard/`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to get dashboard');
+    }
+  }
+
+  /**
+   * Update dashboard section
+   */
+  async updateDashboardSection(sectionId: number, data: any): Promise<any> {
+    try {
+      const response = await api.patch(`/api/facilities/dashboard-section-data/${sectionId}/`, { data });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to update dashboard section');
+    }
+  }
 }
 
 export const apiService = new ApiService();
