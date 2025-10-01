@@ -2,9 +2,104 @@
 Serializers for facility management
 """
 from rest_framework import serializers
-from .models import Location, LocationDashboard, DashboardSection, DashboardSectionData, Tank, Permit
+from .models import Location, LocationDashboard, DashboardSection, DashboardSectionData, Tank, Permit, FacilityProfile
 
 
+class FacilityProfileSerializer(serializers.ModelSerializer):
+    """
+    Serializer for FacilityProfile model
+    """
+    # General Information from Location
+    facilityName = serializers.CharField(source='location.name')
+    address1 = serializers.CharField(source='location.street_address')
+    city = serializers.CharField(source='location.city')
+    state = serializers.CharField(source='location.state')
+    zip = serializers.CharField(source='location.zip_code')
+    country = serializers.CharField(source='location.country')
+    phone = serializers.CharField(source='location.phone', allow_blank=True)
+    email = serializers.CharField(source='location.email', allow_blank=True)
+    
+    # Profile-specific fields
+    internalId = serializers.CharField(source='internal_id')
+    stateIdNumber = serializers.CharField(source='state_id_number')
+    address2 = serializers.CharField(source='location.address2', allow_blank=True)
+    
+    # Operational Information
+    storeOpenDate = serializers.DateField(source='store_open_date', allow_null=True)
+    operationalRegion = serializers.CharField(source='operational_region')
+    tosPosDate = serializers.DateField(source='tos_pos_date', allow_null=True)
+    gasBrand = serializers.CharField(source='gas_brand')
+    storeOperatorType = serializers.CharField(source='store_operator_type')
+    operationalDistrict = serializers.CharField(source='operational_district')
+    facilityType = serializers.CharField(source='location.facility_type')
+    leaseOwn = serializers.CharField(source='lease_own')
+    ownerId = serializers.CharField(source='owner_id')
+    tankOwner = serializers.CharField(source='tank_owner')
+    tankOperator = serializers.CharField(source='tank_operator')
+    numAST = serializers.IntegerField(source='num_ast')
+    numUSTRegistered = serializers.IntegerField(source='num_ust_registered')
+    numMPDs = serializers.IntegerField(source='num_mpds')
+    remodelCloseDate = serializers.DateField(source='remodel_close_date', allow_null=True)
+    remodelOpenDate = serializers.DateField(source='remodel_open_date', allow_null=True)
+    reasonForRemodel = serializers.CharField(source='reason_for_remodel')
+    channelOfTrade = serializers.CharField(source='channel_of_trade')
+    carServiceCenter = serializers.CharField(source='car_service_center')
+    truckServiceCenter = serializers.CharField(source='truck_service_center')
+    busMaintenance = serializers.CharField(source='bus_maintenance')
+    defuelingSite = serializers.CharField(source='defueling_site')
+    defuelingMethod = serializers.CharField(source='defueling_method')
+    
+    # Facility Contacts
+    complianceManagerName = serializers.CharField(source='compliance_manager_name')
+    complianceManagerPhone = serializers.CharField(source='compliance_manager_phone')
+    complianceManagerEmail = serializers.CharField(source='compliance_manager_email')
+    storeManagerName = serializers.CharField(source='store_manager_name')
+    storeManagerPhone = serializers.CharField(source='store_manager_phone')
+    storeManagerEmail = serializers.CharField(source='store_manager_email')
+    testingVendorName = serializers.CharField(source='testing_vendor_name')
+    testingVendorPhone = serializers.CharField(source='testing_vendor_phone')
+    testingVendorEmail = serializers.CharField(source='testing_vendor_email')
+    
+    # Operating Hours
+    operatingHours = serializers.JSONField(source='operating_hours')
+    
+    class Meta:
+        model = FacilityProfile
+        fields = [
+            # General Information
+            'facilityName', 'internalId', 'stateIdNumber', 'address1', 'address2',
+            'city', 'county', 'state', 'zip', 'country', 'phone', 'email',
+            # Operational Information
+            'storeOpenDate', 'operationalRegion', 'tosPosDate', 'gasBrand',
+            'storeOperatorType', 'category', 'operationalDistrict', 'facilityType',
+            'leaseOwn', 'ownerId', 'tankOwner', 'tankOperator', 'numAST',
+            'numUSTRegistered', 'numMPDs', 'insured', 'remodelCloseDate',
+            'remodelOpenDate', 'reasonForRemodel', 'channelOfTrade',
+            'carServiceCenter', 'truckServiceCenter', 'busMaintenance',
+            'defuelingSite', 'defuelingMethod',
+            # Facility Contacts
+            'complianceManagerName', 'complianceManagerPhone', 'complianceManagerEmail',
+            'storeManagerName', 'storeManagerPhone', 'storeManagerEmail',
+            'testingVendorName', 'testingVendorPhone', 'testingVendorEmail',
+            # Operating Hours
+            'operatingHours'
+        ]
+    
+    def update(self, instance, validated_data):
+        # Update Location fields
+        location_data = {}
+        if 'location' in validated_data:
+            location_data = validated_data.pop('location')
+            for field, value in location_data.items():
+                setattr(instance.location, field, value)
+            instance.location.save()
+        
+        # Update Profile fields
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+        
+        instance.save()
+        return instance
 class LocationSerializer(serializers.ModelSerializer):
     """
     Serializer for Location model

@@ -15,7 +15,7 @@ export function Sidebar({ collapsed, activeView, onViewChange, onToggleSidebar }
   const allMenuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, permission: 'view_dashboard' },
     { id: 'locations', label: 'Locations', icon: MapPin, permission: 'view_locations' },
-    { id: 'facilities', label: 'Facilities', icon: Building2, permission: 'view_facilities' },
+    { id: 'facilities', label: 'Facility Profile', icon: Building2, permission: 'view_facilities' },
     { id: 'tanks', label: 'Tank Management', icon: Zap, permission: 'view_tank_management' },
     { id: 'releases', label: 'Release Detection', icon: Shield, permission: 'view_release_detection' },
     { id: 'permits', label: 'Permits & Licenses', icon: FileText, permission: 'view_permits' },

@@ -26,4 +26,7 @@ urlpatterns = [
     
     # Stats
     path('stats/', views.dashboard_stats, name='dashboard_stats'),
+    
+    # Facility Profile
+    path('locations/<int:location_id>/profile/', views.FacilityProfileView.as_view(), name='facility_profile'),
 ]

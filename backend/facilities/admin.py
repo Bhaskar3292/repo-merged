@@ -2,9 +2,15 @@
 Admin configuration for facilities app
 """
 from django.contrib import admin
-from .models import Location, LocationDashboard, DashboardSection, DashboardSectionData, Tank, Permit
+from .models import Location, LocationDashboard, DashboardSection, DashboardSectionData, Tank, Permit, FacilityProfile
 
 
+@admin.register(FacilityProfile)
+class FacilityProfileAdmin(admin.ModelAdmin):
+    list_display = ['location', 'gas_brand', 'insured', 'created_at']
+    list_filter = ['insured', 'gas_brand', 'created_at']
+    search_fields = ['location__name', 'internal_id', 'state_id_number']
+    readonly_fields = ['created_at', 'updated_at']
 @admin.register(Location)
 class LocationAdmin(admin.ModelAdmin):
     list_display = ['name', 'created_by', 'is_active', 'created_at']

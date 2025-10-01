@@ -9,6 +9,74 @@ import json
 User = get_user_model()
 
 
+class FacilityProfile(models.Model):
+    """
+    Comprehensive facility profile with operational details
+    """
+    location = models.OneToOneField('Location', on_delete=models.CASCADE, related_name='profile')
+    
+    # General Information (already in Location model, but additional fields)
+    internal_id = models.CharField(max_length=50, blank=True)
+    state_id_number = models.CharField(max_length=50, blank=True)
+    county = models.CharField(max_length=100, blank=True)
+    
+    # Operational Information
+    store_open_date = models.DateField(null=True, blank=True)
+    operational_region = models.CharField(max_length=100, blank=True)
+    tos_pos_date = models.DateField(null=True, blank=True)
+    gas_brand = models.CharField(max_length=100, default='Phillips')
+    store_operator_type = models.CharField(max_length=100, blank=True)
+    category = models.CharField(max_length=100, blank=True)
+    operational_district = models.CharField(max_length=100, blank=True)
+    lease_own = models.CharField(max_length=50, blank=True)
+    owner_id = models.CharField(max_length=50, blank=True)
+    tank_owner = models.CharField(max_length=100, blank=True)
+    tank_operator = models.CharField(max_length=100, blank=True)
+    num_ast = models.PositiveIntegerField(default=0)
+    num_ust_registered = models.PositiveIntegerField(default=0)
+    num_mpds = models.PositiveIntegerField(default=0)
+    insured = models.BooleanField(default=False)
+    remodel_close_date = models.DateField(null=True, blank=True)
+    remodel_open_date = models.DateField(null=True, blank=True)
+    reason_for_remodel = models.CharField(max_length=200, blank=True)
+    channel_of_trade = models.CharField(max_length=100, blank=True)
+    car_service_center = models.CharField(max_length=100, blank=True)
+    truck_service_center = models.CharField(max_length=100, blank=True)
+    bus_maintenance = models.CharField(max_length=100, blank=True)
+    defueling_site = models.CharField(max_length=100, blank=True)
+    defueling_method = models.CharField(max_length=100, blank=True)
+    
+    # Facility Contacts
+    compliance_manager_name = models.CharField(max_length=100, blank=True)
+    compliance_manager_phone = models.CharField(max_length=20, blank=True)
+    compliance_manager_email = models.EmailField(blank=True)
+    store_manager_name = models.CharField(max_length=100, blank=True)
+    store_manager_phone = models.CharField(max_length=20, blank=True)
+    store_manager_email = models.EmailField(blank=True)
+    testing_vendor_name = models.CharField(max_length=100, blank=True)
+    testing_vendor_phone = models.CharField(max_length=20, blank=True)
+    testing_vendor_email = models.EmailField(blank=True)
+    
+    # Operating Hours (JSON field)
+    operating_hours = models.JSONField(default=dict, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"Profile for {self.location.name}"
+    
+    def get_default_operating_hours(self):
+        """Get default operating hours structure"""
+        return {
+            'monday': {'closed': False, 'open': '08:00', 'close': '18:00'},
+            'tuesday': {'closed': False, 'open': '08:00', 'close': '18:00'},
+            'wednesday': {'closed': False, 'open': '08:00', 'close': '18:00'},
+            'thursday': {'closed': False, 'open': '08:00', 'close': '18:00'},
+            'friday': {'closed': False, 'open': '08:00', 'close': '18:00'},
+            'saturday': {'closed': False, 'open': '09:00', 'close': '17:00'},
+            'sunday': {'closed': True, 'open': '09:00', 'close': '17:00'}
+        }
 class Location(models.Model):
     """
     Location model representing different facility locations

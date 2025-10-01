@@ -14,12 +14,12 @@ from permissions.decorators import require_permission, require_any_permission
 from permissions.models import check_user_permission
 from .models import (
     Location, LocationDashboard, DashboardSection, 
-    DashboardSectionData, Tank, Permit
+    DashboardSectionData, Tank, Permit, FacilityProfile
 )
 from .serializers import (
     LocationSerializer, LocationDetailSerializer, LocationDashboardSerializer,
     DashboardSectionSerializer, DashboardSectionDataSerializer,
-    TankSerializer, PermitSerializer
+    TankSerializer, PermitSerializer, FacilityProfileSerializer
 )
 
 logger = logging.getLogger(__name__)
@@ -300,3 +300,33 @@ def dashboard_stats(request):
     }
     
     return Response(stats)
+
+
+class FacilityProfileView(generics.RetrieveUpdateAPIView):
+    """
+    Retrieve and update facility profile
+    """
+    serializer_class = FacilityProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_object(self):
+        location_id = self.kwargs['location_id']
+        location = get_object_or_404(Location, id=location_id, is_active=True)
+        
+        # Get or create facility profile
+        profile, created = FacilityProfile.objects.get_or_create(
+            location=location,
+            defaults={
+                'operating_hours': {
+                    'monday': {'closed': False, 'open': '08:00', 'close': '18:00'},
+                    'tuesday': {'closed': False, 'open': '08:00', 'close': '18:00'},
+                    'wednesday': {'closed': False, 'open': '08:00', 'close': '18:00'},
+                    'thursday': {'closed': False, 'open': '08:00', 'close': '18:00'},
+                    'friday': {'closed': False, 'open': '08:00', 'close': '18:00'},
+                    'saturday': {'closed': False, 'open': '09:00', 'close': '17:00'},
+                    'sunday': {'closed': True, 'open': '09:00', 'close': '17:00'}
+                }
+            }
+        )
+        
+        return profile

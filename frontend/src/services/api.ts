@@ -482,6 +482,30 @@ class ApiService {
       throw new Error(error.response?.data?.error || error.message || 'Failed to update dashboard section');
     }
   }
+
+  /**
+   * Get facility profile
+   */
+  async getFacilityProfile(locationId: number): Promise<any> {
+    try {
+      const response = await api.get(`/api/facilities/locations/${locationId}/profile/`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to get facility profile');
+    }
+  }
+
+  /**
+   * Update facility profile
+   */
+  async updateFacilityProfile(locationId: number, data: any): Promise<any> {
+    try {
+      const response = await api.patch(`/api/facilities/locations/${locationId}/profile/`, data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to update facility profile');
+    }
+  }
 }
 
 export const apiService = new ApiService();
