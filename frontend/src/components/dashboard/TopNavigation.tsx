@@ -72,29 +72,17 @@ export function TopNavigation({ selectedFacility, onFacilitySelect, onViewChange
     onFacilitySelect(location);
     setSearchTerm('');
     setShowFacilityDropdown(false);
-    
-    // Dispatch event for other components to listen
-    window.dispatchEvent(new CustomEvent('facility:select', { 
-      detail: location 
-    }));
+
+    // Navigate to dashboard with facility ID
+    navigate(`/dashboard?locationId=${location.id}`);
   };
 
   const handleClearFacility = () => {
-  // Clear the selected facility
-  onFacilitySelect(null);
-  
-  // Clear any search term
-  setSearchTerm('');
-  
-  // Close facility dropdown if open
-  setShowFacilityDropdown(false);
-  
-  // Dispatch event for other components to listen
-  window.dispatchEvent(new CustomEvent('facility:clear'));
-  
-  // Optionally redirect to dashboard - uncomment if needed
-  navigate('/');
-};
+    onFacilitySelect(null);
+    setSearchTerm('');
+    setShowFacilityDropdown(false);
+    navigate('/dashboard');
+  };
 
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -147,15 +135,20 @@ export function TopNavigation({ selectedFacility, onFacilitySelect, onViewChange
                       <button
                         key={location.id}
                         onClick={() => handleLocationSelect(location)}
-                        className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                        className="w-full text-left px-4 py-3 hover:bg-blue-50 hover:border-blue-200 border-b border-gray-100 last:border-b-0 transition-colors cursor-pointer"
                       >
-                        <div className="flex items-center space-x-3">
-                          <Building2 className="h-4 w-4 text-gray-400" />
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">{location.name}</p>
-                            <p className="text-xs text-gray-500">
-                              {location.city}, {location.state}
-                            </p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <Building2 className="h-5 w-5 text-blue-600" />
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">{location.name}</p>
+                              <p className="text-xs text-gray-500">
+                                {location.city}, {location.state}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-xs text-blue-600 opacity-0 group-hover:opacity-100">
+                            View →
                           </div>
                         </div>
                       </button>

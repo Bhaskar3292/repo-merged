@@ -1,11 +1,14 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { TopNavigation } from './TopNavigation';
 import { MainContent } from './MainContent';
 import { AdminDashboard } from '../admin/AdminDashboard';
 import { useAuthContext } from '../../contexts/AuthContext';
+import { apiService } from '../../services/api';
 
 export function Dashboard() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeView, setActiveView] = useState('dashboard');
   const [selectedFacility, setSelectedFacility] = useState<any>(null);
@@ -13,32 +16,44 @@ export function Dashboard() {
   const { hasPermission, user } = useAuthContext();
 
   useEffect(() => {
-    // Listen for facility selection events
-    const handleFacilitySelect = (event: CustomEvent) => {
-      setSelectedFacility(event.detail);
-    };
-    
-    const handleFacilityClear = () => {
+    const locationId = searchParams.get('locationId');
+    if (locationId) {
+      loadLocationById(locationId);
+    } else {
       setSelectedFacility(null);
-    };
-    
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     const handleLocationCreated = () => {
       setRefreshKey(prev => prev + 1);
     };
-    
-    window.addEventListener('facility:select', handleFacilitySelect as EventListener);
-    window.addEventListener('facility:clear', handleFacilityClear);
+
     window.addEventListener('location:created', handleLocationCreated);
-    
+
     return () => {
-      window.removeEventListener('facility:select', handleFacilitySelect as EventListener);
-      window.removeEventListener('facility:clear', handleFacilityClear);
       window.removeEventListener('location:created', handleLocationCreated);
     };
   }, []);
+
+  const loadLocationById = async (locationId: string) => {
+    try {
+      const locations = await apiService.getLocations();
+      const location = locations.find((loc: any) => loc.id.toString() === locationId);
+      if (location) {
+        setSelectedFacility(location);
+      }
+    } catch (error) {
+      console.error('Failed to load location:', error);
+    }
+  };
   
   const handleFacilitySelect = (facility: any) => {
-    setSelectedFacility(facility);
+    if (facility) {
+      setSearchParams({ locationId: facility.id.toString() });
+    } else {
+      setSearchParams({});
+    }
   };
 
   return (
