@@ -79,6 +79,24 @@ export function TopNavigation({ selectedFacility, onFacilitySelect, onViewChange
     }));
   };
 
+  const handleClearFacility = () => {
+  // Clear the selected facility
+  onFacilitySelect(null);
+  
+  // Clear any search term
+  setSearchTerm('');
+  
+  // Close facility dropdown if open
+  setShowFacilityDropdown(false);
+  
+  // Dispatch event for other components to listen
+  window.dispatchEvent(new CustomEvent('facility:clear'));
+  
+  // Optionally redirect to dashboard - uncomment if needed
+  navigate('/');
+};
+
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
     setShowFacilityDropdown(true);
@@ -92,8 +110,13 @@ export function TopNavigation({ selectedFacility, onFacilitySelect, onViewChange
           <div className="flex items-center min-w-0 flex-1">
             {selectedFacility && (
               <div className="flex items-center space-x-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-200">
-                <Building2 className="h-4 w-4 text-blue-600" />
                 <span className="text-sm font-medium text-blue-900 truncate">{selectedFacility.name}</span>
+                <button 
+        onClick={handleClearFacility}
+        className="flex-shrink-0 w-5 h-5 flex items-center justify-center text-blue-500 hover:text-red-700 hover:bg-blue-100 rounded"
+      >
+        <X size={32} />
+      </button>
               </div>
             )}
           </div>

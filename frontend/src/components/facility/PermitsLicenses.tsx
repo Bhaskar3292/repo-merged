@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Calendar, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, Clock, Download, Upload, Plus, Eye, CreditCard as Edit, Save, X, Paperclip } from 'lucide-react';
+import { FileText, Calendar, AlertTriangle, CheckCircle, Clock, Download, Upload, Plus, Eye, CreditCard as Edit, Save, X, Paperclip } from 'lucide-react';
 
 interface PermitsLicensesProps {
   selectedFacility?: any;
@@ -9,7 +9,7 @@ export function PermitsLicenses({ selectedFacility }: PermitsLicensesProps) {
   const [filter, setFilter] = useState('all');
   const [editingPermit, setEditingPermit] = useState<number | null>(null);
   const [editedPermit, setEditedPermit] = useState<any>({});
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(true);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedPermitForUpload, setSelectedPermitForUpload] = useState<number | null>(null);
   const [newPermit, setNewPermit] = useState({
@@ -57,7 +57,7 @@ export function PermitsLicenses({ selectedFacility }: PermitsLicensesProps) {
       status: 'Active',
       authority: ''
     });
-    setShowAddModal(false);
+    setShowAddModal(true);
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
