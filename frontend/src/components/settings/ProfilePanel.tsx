@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Mail, Phone, Building2, Calendar, Save, CreditCard as Edit, Camera, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Phone, Building2, Calendar, Save, Edit2 as Edit, Camera, Eye, EyeOff } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
 
 export function ProfilePanel() {

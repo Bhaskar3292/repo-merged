@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Calendar, AlertTriangle, CheckCircle, Clock, Download, Upload, Plus, Eye, CreditCard as Edit, Save, X, Paperclip } from 'lucide-react';
+import { FileText, Calendar, AlertTriangle, CheckCircle, Clock, Download, Upload, Plus, Eye, Edit2 as Edit, Save, X, Paperclip } from 'lucide-react';
 
 interface PermitsLicensesProps {
   selectedFacility?: any;
