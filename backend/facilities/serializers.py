@@ -16,13 +16,12 @@ class FacilityProfileSerializer(serializers.ModelSerializer):
     state = serializers.CharField(source='location.state')
     zip = serializers.CharField(source='location.zip_code')
     country = serializers.CharField(source='location.country')
-    phone = serializers.CharField(source='location.phone', allow_blank=True)
-    email = serializers.CharField(source='location.email', allow_blank=True)
+    # phone = serializers.CharField(source='location.phone', allow_blank=True)
+    # email = serializers.CharField(source='location.email', allow_blank=True)
     
     # Profile-specific fields
     internalId = serializers.CharField(source='internal_id')
-    stateIdNumber = serializers.CharField(source='state_id_number')
-    address2 = serializers.CharField(source='location.address2', allow_blank=True)
+    stateIdNumber = serializers.CharField(source='state_id_number')    
     
     # Operational Information
     storeOpenDate = serializers.DateField(source='store_open_date', allow_null=True)
@@ -67,8 +66,8 @@ class FacilityProfileSerializer(serializers.ModelSerializer):
         model = FacilityProfile
         fields = [
             # General Information
-            'facilityName', 'internalId', 'stateIdNumber', 'address1', 'address2',
-            'city', 'county', 'state', 'zip', 'country', 'phone', 'email',
+            'facilityName', 'internalId', 'stateIdNumber', 'address1',
+            'city', 'county', 'state', 'zip', 'country',
             # Operational Information
             'storeOpenDate', 'operationalRegion', 'tosPosDate', 'gasBrand',
             'storeOperatorType', 'category', 'operationalDistrict', 'facilityType',

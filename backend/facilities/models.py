@@ -183,7 +183,7 @@ class Tank(models.Model):
     ]
     
     location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='tanks')
-    label = models.CharField(max_length=100, help_text="Tank identifier/label")
+    label = models.CharField(max_length=100, help_text="Tank identifier/label", default="Unlabeled", blank=False)
     product = models.CharField(max_length=100, blank=True, help_text="Product stored in tank")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     size = models.CharField(max_length=50, blank=True, help_text="Tank size/capacity")
@@ -205,11 +205,8 @@ class Tank(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        unique_together = ['location', 'label']
+        constraints = [models.UniqueConstraint(fields=['location', 'label'], name='uniq_location_label')]
         ordering = ['location', 'label']
-    
-    def __str__(self):
-        return f"{self.location} - {self.label}"
 
 
 class Permit(models.Model):
