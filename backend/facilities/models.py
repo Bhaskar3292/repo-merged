@@ -82,11 +82,13 @@ class Location(models.Model):
     Location model representing different facility locations
     """
     name = models.CharField(max_length=200, unique=True)
-    street_address = models.CharField(max_length=255, blank=True)
-    city = models.CharField(max_length=100, blank=True)
-    state = models.CharField(max_length=50, blank=True)
-    zip_code = models.CharField(max_length=10, blank=True)
+    street_address = models.CharField(max_length=255, blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
+    state = models.CharField(max_length=50, blank=True, null=True)
+    zip_code = models.CharField(max_length=10, blank=True, null=True)
     country = models.CharField(max_length=100, default='United States')
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
     facility_type = models.CharField(
         max_length=50,
         choices=[
@@ -104,10 +106,10 @@ class Location(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
-    
+
     class Meta:
         ordering = ['name']
-    
+
     def __str__(self):
         return self.name
 

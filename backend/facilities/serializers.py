@@ -110,10 +110,10 @@ class LocationSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Location
-        fields = ['id', 'name', 'street_address', 'city', 'state', 'zip_code', 
-                 'country', 'facility_type', 'description', 'created_by', 
-                 'created_by_username', 'created_at', 'updated_at', 'is_active',
-                 'tank_count', 'permit_count', 'full_address']
+        fields = ['id', 'name', 'street_address', 'city', 'state', 'zip_code',
+                 'country', 'phone', 'email', 'facility_type', 'description',
+                 'created_by', 'created_by_username', 'created_at', 'updated_at',
+                 'is_active', 'tank_count', 'permit_count', 'full_address']
         read_only_fields = ['created_by', 'created_at', 'updated_at']
     
     def get_tank_count(self, obj):
@@ -218,9 +218,9 @@ class LocationDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
         fields = ['id', 'name', 'street_address', 'city', 'state', 'zip_code',
-                 'country', 'facility_type', 'description', 'created_by', 
-                 'created_by_username', 'created_at', 'updated_at', 'is_active',
-                 'tanks', 'permits', 'dashboard', 'full_address']
+                 'country', 'phone', 'email', 'facility_type', 'description',
+                 'created_by', 'created_by_username', 'created_at', 'updated_at',
+                 'is_active', 'tanks', 'permits', 'dashboard', 'full_address']
         read_only_fields = ['created_by', 'created_at', 'updated_at']
     
     def get_full_address(self, obj):
