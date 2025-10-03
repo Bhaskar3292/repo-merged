@@ -39,7 +39,7 @@ export function LocationCard({ location, onEdit, onDelete, canEdit, canDelete }:
     try {
       setLoadingCounts(true);
       const [tanks, permits] = await Promise.all([
-        apiService.getTanks(location.id),
+        apiService.getTanksByLocationid(location.id),
         apiService.getPermits(location.id)
       ]);
       setTankCount(Array.isArray(tanks) ? tanks.length : 0);
@@ -186,9 +186,6 @@ export function LocationCard({ location, onEdit, onDelete, canEdit, canDelete }:
           </button>
         </div>
       </div>
-
-      {/* Hover indicator */}
-      <div className="h-1 bg-gradient-to-r from-blue-500 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity rounded-b-lg"></div>
     </div>
   );
 }

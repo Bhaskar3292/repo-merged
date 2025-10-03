@@ -425,7 +425,7 @@ class ApiService {
   /**
    * Get tanks by location ID (alias for getTanksByFacility)
    */
-  async getTanks(locationId: number): Promise<any[]> {
+  async getTanksByLocationid(locationId: number): Promise<any[]> {
     try {
       const response = await api.get(`/api/facilities/locations/${locationId}/tanks/`);
       return response.data.results || response.data || [];
