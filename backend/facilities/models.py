@@ -251,7 +251,21 @@ class Permit(models.Model):
     @property
     def is_expiring_soon(self):
         return self.expiry_date <= date.today() + timedelta(days=30)
-    
+
     @property
     def is_expired(self):
         return self.expiry_date < date.today()
+
+    @property
+    def calculated_status(self):
+        """
+        Calculate permit status based on expiry date
+        Returns: 'expired', 'expiring_soon', or 'active'
+        """
+        today = date.today()
+        if self.expiry_date < today:
+            return 'expired'
+        elif self.expiry_date <= today + timedelta(days=30):
+            return 'expiring_soon'
+        else:
+            return 'active'

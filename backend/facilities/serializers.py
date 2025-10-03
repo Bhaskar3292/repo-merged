@@ -194,13 +194,14 @@ class PermitSerializer(serializers.ModelSerializer):
     location_name = serializers.CharField(source='location.name', read_only=True)
     is_expiring_soon = serializers.ReadOnlyField()
     is_expired = serializers.ReadOnlyField()
-    
+    calculated_status = serializers.ReadOnlyField()
+
     class Meta:
         model = Permit
-        fields = ['id', 'location', 'location_name', 'permit_type', 'permit_number', 
-                 'issuing_authority', 'issue_date', 'expiry_date', 'status', 
+        fields = ['id', 'location', 'location_name', 'permit_type', 'permit_number',
+                 'issuing_authority', 'issue_date', 'expiry_date', 'status',
                  'description', 'renewal_required', 'is_expiring_soon', 'is_expired',
-                 'created_at', 'updated_at']
+                 'calculated_status', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
 
 

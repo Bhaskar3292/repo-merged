@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { FileText, Calendar, AlertTriangle,CheckCircle, Clock, Download, Upload, Plus, Eye, CreditCard as Edit, Save, X, Paperclip } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { FileText, Calendar, AlertTriangle, CheckCircle, Clock, Download, Upload, Plus, Eye, Edit2 as Edit, Save, X, Paperclip } from 'lucide-react';
+import { apiService } from '../../services/api';
 
 interface PermitsLicensesProps {
   selectedFacility?: any;
@@ -13,51 +14,151 @@ export function PermitsLicenses({ selectedFacility }: PermitsLicensesProps) {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedPermitForUpload, setSelectedPermitForUpload] = useState<number | null>(null);
   const [newPermit, setNewPermit] = useState({
-    facility: '',
-    type: '',
-    number: '',
-    issueDate: '',
-    expiryDate: '',
-    status: 'Active',
-    authority: ''
+    permit_type: 'operating',
+    permit_number: '',
+    issuing_authority: '',
+    issue_date: '',
+    expiry_date: '',
+    description: '',
+    renewal_required: true
   });
   const [uploadedFiles, setUploadedFiles] = useState<Record<number, string[]>>({});
   const [downloadingPermit, setDownloadingPermit] = useState<number | null>(null);
   const [permits, setPermits] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (selectedFacility) {
+      loadPermits();
+    }
+  }, [selectedFacility]);
+
+  const loadPermits = async () => {
+    if (!selectedFacility?.id) return;
+
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await apiService.getPermits(selectedFacility.id);
+      console.log('🔍 Loaded permits:', response);
+      setPermits(response);
+    } catch (error: any) {
+      console.error('Failed to load permits:', error);
+      setError(error.message || 'Failed to load permits');
+      setPermits([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleEditPermit = (permit: any) => {
     setEditingPermit(permit.id);
     setEditedPermit(permit);
   };
 
-  const handleSavePermit = () => {
-    setPermits(prev => prev.map(permit => 
-      permit.id === editingPermit ? { ...permit, ...editedPermit } : permit
-    ));
-    setEditingPermit(null);
-    setEditedPermit({});
+  const handleSavePermit = async () => {
+    if (!editingPermit || !editedPermit) return;
+
+    setLoading(true);
+    setError(null);
+    try {
+      await apiService.updatePermit(editingPermit, {
+        location: selectedFacility.id,
+        permit_type: editedPermit.permit_type,
+        permit_number: editedPermit.permit_number,
+        issuing_authority: editedPermit.issuing_authority,
+        issue_date: editedPermit.issue_date,
+        expiry_date: editedPermit.expiry_date,
+        description: editedPermit.description || '',
+        renewal_required: editedPermit.renewal_required !== false
+      });
+
+      setEditingPermit(null);
+      setEditedPermit({});
+      setSuccess('Permit updated successfully');
+      setTimeout(() => setSuccess(null), 5000);
+
+      await loadPermits();
+    } catch (error: any) {
+      console.error('Failed to update permit:', error);
+      setError(error.message || 'Failed to update permit');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAddPermit = () => {
-    const newId = Math.max(...permits.map(p => p.id), 0) + 1;
-    const permitToAdd = {
-      ...newPermit,
-      id: newId,
-      facility: selectedFacility?.name || newPermit.facility
-    };
-    setPermits(prev => [...prev, permitToAdd]);
-    setNewPermit({
-      facility: '',
-      type: '',
-      number: '',
-      issueDate: '',
-      expiryDate: '',
-      status: 'Active',
-      authority: ''
-    });
-    setShowAddModal(false);
+  const handleAddPermit = async () => {
+    if (!newPermit.permit_number.trim()) {
+      setError('Permit number is required');
+      return;
+    }
+
+    if (!selectedFacility?.id) {
+      setError('No facility selected');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const permitData = {
+        location: selectedFacility.id,
+        permit_type: newPermit.permit_type,
+        permit_number: newPermit.permit_number,
+        issuing_authority: newPermit.issuing_authority,
+        issue_date: newPermit.issue_date,
+        expiry_date: newPermit.expiry_date,
+        description: newPermit.description,
+        renewal_required: newPermit.renewal_required
+      };
+
+      console.log('🔍 Creating permit:', permitData);
+      await apiService.createPermit(selectedFacility.id, permitData);
+
+      setShowAddModal(false);
+      setNewPermit({
+        permit_type: 'operating',
+        permit_number: '',
+        issuing_authority: '',
+        issue_date: '',
+        expiry_date: '',
+        description: '',
+        renewal_required: true
+      });
+      setSuccess(`Permit "${newPermit.permit_number}" created successfully`);
+      setTimeout(() => setSuccess(null), 5000);
+
+      await loadPermits();
+    } catch (error: any) {
+      console.error('Failed to create permit:', error);
+      setError(error.message || 'Failed to create permit');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeletePermit = async (permitId: number, permitNumber: string) => {
+    if (!window.confirm(`Are you sure you want to delete permit "${permitNumber}"?`)) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      await apiService.deletePermit(permitId);
+
+      setSuccess(`Permit "${permitNumber}" deleted successfully`);
+      setTimeout(() => setSuccess(null), 5000);
+
+      await loadPermits();
+    } catch (error: any) {
+      console.error('Failed to delete permit:', error);
+      setError(error.message || 'Failed to delete permit');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -186,24 +287,15 @@ export function PermitsLicenses({ selectedFacility }: PermitsLicensesProps) {
     return diffDays;
   };
 
-  // Filter permits by selected facility
-  const facilityPermits = selectedFacility 
-    ? permits.filter(permit => permit.facility === selectedFacility.name)
-    : permits;
+  // Permits are already filtered by location from API
+  const facilityPermits = permits;
 
-  const filteredPermits = permits.filter(permit => {
-    if (filter === 'all') return true;
-    if (filter === 'active') return permit.status === 'Active';
-    if (filter === 'expiring') return permit.status === 'Expiring Soon';
-    if (filter === 'expired') return permit.status === 'Expired';
-    return true;
-  });
-
+  // Filter by status using calculated_status from backend
   const filteredFacilityPermits = facilityPermits.filter(permit => {
     if (filter === 'all') return true;
-    if (filter === 'active') return permit.status === 'Active';
-    if (filter === 'expiring') return permit.status === 'Expiring Soon';
-    if (filter === 'expired') return permit.status === 'Expired';
+    if (filter === 'active') return permit.calculated_status === 'active';
+    if (filter === 'expiring') return permit.calculated_status === 'expiring_soon';
+    if (filter === 'expired') return permit.calculated_status === 'expired';
     return true;
   });
 
@@ -216,19 +308,19 @@ export function PermitsLicenses({ selectedFacility }: PermitsLicensesProps) {
     },
     {
       title: 'Active Permits',
-      value: facilityPermits.filter(p => p.status === 'Active').length.toString(),
+      value: facilityPermits.filter(p => p.calculated_status === 'active').length.toString(),
       icon: CheckCircle,
       color: 'green'
     },
     {
       title: 'Expiring Soon',
-      value: facilityPermits.filter(p => p.status === 'Expiring Soon').length.toString(),
+      value: facilityPermits.filter(p => p.calculated_status === 'expiring_soon').length.toString(),
       icon: Clock,
       color: 'yellow'
     },
     {
       title: 'Expired',
-      value: facilityPermits.filter(p => p.status === 'Expired').length.toString(),
+      value: facilityPermits.filter(p => p.calculated_status === 'expired').length.toString(),
       icon: AlertTriangle,
       color: 'red'
     }
@@ -257,6 +349,26 @@ export function PermitsLicenses({ selectedFacility }: PermitsLicensesProps) {
           )}
         </div>
       </div>
+
+      {/* Success Message */}
+      {success && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
+            <span className="text-green-800">{success}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <AlertTriangle className="h-5 w-5 text-red-600 mr-2" />
+            <span className="text-red-800">{error}</span>
+          </div>
+        </div>
+      )}
 
       {!selectedFacility && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
@@ -549,43 +661,48 @@ export function PermitsLicenses({ selectedFacility }: PermitsLicensesProps) {
             <form className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Facility Name
+                  Permit Type *
                 </label>
-                <input
-                  type="text"
-                  value={newPermit.facility}
-                  onChange={(e) => setNewPermit(prev => ({ ...prev, facility: e.target.value }))}
+                <select
+                  value={newPermit.permit_type}
+                  onChange={(e) => setNewPermit(prev => ({ ...prev, permit_type: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., Downtown Station A"
-                />
+                  required
+                >
+                  <option value="operating">Operating Permit</option>
+                  <option value="environmental">Environmental Permit</option>
+                  <option value="safety">Safety Permit</option>
+                  <option value="construction">Construction Permit</option>
+                </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Permit Type
+                  Permit Number *
                 </label>
                 <input
                   type="text"
-                  value={newPermit.type}
-                  onChange={(e) => setNewPermit(prev => ({ ...prev, type: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., Operating Permit"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Permit Number
-                </label>
-                <input
-                  type="text"
-                  value={newPermit.number}
-                  onChange={(e) => setNewPermit(prev => ({ ...prev, number: e.target.value }))}
+                  value={newPermit.permit_number}
+                  onChange={(e) => setNewPermit(prev => ({ ...prev, permit_number: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="e.g., OP-2024-001"
+                  required
                 />
               </div>
-              
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Issuing Authority
+                </label>
+                <input
+                  type="text"
+                  value={newPermit.issuing_authority}
+                  onChange={(e) => setNewPermit(prev => ({ ...prev, issuing_authority: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., State Environmental Agency"
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -593,52 +710,36 @@ export function PermitsLicenses({ selectedFacility }: PermitsLicensesProps) {
                   </label>
                   <input
                     type="date"
-                    value={newPermit.issueDate}
-                    onChange={(e) => setNewPermit(prev => ({ ...prev, issueDate: e.target.value }))}
+                    value={newPermit.issue_date}
+                    onChange={(e) => setNewPermit(prev => ({ ...prev, issue_date: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Expiry Date
                   </label>
                   <input
                     type="date"
-                    value={newPermit.expiryDate}
-                    onChange={(e) => setNewPermit(prev => ({ ...prev, expiryDate: e.target.value }))}
+                    value={newPermit.expiry_date}
+                    onChange={(e) => setNewPermit(prev => ({ ...prev, expiry_date: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Issuing Authority
+                  Description
                 </label>
-                <input
-                  type="text"
-                  value={newPermit.authority}
-                  onChange={(e) => setNewPermit(prev => ({ ...prev, authority: e.target.value }))}
+                <textarea
+                  value={newPermit.description}
+                  onChange={(e) => setNewPermit(prev => ({ ...prev, description: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., State Environmental Agency"
+                  placeholder="Additional notes or details"
+                  rows={3}
                 />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Status
-                </label>
-                <select
-                  value={newPermit.status}
-                  onChange={(e) => setNewPermit(prev => ({ ...prev, status: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="Active">Active</option>
-                  <option value="Expiring Soon">Expiring Soon</option>
-                  <option value="Expired">Expired</option>
-                  <option value="Pending">Pending</option>
-                </select>
               </div>
             </form>
             

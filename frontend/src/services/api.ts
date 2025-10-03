@@ -587,6 +587,29 @@ class ApiService {
       throw new Error(error.response?.data?.error || error.message || 'Failed to create permit');
     }
   }
+
+  /**
+   * Update permit
+   */
+  async updatePermit(id: number, data: any): Promise<any> {
+    try {
+      const response = await api.patch(`/api/facilities/permits/${id}/`, data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to update permit');
+    }
+  }
+
+  /**
+   * Delete permit
+   */
+  async deletePermit(id: number): Promise<void> {
+    try {
+      await api.delete(`/api/facilities/permits/${id}/`);
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to delete permit');
+    }
+  }
 }
 
 export const apiService = new ApiService();
