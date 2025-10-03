@@ -17,10 +17,19 @@ export function Dashboard() {
 
   useEffect(() => {
     const locationId = searchParams.get('locationId');
+    const tab = searchParams.get('tab');
+
     if (locationId) {
       loadLocationById(locationId);
     } else {
       setSelectedFacility(null);
+    }
+
+    // Set active view based on tab parameter
+    if (tab) {
+      setActiveView(tab);
+    } else if (locationId) {
+      setActiveView('dashboard');
     }
   }, [searchParams]);
 
@@ -57,20 +66,35 @@ export function Dashboard() {
     }
   };
 
+  const handleViewChange = (view: string) => {
+    setActiveView(view);
+
+    // Update URL with tab parameter if a facility is selected
+    const locationId = searchParams.get('locationId');
+    if (locationId && view !== 'dashboard' && view !== 'admin' && view !== 'locations') {
+      setSearchParams({ locationId, tab: view });
+    } else if (locationId && view === 'dashboard') {
+      setSearchParams({ locationId });
+    } else {
+      // No facility selected, just change view without URL params
+      setSearchParams({});
+    }
+  };
+
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar 
+      <Sidebar
         collapsed={sidebarCollapsed}
         activeView={activeView}
-        onViewChange={setActiveView}
+        onViewChange={handleViewChange}
         onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
       
       <div className="flex-1 flex flex-col overflow-hidden">
-        <TopNavigation 
+        <TopNavigation
           selectedFacility={selectedFacility}
           onFacilitySelect={handleFacilitySelect}
-          onViewChange={setActiveView}
+          onViewChange={handleViewChange}
           refreshKey={refreshKey}
         />
         
