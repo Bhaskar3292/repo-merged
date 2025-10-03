@@ -8,8 +8,7 @@ interface FacilityProfileData {
   facilityName: string;
   internalId: string;
   stateIdNumber: string;
-  address1: string;
-  address2: string;
+  address: string;
   city: string;
   county: string;
   state: string;
@@ -76,8 +75,7 @@ export function FacilityProfile({ selectedFacility }: FacilityProfileProps) {
     facilityName: '',
     internalId: '',
     stateIdNumber: '',
-    address1: '',
-    address2: '',
+    address: '',
     city: '',
     county: '',
     state: '',
@@ -172,7 +170,7 @@ export function FacilityProfile({ selectedFacility }: FacilityProfileProps) {
       setProfileData(prev => ({
         ...prev,
         facilityName: selectedFacility.name,
-        address1: selectedFacility.street_address || '',
+        address: selectedFacility.street_address || '',
         city: selectedFacility.city || '',
         state: selectedFacility.state || '',
         zip: selectedFacility.zip_code || '',
@@ -486,8 +484,7 @@ export function FacilityProfile({ selectedFacility }: FacilityProfileProps) {
                 {renderInput('facilityName', 'Facility Name', 'text', undefined, editingSections.general)}
                 {renderInput('internalId', 'Internal ID', 'text', undefined, editingSections.general)}
                 {renderInput('stateIdNumber', 'State ID Number', 'text', undefined, editingSections.general)}
-                {renderInput('address1', 'Address 1', 'text', undefined, editingSections.general)}
-                {renderInput('address2', 'Address 2', 'text', undefined, editingSections.general)}
+                {renderInput('address', 'Address 1', 'text', undefined, editingSections.general)}
                 {renderInput('city', 'City', 'text', undefined, editingSections.general)}
                 {renderInput('county', 'County', 'text', undefined, editingSections.general)}
                 {renderInput('state', 'State', 'select', usStates, editingSections.general)}

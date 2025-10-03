@@ -11,7 +11,7 @@ class FacilityProfileSerializer(serializers.ModelSerializer):
     """
     # General Information from Location
     facilityName = serializers.CharField(source='location.name')
-    address1 = serializers.CharField(source='location.street_address')
+    address = serializers.CharField(source='location.street_address')
     city = serializers.CharField(source='location.city')
     state = serializers.CharField(source='location.state')
     zip = serializers.CharField(source='location.zip_code')
@@ -66,7 +66,7 @@ class FacilityProfileSerializer(serializers.ModelSerializer):
         model = FacilityProfile
         fields = [
             # General Information
-            'facilityName', 'internalId', 'stateIdNumber', 'address1',
+            'facilityName', 'internalId', 'stateIdNumber', 'address',
             'city', 'county', 'state', 'zip', 'country',
             # Operational Information
             'storeOpenDate', 'operationalRegion', 'tosPosDate', 'gasBrand',

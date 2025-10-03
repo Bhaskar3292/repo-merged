@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Calendar, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, Clock, Download, Upload, Plus, Eye, CreditCard as Edit, Save, X, Paperclip } from 'lucide-react';
+import { FileText, Calendar, AlertTriangle,CheckCircle, Clock, Download, Upload, Plus, Eye, CreditCard as Edit, Save, X, Paperclip } from 'lucide-react';
 import { apiService } from '../../services/api';
 
 interface PermitsLicensesProps {
