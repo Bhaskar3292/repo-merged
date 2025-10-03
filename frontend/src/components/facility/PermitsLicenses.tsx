@@ -251,31 +251,46 @@ export function PermitsLicenses({ selectedFacility }: PermitsLicensesProps) {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Active':
-        return 'bg-green-100 text-green-800';
-      case 'Expiring Soon':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'Expired':
-        return 'bg-red-100 text-red-800';
-      case 'Pending':
-        return 'bg-blue-100 text-blue-800';
+      case 'active':
+        return 'bg-green-100 text-green-800 border border-green-200';
+      case 'expiring_soon':
+        return 'bg-yellow-100 text-yellow-800 border border-yellow-200';
+      case 'expired':
+        return 'bg-red-100 text-red-800 border border-red-200';
+      case 'pending':
+        return 'bg-blue-100 text-blue-800 border border-blue-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 border border-gray-200';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'Active':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case 'Expiring Soon':
-        return <Clock className="h-4 w-4 text-yellow-600" />;
-      case 'Expired':
-        return <AlertTriangle className="h-4 w-4 text-red-600" />;
-      case 'Pending':
-        return <Clock className="h-4 w-4 text-blue-600" />;
+      case 'active':
+        return <CheckCircle className="h-4 w-4" />;
+      case 'expiring_soon':
+        return <Clock className="h-4 w-4" />;
+      case 'expired':
+        return <AlertTriangle className="h-4 w-4" />;
+      case 'pending':
+        return <Clock className="h-4 w-4" />;
       default:
-        return <FileText className="h-4 w-4 text-gray-600" />;
+        return <FileText className="h-4 w-4" />;
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'Active';
+      case 'expiring_soon':
+        return 'Expiring Soon';
+      case 'expired':
+        return 'Expired';
+      case 'pending':
+        return 'Pending';
+      default:
+        return 'Unknown';
     }
   };
 
@@ -438,127 +453,85 @@ export function PermitsLicenses({ selectedFacility }: PermitsLicensesProps) {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="p-6">
           <div className="space-y-4">
-            {filteredFacilityPermits.map((permit) => {
-              const daysUntilExpiry = getDaysUntilExpiry(permit.expiryDate);
+            {loading && (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="text-gray-500 mt-2">Loading permits...</p>
+              </div>
+            )}
+
+            {!loading && filteredFacilityPermits.length === 0 && (
+              <div className="text-center py-8">
+                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                <p className="text-gray-500">No permits found</p>
+              </div>
+            )}
+
+            {!loading && filteredFacilityPermits.map((permit) => {
+              const daysUntilExpiry = getDaysUntilExpiry(permit.expiry_date);
               const isEditing = editingPermit === permit.id;
-              const displayPermit = isEditing ? editedPermit : permit;
-              
+
               return (
-                <div key={permit.id} className="border border-gray-200 rounded-lg p-4">
+                <div key={permit.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center space-x-3">
                       <div className="p-2 bg-blue-100 rounded-lg">
                         <FileText className="h-5 w-5 text-blue-600" />
                       </div>
                       <div>
-                        {editingPermit === permit.id ? (
-                          <div className="space-y-2">
-                            <input
-                              type="text"
-                              value={editedPermit.type || permit.type}
-                              onChange={(e) => updateEditedPermit('type', e.target.value)}
-                              className="font-semibold text-gray-900 bg-transparent border-b border-gray-300 focus:border-blue-500 focus:outline-none"
-                              placeholder="Permit Type"
-                            />
-                            <input
-                              type="text"
-                              value={editedPermit.facility || permit.facility}
-                              onChange={(e) => updateEditedPermit('facility', e.target.value)}
-                              className="text-sm text-gray-500 bg-transparent border-b border-gray-300 focus:border-blue-500 focus:outline-none"
-                              placeholder="Facility Name"
-                            />
-                          </div>
-                        ) : (
-                          <>
-                            <h3 className="font-semibold text-gray-900">{permit.type}</h3>
-                            <p className="text-sm text-gray-500">{permit.facility}</p>
-                          </>
+                        <h3 className="font-semibold text-gray-900 capitalize">
+                          {permit.permit_type?.replace('_', ' ') || 'Unknown Type'}
+                        </h3>
+                        <p className="text-sm text-gray-500">{permit.location_name || selectedFacility?.name}</p>
+                      </div>
+                    </div>
+                    <span className={`flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-semibold ${getStatusColor(permit.calculated_status)}`}>
+                      {getStatusIcon(permit.calculated_status)}
+                      <span>{getStatusLabel(permit.calculated_status)}</span>
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm mb-4">
+                    <div>
+                      <span className="font-medium text-gray-700">Permit Number:</span>
+                      <p className="text-gray-900 mt-0.5">{permit.permit_number || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">Issue Date:</span>
+                      <p className="text-gray-900 mt-0.5">
+                        {permit.issue_date ? new Date(permit.issue_date).toLocaleDateString() : 'N/A'}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">Expiry Date:</span>
+                      <div className="mt-0.5">
+                        <p className="text-gray-900">
+                          {permit.expiry_date ? new Date(permit.expiry_date).toLocaleDateString() : 'N/A'}
+                        </p>
+                        {daysUntilExpiry > 0 && daysUntilExpiry <= 30 && (
+                          <p className="text-yellow-600 font-medium text-xs mt-1">
+                            ⚠️ {daysUntilExpiry} days remaining
+                          </p>
+                        )}
+                        {daysUntilExpiry <= 0 && (
+                          <p className="text-red-600 font-medium text-xs mt-1">
+                            ❌ Expired {Math.abs(daysUntilExpiry)} days ago
+                          </p>
                         )}
                       </div>
                     </div>
-                    {editingPermit === permit.id ? (
-                      <select
-                        value={editedPermit.status || permit.status}
-                        onChange={(e) => updateEditedPermit('status', e.target.value)}
-                        className={`px-2 py-1 rounded-full text-xs font-medium border focus:outline-none focus:ring-2 focus:ring-blue-500 ${getStatusColor(editedPermit.status || permit.status)}`}
-                      >
-                        <option value="Active">Active</option>
-                        <option value="Expiring Soon">Expiring Soon</option>
-                        <option value="Expired">Expired</option>
-                        <option value="Pending">Pending</option>
-                      </select>
-                    ) : (
-                      <span className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(permit.status)}`}>
-                        {getStatusIcon(permit.status)}
-                        <span>{permit.status}</span>
-                      </span>
-                    )}
+                    <div>
+                      <span className="font-medium text-gray-700">Authority:</span>
+                      <p className="text-gray-900 mt-0.5">{permit.issuing_authority || 'N/A'}</p>
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600 mb-4">
-                    <div>
-                      <span className="font-medium">Permit Number:</span>
-                      {editingPermit === permit.id ? (
-                        <input
-                          type="text"
-                          value={editedPermit.number || permit.number}
-                          onChange={(e) => updateEditedPermit('number', e.target.value)}
-                          className="block w-full mt-1 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Permit Number"
-                        />
-                      ) : (
-                        <p>{permit.number}</p>
-                      )}
+                  {permit.description && (
+                    <div className="text-sm mb-4">
+                      <span className="font-medium text-gray-700">Description:</span>
+                      <p className="text-gray-600 mt-0.5">{permit.description}</p>
                     </div>
-                    <div>
-                      <span className="font-medium">Issue Date:</span>
-                      {editingPermit === permit.id ? (
-                        <input
-                          type="date"
-                          value={editedPermit.issueDate || permit.issueDate}
-                          onChange={(e) => updateEditedPermit('issueDate', e.target.value)}
-                          className="block w-full mt-1 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      ) : (
-                        <p>{new Date(permit.issueDate).toLocaleDateString()}</p>
-                      )}
-                    </div>
-                    <div>
-                      <span className="font-medium">Expiry Date:</span>
-                      {editingPermit === permit.id ? (
-                        <input
-                          type="date"
-                          value={editedPermit.expiryDate || permit.expiryDate}
-                          onChange={(e) => updateEditedPermit('expiryDate', e.target.value)}
-                          className="block w-full mt-1 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      ) : (
-                        <>
-                          <p>{new Date(permit.expiryDate).toLocaleDateString()}</p>
-                          {daysUntilExpiry > 0 && daysUntilExpiry <= 30 && (
-                            <p className="text-yellow-600 font-medium">({daysUntilExpiry} days remaining)</p>
-                          )}
-                          {daysUntilExpiry < 0 && (
-                            <p className="text-red-600 font-medium">(Expired {Math.abs(daysUntilExpiry)} days ago)</p>
-                          )}
-                        </>
-                      )}
-                    </div>
-                    <div>
-                      <span className="font-medium">Authority:</span>
-                      {editingPermit === permit.id ? (
-                        <input
-                          type="text"
-                          value={editedPermit.authority || permit.authority}
-                          onChange={(e) => updateEditedPermit('authority', e.target.value)}
-                          className="block w-full mt-1 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Issuing Authority"
-                        />
-                      ) : (
-                        <p>{permit.authority}</p>
-                      )}
-                    </div>
-                  </div>
+                  )}
 
                   <div className="flex space-x-2">
                     {editingPermit === permit.id ? (
@@ -592,26 +565,34 @@ export function PermitsLicenses({ selectedFacility }: PermitsLicensesProps) {
                           <span>Edit</span>
                         </button>
                         <button
-                          onClick={() => handleDownloadPermit(permit.id, permit.number)}
+                          onClick={() => handleDownloadPermit(permit.id, permit.permit_number)}
                           disabled={downloadingPermit === permit.id}
-                          className="flex items-center space-x-1 px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50"
+                          className="flex items-center space-x-1 px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50"
                         >
                           <Download className={`h-4 w-4 ${downloadingPermit === permit.id ? 'animate-spin' : ''}`} />
                           <span>{downloadingPermit === permit.id ? 'Downloading...' : 'Download'}</span>
                         </button>
-                        <button 
+                        <button
                           onClick={() => openUploadModal(permit.id)}
                           className="flex items-center space-x-1 px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50"
                         >
                           <Upload className="h-4 w-4" />
                           <span>Upload</span>
                         </button>
-                        {permit.status === 'Expiring Soon' && (
-                          <button className="flex items-center space-x-1 px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
+                        {permit.calculated_status === 'expiring_soon' && (
+                          <button className="flex items-center space-x-1 px-3 py-1 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700">
                             <Calendar className="h-4 w-4" />
                             <span>Renew</span>
                           </button>
                         )}
+                        <button
+                          onClick={() => handleDeletePermit(permit.id, permit.permit_number)}
+                          disabled={loading}
+                          className="flex items-center space-x-1 px-3 py-1 text-red-600 hover:bg-red-50 rounded text-sm disabled:opacity-50"
+                        >
+                          <X className="h-4 w-4" />
+                          <span>Delete</span>
+                        </button>
                         {uploadedFiles[permit.id] && uploadedFiles[permit.id].length > 0 && (
                           <div className="flex items-center space-x-1 text-xs text-gray-500">
                             <Paperclip className="h-3 w-3" />
