@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Plus, Building2, Eye, Edit2 as Edit, Trash2, X, Save } from 'lucide-react';
+import { MapPin, Plus, X, Save, Edit2 as Edit } from 'lucide-react';
 import { apiService } from '../services/api';
 import { useAuthContext } from '../contexts/AuthContext';
+import { LocationCard } from '../components/facility/LocationCard';
 
 interface Location {
   id: number;
@@ -228,73 +229,14 @@ export function LocationsPage() {
       {/* Locations Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {locations.map((location) => (
-          <div key={location.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Building2 className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{location.name}</h3>
-                  <p className="text-sm text-gray-500 capitalize">
-                    {location.facility_type.replace('_', ' ')}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-1">
-                <button
-                  onClick={() => window.dispatchEvent(new CustomEvent('facility:select', { 
-                    detail: location 
-                  }))}
-                  className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                  title="Select location"
-                >
-                  <Eye className="h-4 w-4" />
-                </button>
-                {(currentUser?.is_superuser || hasPermission('edit_locations')) && (
-                  <button
-                    onClick={() => setEditingLocation(location)}
-                    className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                    title="Edit location"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </button>
-                )}
-                {(currentUser?.is_superuser || hasPermission('delete_locations')) && (
-                  <button
-                    onClick={() => handleDeleteLocation(location.id)}
-                    className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
-                    title="Delete location"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2 mb-4">
-              <div className="flex items-start space-x-2">
-                <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
-                <div className="text-sm text-gray-600">
-                  <p>{location.street_address}</p>
-                  <p>{location.city}, {location.state} {location.zip_code}</p>
-                  <p>{location.country}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="text-center p-3 bg-blue-50 rounded-lg">
-                <p className="text-lg font-bold text-blue-600">{location.tank_count || 0}</p>
-                <p className="text-xs text-gray-600">Tanks</p>
-              </div>
-              <div className="text-center p-3 bg-green-50 rounded-lg">
-                <p className="text-lg font-bold text-green-600">{location.permit_count || 0}</p>
-                <p className="text-xs text-gray-600">Permits</p>
-              </div>
-            </div>
-          </div>
+          <LocationCard
+            key={location.id}
+            location={location}
+            onEdit={setEditingLocation}
+            onDelete={handleDeleteLocation}
+            canEdit={currentUser?.is_superuser || hasPermission('edit_locations')}
+            canDelete={currentUser?.is_superuser || hasPermission('delete_locations')}
+          />
         ))}
       </div>
 

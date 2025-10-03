@@ -40,7 +40,11 @@ class LocationListCreateView(generics.ListCreateAPIView):
         return super().post(request, *args, **kwargs)
     
     def get_queryset(self):
-        queryset = Location.objects.filter(is_active=True).order_by('name')
+        from django.db.models import Count
+        queryset = Location.objects.filter(is_active=True).annotate(
+            tank_count=Count('tanks', distinct=True),
+            permit_count=Count('permits', distinct=True)
+        ).order_by('name')
         return queryset
     
     def list(self, request, *args, **kwargs):
@@ -298,8 +302,38 @@ def dashboard_stats(request):
             expiry_date__lte=timezone.now().date() + timezone.timedelta(days=30)
         ).count(),
     }
-    
+
     return Response(stats)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def location_tank_count(request, location_id):
+    """
+    Get tank count for a specific location
+    """
+    try:
+        location = get_object_or_404(Location, id=location_id, is_active=True)
+        count = Tank.objects.filter(location=location).count()
+        return Response({'count': count})
+    except Exception as e:
+        logger.error(f"Error fetching tank count for location {location_id}: {str(e)}")
+        return Response({'error': 'Failed to fetch tank count'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def location_permit_count(request, location_id):
+    """
+    Get permit count for a specific location
+    """
+    try:
+        location = get_object_or_404(Location, id=location_id, is_active=True)
+        count = Permit.objects.filter(location=location).count()
+        return Response({'count': count})
+    except Exception as e:
+        logger.error(f"Error fetching permit count for location {location_id}: {str(e)}")
+        return Response({'error': 'Failed to fetch permit count'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class FacilityProfileView(generics.RetrieveUpdateAPIView):

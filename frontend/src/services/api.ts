@@ -423,6 +423,54 @@ class ApiService {
   }
 
   /**
+   * Get tanks by location ID (alias for getTanksByFacility)
+   */
+  async getTanks(locationId: number): Promise<any[]> {
+    try {
+      const response = await api.get(`/api/facilities/locations/${locationId}/tanks/`);
+      return response.data.results || response.data || [];
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to get tanks');
+    }
+  }
+
+  /**
+   * Get permits by location ID
+   */
+  async getPermits(locationId: number): Promise<any[]> {
+    try {
+      const response = await api.get(`/api/facilities/locations/${locationId}/permits/`);
+      return response.data.results || response.data || [];
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to get permits');
+    }
+  }
+
+  /**
+   * Get tank count for a location
+   */
+  async getTankCount(locationId: number): Promise<number> {
+    try {
+      const response = await api.get(`/api/facilities/locations/${locationId}/tanks/count/`);
+      return response.data.count;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to get tank count');
+    }
+  }
+
+  /**
+   * Get permit count for a location
+   */
+  async getPermitCount(locationId: number): Promise<number> {
+    try {
+      const response = await api.get(`/api/facilities/locations/${locationId}/permits/count/`);
+      return response.data.count;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to get permit count');
+    }
+  }
+
+  /**
    * Create new tank
    */
   async createTank(data: any): Promise<any> {
