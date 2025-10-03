@@ -39,7 +39,8 @@ export function Dashboard() {
   const loadLocationById = async (locationId: string) => {
     try {
       const locations = await apiService.getLocations();
-      const location = locations.find((loc: any) => loc.id.toString() === locationId);
+      const response=locations.results;
+      const location = response.find((loc: any) => loc.id.toString() === locationId);
       if (location) {
         setSelectedFacility(location);
       }
