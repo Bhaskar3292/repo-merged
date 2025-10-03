@@ -9,7 +9,7 @@ export function PermitsLicenses({ selectedFacility }: PermitsLicensesProps) {
   const [filter, setFilter] = useState('all');
   const [editingPermit, setEditingPermit] = useState<number | null>(null);
   const [editedPermit, setEditedPermit] = useState<any>({});
-  const [showAddModal, setShowAddModal] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedPermitForUpload, setSelectedPermitForUpload] = useState<number | null>(null);
   const [newPermit, setNewPermit] = useState({
@@ -57,7 +57,7 @@ export function PermitsLicenses({ selectedFacility }: PermitsLicensesProps) {
       status: 'Active',
       authority: ''
     });
-    setShowAddModal(true);
+    setShowAddModal(false);
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
