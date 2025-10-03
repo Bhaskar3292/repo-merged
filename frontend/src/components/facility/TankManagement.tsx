@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, Plus, Search,  Grid3X3, List, Eye, Edit2 as Edit, Trash2, X, Save, ListFilter as Filter, Building2 } from 'lucide-react';
+import { Zap, Plus, Search, Grid3X3, List, Eye, Edit2 as Edit, Trash2, X, Save, ListFilter as Filter, Building2 } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
+import { apiService } from '../../services/api';
 
 interface Tank {
   id: number;
@@ -68,112 +69,164 @@ export function TankManagement({ selectedFacility }: TankManagementProps) {
   }, [selectedFacility]);
 
   const loadTanks = async () => {
+    if (!selectedFacility?.id) return;
+
     setLoading(true);
+    setError(null);
     try {
-      // Mock data for demonstration - replace with actual API call
-      const mockTanks: Tank[] = [
-        {
-          id: 1,
-          label: 'Tank A1',
-          product: 'Regular Gasoline',
-          status: 'Active',
-          size: '10,000 gallons',
-          tankLined: 'Yes',
-          compartment: 'No',
-          manifoldedWith: 'Tank A2',
-          pipingManifoldedWith: 'Line B',
-          trackReleaseDetection: 'Yes',
-          tankMaterial: 'Fiberglass',
-          releaseDetection: 'Continuous ATG',
-          stpSumps: 'Installed',
-          pipingDetection: 'Line Leak Detector',
-          pipingMaterial: 'HDPE',
-          atgId: 'ATG-001',
-          installed: '2020-01-15',
-          pipingInstalled: '2020-01-20'
-        },
-        {
-          id: 2,
-          label: 'Tank B1',
-          product: 'Premium Gasoline',
-          status: 'Active',
-          size: '8,000 gallons',
-          tankLined: 'Yes',
-          compartment: 'Yes',
-          manifoldedWith: '',
-          pipingManifoldedWith: 'Line A',
-          trackReleaseDetection: 'Yes',
-          tankMaterial: 'Steel',
-          releaseDetection: 'Monthly Manual',
-          stpSumps: 'Not Installed',
-          pipingDetection: 'Pressure Test',
-          pipingMaterial: 'Steel',
-          atgId: 'ATG-002',
-          installed: '2019-06-10',
-          pipingInstalled: '2019-06-15'
-        },
-        {
-          id: 3,
-          label: 'Tank C1',
-          product: 'Diesel',
-          status: 'Maintenance',
-          size: '12,000 gallons',
-          tankLined: 'No',
-          compartment: 'No',
-          manifoldedWith: 'Tank C2',
-          pipingManifoldedWith: '',
-          trackReleaseDetection: 'No',
-          tankMaterial: 'Concrete',
-          releaseDetection: 'Visual Inspection',
-          stpSumps: 'Installed',
-          pipingDetection: 'None',
-          pipingMaterial: 'PVC',
-          atgId: '',
-          installed: '2018-03-22',
-          pipingInstalled: '2018-03-25'
-        }
-      ];
-      setTanks(mockTanks);
-    } catch (error) {
-      setError('Failed to load tanks');
+      const response = await apiService.getTanks(selectedFacility.id);
+      const tanksData = Array.isArray(response) ? response : (response.results || []);
+
+      // Transform backend snake_case to frontend camelCase
+      const transformedTanks: Tank[] = tanksData.map((tank: any) => ({
+        id: tank.id,
+        label: tank.label || '',
+        product: tank.product || '',
+        status: tank.status ? (tank.status.charAt(0).toUpperCase() + tank.status.slice(1)) : 'Active',
+        size: tank.size || '',
+        tankLined: tank.tank_lined || 'No',
+        compartment: tank.compartment || 'No',
+        manifoldedWith: tank.manifolded_with || '',
+        pipingManifoldedWith: tank.piping_manifolded_with || '',
+        trackReleaseDetection: tank.track_release_detection || 'No',
+        tankMaterial: tank.tank_material || '',
+        releaseDetection: tank.release_detection || '',
+        stpSumps: tank.stp_sumps || '',
+        pipingDetection: tank.piping_detection || '',
+        pipingMaterial: tank.piping_material || '',
+        atgId: tank.atg_id || '',
+        installed: tank.installed || '',
+        pipingInstalled: tank.piping_installed || '',
+        created_at: tank.created_at,
+        updated_at: tank.updated_at
+      }));
+
+      setTanks(transformedTanks);
+    } catch (error: any) {
+      console.error('Failed to load tanks:', error);
+      setError(error.message || 'Failed to load tanks');
+      setTanks([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreateTank = () => {
+  const handleCreateTank = async () => {
     if (!newTank.label.trim()) {
       setError('Tank label is required');
       return;
     }
 
-    const tankToAdd: Tank = {
-      ...newTank,
-      id: Math.max(...tanks.map(t => t.id), 0) + 1
-    };
+    if (!selectedFacility?.id) {
+      setError('No facility selected');
+      return;
+    }
 
-    setTanks(prev => [...prev, tankToAdd]);
-    setShowAddModal(false);
-    resetForm();
-    setSuccess(`Tank "${newTank.label}" created successfully`);
-    setTimeout(() => setSuccess(null), 3000);
+    setLoading(true);
+    setError(null);
+    try {
+      // Transform camelCase to snake_case for backend
+      const tankData = {
+        location: selectedFacility.id,
+        label: newTank.label,
+        product: newTank.product,
+        status: newTank.status.toLowerCase(),
+        size: newTank.size,
+        tank_lined: newTank.tankLined,
+        compartment: newTank.compartment,
+        manifolded_with: newTank.manifoldedWith,
+        piping_manifolded_with: newTank.pipingManifoldedWith,
+        track_release_detection: newTank.trackReleaseDetection,
+        tank_material: newTank.tankMaterial,
+        release_detection: newTank.releaseDetection,
+        stp_sumps: newTank.stpSumps,
+        piping_detection: newTank.pipingDetection,
+        piping_material: newTank.pipingMaterial,
+        atg_id: newTank.atgId,
+        installed: newTank.installed,
+        piping_installed: newTank.pipingInstalled
+      };
+
+      await apiService.createTank(tankData);
+
+      setShowAddModal(false);
+      resetForm();
+      setSuccess(`Tank "${newTank.label}" created successfully`);
+      setTimeout(() => setSuccess(null), 5000);
+
+      // Reload tanks to show the new one
+      await loadTanks();
+    } catch (error: any) {
+      console.error('Failed to create tank:', error);
+      setError(error.message || 'Failed to create tank');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleUpdateTank = (updatedTank: Tank) => {
-    setTanks(prev => prev.map(tank => 
-      tank.id === updatedTank.id ? updatedTank : tank
-    ));
-    setEditingTank(null);
-    setSuccess(`Tank "${updatedTank.label}" updated successfully`);
-    setTimeout(() => setSuccess(null), 3000);
+  const handleUpdateTank = async (updatedTank: Tank) => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Transform camelCase to snake_case for backend
+      const tankData = {
+        location: selectedFacility.id,
+        label: updatedTank.label,
+        product: updatedTank.product,
+        status: updatedTank.status.toLowerCase(),
+        size: updatedTank.size,
+        tank_lined: updatedTank.tankLined,
+        compartment: updatedTank.compartment,
+        manifolded_with: updatedTank.manifoldedWith,
+        piping_manifolded_with: updatedTank.pipingManifoldedWith,
+        track_release_detection: updatedTank.trackReleaseDetection,
+        tank_material: updatedTank.tankMaterial,
+        release_detection: updatedTank.releaseDetection,
+        stp_sumps: updatedTank.stpSumps,
+        piping_detection: updatedTank.pipingDetection,
+        piping_material: updatedTank.pipingMaterial,
+        atg_id: updatedTank.atgId,
+        installed: updatedTank.installed,
+        piping_installed: updatedTank.pipingInstalled
+      };
+
+      await apiService.updateTank(updatedTank.id, tankData);
+
+      setEditingTank(null);
+      setSuccess(`Tank "${updatedTank.label}" updated successfully`);
+      setTimeout(() => setSuccess(null), 5000);
+
+      // Reload tanks to show updated data
+      await loadTanks();
+    } catch (error: any) {
+      console.error('Failed to update tank:', error);
+      setError(error.message || 'Failed to update tank');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteTank = (tankId: number) => {
+  const handleDeleteTank = async (tankId: number) => {
     const tank = tanks.find(t => t.id === tankId);
-    if (tank && window.confirm(`Are you sure you want to delete "${tank.label}"?`)) {
-      setTanks(prev => prev.filter(tank => tank.id !== tankId));
-      setSuccess(`Tank "${tank.label}" deleted successfully`);
-      setTimeout(() => setSuccess(null), 3000);
+    if (!tank) return;
+
+    if (window.confirm(`Are you sure you want to delete "${tank.label}"?`)) {
+      setLoading(true);
+      setError(null);
+      try {
+        await apiService.deleteTank(tankId);
+
+        setSuccess(`Tank "${tank.label}" deleted successfully`);
+        setTimeout(() => setSuccess(null), 5000);
+
+        // Reload tanks to reflect deletion
+        await loadTanks();
+      } catch (error: any) {
+        console.error('Failed to delete tank:', error);
+        setError(error.message || 'Failed to delete tank');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
