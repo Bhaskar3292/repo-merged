@@ -263,7 +263,7 @@ export function LocationDashboard({ locationId, locationName }: LocationDashboar
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <Building2 className="h-6 w-6 text-blue-600" />
-          <h2 className="text-2xl font-bold text-gray-900">{locationName} Dashboard</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{locationName}</h2>
         </div>
       </div>
 

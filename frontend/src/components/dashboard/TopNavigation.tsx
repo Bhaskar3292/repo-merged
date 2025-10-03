@@ -165,10 +165,6 @@ export function TopNavigation({ selectedFacility, onFacilitySelect, onViewChange
 
           {/* Right - Notifications and User Menu */}
           <div className="flex items-center space-x-4">
-            <div className="text-sm text-gray-600">
-              <span className="font-medium truncate">Facility Management</span>
-            </div>
-
             <button className="p-2 rounded-md hover:bg-gray-100 transition-colors relative">
               <Bell className="h-5 w-5 text-gray-600" />
               <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
