@@ -87,8 +87,6 @@ class Location(models.Model):
     state = models.CharField(max_length=50, blank=True, null=True)
     zip_code = models.CharField(max_length=10, blank=True, null=True)
     country = models.CharField(max_length=100, default='United States')
-    phone = models.CharField(max_length=20, blank=True, null=True)
-    email = models.EmailField(blank=True, null=True)
     facility_type = models.CharField(
         max_length=50,
         choices=[

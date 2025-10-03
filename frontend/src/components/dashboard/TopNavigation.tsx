@@ -81,7 +81,7 @@ export function TopNavigation({ selectedFacility, onFacilitySelect, onViewChange
     onFacilitySelect(null);
     setSearchTerm('');
     setShowFacilityDropdown(false);
-    navigate('/dashboard');
+    navigate('/');
   };
 
 
