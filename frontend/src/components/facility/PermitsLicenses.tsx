@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Calendar, AlertTriangle,CheckCircle, Clock, Download, Upload, Plus, Eye, CreditCard as Edit, Save, X, Paperclip } from 'lucide-react';
+import { FileText, Calendar, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, Clock, Download, Upload, Plus, Eye, CreditCard as Edit, Save, X, Paperclip } from 'lucide-react';
 import { apiService } from '../../services/api';
 
 interface PermitsLicensesProps {
@@ -393,7 +393,7 @@ export function PermitsLicenses({ selectedFacility }: PermitsLicensesProps) {
         </div>
       )}
 
-      {/* Statistics Cards */}
+      {/* Statistics Cards - Now Clickable */}
       {selectedFacility && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statsData.map((stat, index) => {
@@ -405,8 +405,26 @@ export function PermitsLicenses({ selectedFacility }: PermitsLicensesProps) {
             red: 'bg-red-100 text-red-600'
           };
 
+          // Map stat titles to filter values
+          const filterMapping: Record<string, string> = {
+            'Total Permits': 'all',
+            'Active Permits': 'active',
+            'Expiring Soon': 'expiring',
+            'Expired': 'expired'
+          };
+          const filterValue = filterMapping[stat.title] || 'all';
+          const isActive = filter === filterValue;
+
           return (
-            <div key={index} className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <button
+              key={index}
+              onClick={() => setFilter(filterValue)}
+              className={`bg-white rounded-lg p-6 shadow-sm border-2 transition-all text-left hover:shadow-md ${
+                isActive
+                  ? 'border-blue-500 ring-2 ring-blue-200'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">{stat.title}</p>
@@ -416,7 +434,7 @@ export function PermitsLicenses({ selectedFacility }: PermitsLicensesProps) {
                   <Icon className="h-6 w-6" />
                 </div>
               </div>
-            </div>
+            </button>
           );
         })}
         </div>
@@ -479,9 +497,22 @@ export function PermitsLicenses({ selectedFacility }: PermitsLicensesProps) {
                         <FileText className="h-5 w-5 text-blue-600" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900 capitalize">
-                          {permit.permit_type?.replace('_', ' ') || 'Unknown Type'}
-                        </h3>
+                        {isEditing ? (
+                          <select
+                            value={editedPermit.permit_type || permit.permit_type}
+                            onChange={(e) => updateEditedPermit('permit_type', e.target.value)}
+                            className="font-semibold text-gray-900 border border-gray-300 rounded px-2 py-1 capitalize"
+                          >
+                            <option value="operating">Operating Permit</option>
+                            <option value="environmental">Environmental Permit</option>
+                            <option value="safety">Safety Permit</option>
+                            <option value="construction">Construction Permit</option>
+                          </select>
+                        ) : (
+                          <h3 className="font-semibold text-gray-900 capitalize">
+                            {permit.permit_type?.replace('_', ' ') || 'Unknown Type'}
+                          </h3>
+                        )}
                         <p className="text-sm text-gray-500">{permit.location_name || selectedFacility?.name}</p>
                       </div>
                     </div>
@@ -494,42 +525,92 @@ export function PermitsLicenses({ selectedFacility }: PermitsLicensesProps) {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm mb-4">
                     <div>
                       <span className="font-medium text-gray-700">Permit Number:</span>
-                      <p className="text-gray-900 mt-0.5">{permit.permit_number || 'N/A'}</p>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editedPermit.permit_number || permit.permit_number}
+                          onChange={(e) => updateEditedPermit('permit_number', e.target.value)}
+                          className="text-gray-900 mt-0.5 w-full px-2 py-1 border border-gray-300 rounded"
+                          placeholder="e.g., OP-2024-001"
+                        />
+                      ) : (
+                        <p className="text-gray-900 mt-0.5">{permit.permit_number || 'N/A'}</p>
+                      )}
                     </div>
                     <div>
                       <span className="font-medium text-gray-700">Issue Date:</span>
-                      <p className="text-gray-900 mt-0.5">
-                        {permit.issue_date ? new Date(permit.issue_date).toLocaleDateString() : 'N/A'}
-                      </p>
+                      {isEditing ? (
+                        <input
+                          type="date"
+                          value={editedPermit.issue_date || permit.issue_date}
+                          onChange={(e) => updateEditedPermit('issue_date', e.target.value)}
+                          className="text-gray-900 mt-0.5 w-full px-2 py-1 border border-gray-300 rounded"
+                        />
+                      ) : (
+                        <p className="text-gray-900 mt-0.5">
+                          {permit.issue_date ? new Date(permit.issue_date).toLocaleDateString() : 'N/A'}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <span className="font-medium text-gray-700">Expiry Date:</span>
                       <div className="mt-0.5">
-                        <p className="text-gray-900">
-                          {permit.expiry_date ? new Date(permit.expiry_date).toLocaleDateString() : 'N/A'}
-                        </p>
-                        {daysUntilExpiry > 0 && daysUntilExpiry <= 30 && (
-                          <p className="text-yellow-600 font-medium text-xs mt-1">
-                            ⚠️ {daysUntilExpiry} days remaining
-                          </p>
-                        )}
-                        {daysUntilExpiry <= 0 && (
-                          <p className="text-red-600 font-medium text-xs mt-1">
-                            ❌ Expired {Math.abs(daysUntilExpiry)} days ago
-                          </p>
+                        {isEditing ? (
+                          <input
+                            type="date"
+                            value={editedPermit.expiry_date || permit.expiry_date}
+                            onChange={(e) => updateEditedPermit('expiry_date', e.target.value)}
+                            className="text-gray-900 w-full px-2 py-1 border border-gray-300 rounded"
+                          />
+                        ) : (
+                          <>
+                            <p className="text-gray-900">
+                              {permit.expiry_date ? new Date(permit.expiry_date).toLocaleDateString() : 'N/A'}
+                            </p>
+                            {daysUntilExpiry > 0 && daysUntilExpiry <= 30 && (
+                              <p className="text-yellow-600 font-medium text-xs mt-1">
+                                ⚠️ {daysUntilExpiry} days remaining
+                              </p>
+                            )}
+                            {daysUntilExpiry <= 0 && (
+                              <p className="text-red-600 font-medium text-xs mt-1">
+                                ❌ Expired {Math.abs(daysUntilExpiry)} days ago
+                              </p>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
                     <div>
                       <span className="font-medium text-gray-700">Authority:</span>
-                      <p className="text-gray-900 mt-0.5">{permit.issuing_authority || 'N/A'}</p>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editedPermit.issuing_authority || permit.issuing_authority}
+                          onChange={(e) => updateEditedPermit('issuing_authority', e.target.value)}
+                          className="text-gray-900 mt-0.5 w-full px-2 py-1 border border-gray-300 rounded"
+                          placeholder="e.g., State Environmental Agency"
+                        />
+                      ) : (
+                        <p className="text-gray-900 mt-0.5">{permit.issuing_authority || 'N/A'}</p>
+                      )}
                     </div>
                   </div>
 
-                  {permit.description && (
+                  {(permit.description || isEditing) && (
                     <div className="text-sm mb-4">
                       <span className="font-medium text-gray-700">Description:</span>
-                      <p className="text-gray-600 mt-0.5">{permit.description}</p>
+                      {isEditing ? (
+                        <textarea
+                          value={editedPermit.description !== undefined ? editedPermit.description : permit.description || ''}
+                          onChange={(e) => updateEditedPermit('description', e.target.value)}
+                          className="text-gray-600 mt-0.5 w-full px-2 py-1 border border-gray-300 rounded"
+                          placeholder="Additional notes or details"
+                          rows={2}
+                        />
+                      ) : (
+                        <p className="text-gray-600 mt-0.5">{permit.description}</p>
+                      )}
                     </div>
                   )}
 
@@ -553,7 +634,16 @@ export function PermitsLicenses({ selectedFacility }: PermitsLicensesProps) {
                       </>
                     ) : (
                       <>
-                        <button className="flex items-center space-x-1 px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">
+                        <button
+                          onClick={() => {
+                            if (uploadedFiles[permit.id] && uploadedFiles[permit.id].length > 0) {
+                              alert(`Opening: ${uploadedFiles[permit.id][0]}\n\nIn production, this would open the actual file.`);
+                            } else {
+                              alert('No files uploaded for this permit. Please upload a file first.');
+                            }
+                          }}
+                          className="flex items-center space-x-1 px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50"
+                        >
                           <Eye className="h-4 w-4" />
                           <span>View</span>
                         </button>
