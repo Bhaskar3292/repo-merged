@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, Plus, Search, Grid3x2 as Grid3X3, List, Eye, CreditCard as Edit, Trash2, X, Save, ListFilter as Filter, Building2 } from 'lucide-react';
+import { Zap, Plus, Search, Grid3X3, List, Eye, CreditCard as Edit, Trash2, X, Save, ListFilter as Filter, Building2 } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { apiService } from '../../services/api';
 
@@ -74,8 +74,8 @@ export function TankManagement({ selectedFacility }: TankManagementProps) {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiService.getTanks(selectedFacility.id);
-      const tanksData = Array.isArray(response) ? response : (response.results || []);
+      const response = await apiService.getTanksByLocationid(selectedFacility?.id);
+      const tanksData = Array.isArray(response) ? response :  [];
 
       // Transform backend snake_case to frontend camelCase
       const transformedTanks: Tank[] = tanksData.map((tank: any) => ({
