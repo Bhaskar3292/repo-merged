@@ -36,22 +36,46 @@ export const tokenManager = {
   getAccessToken: (): string | null => {
     return localStorage.getItem(TOKEN_STORAGE_KEY);
   },
-  
+
   getRefreshToken: (): string | null => {
     return localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
   },
-  
+
   setTokens: (accessToken: string, refreshToken: string): void => {
     localStorage.setItem(TOKEN_STORAGE_KEY, accessToken);
     localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, refreshToken);
   },
-  
+
   clearTokens: (): void => {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
     localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
     localStorage.removeItem(USER_STORAGE_KEY);
   },
-  
+
+  /**
+   * Clear all authentication data from storage
+   * Use this when user logs out or session becomes invalid
+   */
+  clearAllAuthData: (): void => {
+    // Clear localStorage
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+    localStorage.removeItem(USER_STORAGE_KEY);
+
+    // Clear sessionStorage
+    sessionStorage.clear();
+
+    // Clear any other auth-related items
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.includes('token') || key.includes('auth') || key.includes('user'))) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+  },
+
   isAuthenticated: (): boolean => {
     return !!(tokenManager.getAccessToken() && tokenManager.getRefreshToken());
   }
@@ -114,13 +138,29 @@ api.interceptors.response.use(
 
           return api(originalRequest);
         }
-      } catch (refreshError) {
-        // Refresh failed, clear tokens and redirect to login
-        tokenManager.clearTokens();
-        
-        // Dispatch custom event for auth failure
-        window.dispatchEvent(new CustomEvent('auth:logout'));
-        
+      } catch (refreshError: any) {
+        // Check if backend explicitly requested token clearing
+        const shouldClearTokens =
+          refreshError?.response?.data?.action === 'clear_tokens' ||
+          refreshError?.response?.data?.error === 'user_not_found' ||
+          refreshError?.response?.data?.error === 'invalid_token' ||
+          refreshError?.response?.data?.error === 'user_inactive';
+
+        if (shouldClearTokens) {
+          console.warn('🔒 Token refresh failed - clearing all auth data:', refreshError?.response?.data?.detail);
+
+          // Clear all stored authentication data
+          tokenManager.clearAllAuthData();
+
+          // Dispatch custom event for auth failure
+          window.dispatchEvent(new CustomEvent('auth:logout', {
+            detail: {
+              reason: refreshError?.response?.data?.error || 'token_refresh_failed',
+              message: refreshError?.response?.data?.detail || 'Session expired. Please log in again.'
+            }
+          }));
+        }
+
         return Promise.reject(refreshError);
       }
     }
@@ -168,17 +208,36 @@ export const startTokenExpiryMonitoring = () => {
                 const { access, refresh: newRefresh } = response.data;
                 tokenManager.setTokens(access, newRefresh || refreshToken);
               })
-              .catch(() => {
-                tokenManager.clearTokens();
-                window.dispatchEvent(new CustomEvent('auth:logout'));
+              .catch((error: any) => {
+                // Handle token refresh failure gracefully
+                const shouldClearTokens =
+                  error?.response?.data?.action === 'clear_tokens' ||
+                  error?.response?.data?.error === 'user_not_found' ||
+                  error?.response?.data?.error === 'invalid_token' ||
+                  error?.response?.data?.error === 'user_inactive';
+
+                if (shouldClearTokens) {
+                  tokenManager.clearAllAuthData();
+                  window.dispatchEvent(new CustomEvent('auth:logout', {
+                    detail: {
+                      reason: error?.response?.data?.error || 'token_expired',
+                      message: error?.response?.data?.detail || 'Session expired'
+                    }
+                  }));
+                }
               });
           }
         }
         
         // Check if token is already expired
         if (payload.exp && payload.exp < currentTime) {
-          tokenManager.clearTokens();
-          window.dispatchEvent(new CustomEvent('auth:logout'));
+          tokenManager.clearAllAuthData();
+          window.dispatchEvent(new CustomEvent('auth:logout', {
+            detail: {
+              reason: 'token_expired',
+              message: 'Your session has expired'
+            }
+          }));
         }
       } catch (error) {
         // Silent error handling

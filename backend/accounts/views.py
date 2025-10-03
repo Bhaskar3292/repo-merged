@@ -650,3 +650,123 @@ def unlock_user_account(request, user_id):
         return Response({'message': f'Account unlocked for {user.username}'})
     except User.DoesNotExist:
         return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class CustomTokenRefreshView(generics.GenericAPIView):
+    """
+    Custom token refresh view that handles user deletion gracefully
+
+    This view extends the default TokenRefreshView to properly handle cases where:
+    - Database has been reset and users no longer exist
+    - User has been deleted but still has valid refresh tokens
+    - Tokens reference non-existent user IDs
+
+    Returns appropriate error responses that frontend can handle to clear tokens
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        refresh_token = request.data.get('refresh')
+
+        if not refresh_token:
+            return Response(
+                {
+                    'error': 'refresh_token_required',
+                    'detail': 'Refresh token is required',
+                    'action': 'clear_tokens'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # Try to create RefreshToken instance
+            token = RefreshToken(refresh_token)
+
+            # Get user ID from token
+            user_id = token.get('user_id')
+
+            # Check if user exists
+            try:
+                user = User.objects.get(id=user_id)
+
+                # Check if user is active
+                if not user.is_active:
+                    log_security_event(
+                        user=user,
+                        action='token_refresh_inactive_user',
+                        description=f'Token refresh attempted for inactive user',
+                        ip_address=get_client_ip(request),
+                        user_agent=request.META.get('HTTP_USER_AGENT', '')
+                    )
+
+                    return Response(
+                        {
+                            'error': 'user_inactive',
+                            'detail': 'User account is inactive',
+                            'action': 'clear_tokens'
+                        },
+                        status=status.HTTP_401_UNAUTHORIZED
+                    )
+
+                # Generate new access token
+                access_token = token.access_token
+
+                # Optionally generate new refresh token (token rotation)
+                # For now, we'll reuse the same refresh token
+
+                return Response({
+                    'access': str(access_token),
+                    'refresh': str(token)
+                })
+
+            except User.DoesNotExist:
+                # User has been deleted - log and return clear error
+                log_security_event(
+                    user=None,
+                    action='token_refresh_user_not_found',
+                    description=f'Token refresh attempted for non-existent user ID: {user_id}',
+                    ip_address=get_client_ip(request),
+                    user_agent=request.META.get('HTTP_USER_AGENT', ''),
+                    metadata={'token_user_id': user_id}
+                )
+
+                return Response(
+                    {
+                        'error': 'user_not_found',
+                        'detail': 'User account no longer exists. Please log in again.',
+                        'action': 'clear_tokens'
+                    },
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+
+        except TokenError as e:
+            # Invalid or expired token
+            log_security_event(
+                user=None,
+                action='token_refresh_invalid',
+                description=f'Invalid token refresh attempt: {str(e)}',
+                ip_address=get_client_ip(request),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+
+            return Response(
+                {
+                    'error': 'invalid_token',
+                    'detail': str(e),
+                    'action': 'clear_tokens'
+                },
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        except Exception as e:
+            # Catch-all for unexpected errors
+            logger.error(f'Unexpected error in token refresh: {str(e)}')
+
+            return Response(
+                {
+                    'error': 'token_refresh_failed',
+                    'detail': 'Token refresh failed. Please log in again.',
+                    'action': 'clear_tokens'
+                },
+                status=status.HTTP_401_UNAUTHORIZED
+            )
