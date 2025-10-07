@@ -240,6 +240,10 @@ export function PermitsLicenses({ selectedFacility }: PermitsLicensesProps) {
     setShowUploadModal(true);
   };
 
+  const handleRenew = () => {
+    window.open('https://google.com', '_blank');
+  };
+
   const handleCancelEdit = () => {
     setEditingPermit(null);
     setEditedPermit({});
@@ -670,7 +674,8 @@ export function PermitsLicenses({ selectedFacility }: PermitsLicensesProps) {
                           <span>Upload</span>
                         </button>
                         {permit.calculated_status === 'expiring_soon' && (
-                          <button className="flex items-center space-x-1 px-3 py-1 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700">
+                          <button onClick={handleRenew}
+                          className="flex items-center space-x-1 px-3 py-1 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700">
                             <Calendar className="h-4 w-4" />
                             <span>Renew</span>
                           </button>
