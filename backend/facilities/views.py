@@ -19,7 +19,9 @@ from .models import (
 from .serializers import (
     LocationSerializer, LocationDetailSerializer, LocationDashboardSerializer,
     DashboardSectionSerializer, DashboardSectionDataSerializer,
-    TankSerializer, PermitSerializer, FacilityProfileSerializer
+    TankSerializer, PermitSerializer, FacilityProfileSerializer,
+    ProfileGeneralInfoSerializer, ProfileOperationalInfoSerializer,
+    ProfileContactsSerializer, ProfileOperationHoursSerializer
 )
 
 logger = logging.getLogger(__name__)
@@ -364,3 +366,119 @@ class FacilityProfileView(generics.RetrieveUpdateAPIView):
         )
         
         return profile
+
+class ProfileGeneralInfoView(generics.UpdateAPIView):
+    """
+    Update General Information section only
+    """
+    serializer_class = ProfileGeneralInfoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        location_id = self.kwargs['location_id']
+        location = get_object_or_404(Location, id=location_id, is_active=True)
+        profile, created = FacilityProfile.objects.get_or_create(location=location)
+        return profile
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response({
+            'message': 'General Information updated successfully',
+            'data': serializer.data
+        })
+
+
+class ProfileOperationalInfoView(generics.UpdateAPIView):
+    """
+    Update Operational Information section only
+    """
+    serializer_class = ProfileOperationalInfoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        location_id = self.kwargs['location_id']
+        location = get_object_or_404(Location, id=location_id, is_active=True)
+        profile, created = FacilityProfile.objects.get_or_create(location=location)
+        return profile
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response({
+            'message': 'Operational Information updated successfully',
+            'data': serializer.data
+        })
+
+
+class ProfileContactsView(generics.UpdateAPIView):
+    """
+    Update Facility Contacts section only
+    """
+    serializer_class = ProfileContactsSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        location_id = self.kwargs['location_id']
+        location = get_object_or_404(Location, id=location_id, is_active=True)
+        profile, created = FacilityProfile.objects.get_or_create(location=location)
+        return profile
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response({
+            'message': 'Facility Contacts updated successfully',
+            'data': serializer.data
+        })
+
+
+class ProfileOperationHoursView(generics.UpdateAPIView):
+    """
+    Update Operation Hours section only
+    """
+    serializer_class = ProfileOperationHoursSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        location_id = self.kwargs['location_id']
+        location = get_object_or_404(Location, id=location_id, is_active=True)
+        profile, created = FacilityProfile.objects.get_or_create(
+            location=location,
+            defaults={
+                'operating_hours': {
+                    'monday': {'closed': False, 'open': '08:00', 'close': '18:00'},
+                    'tuesday': {'closed': False, 'open': '08:00', 'close': '18:00'},
+                    'wednesday': {'closed': False, 'open': '08:00', 'close': '18:00'},
+                    'thursday': {'closed': False, 'open': '08:00', 'close': '18:00'},
+                    'friday': {'closed': False, 'open': '08:00', 'close': '18:00'},
+                    'saturday': {'closed': False, 'open': '09:00', 'close': '17:00'},
+                    'sunday': {'closed': True, 'open': '09:00', 'close': '17:00'}
+                }
+            }
+        )
+        return profile
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response({
+            'message': 'Operation Hours updated successfully',
+            'data': serializer.data
+        })

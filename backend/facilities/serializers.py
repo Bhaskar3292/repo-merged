@@ -232,3 +232,115 @@ class LocationDetailSerializer(serializers.ModelSerializer):
             obj.country
         ]
         return ', '.join(part for part in address_parts if part)
+
+class ProfileGeneralInfoSerializer(serializers.ModelSerializer):
+    """
+    Serializer for General Information section only
+    """
+    facilityName = serializers.CharField(source='location.name')
+    address = serializers.CharField(source='location.street_address', allow_blank=True, required=False)
+    city = serializers.CharField(source='location.city', allow_blank=True, required=False)
+    state = serializers.CharField(source='location.state', allow_blank=True, required=False)
+    zip = serializers.CharField(source='location.zip_code', allow_blank=True, required=False)
+    country = serializers.CharField(source='location.country', required=False)
+    internalId = serializers.CharField(source='internal_id', allow_blank=True, required=False)
+    stateIdNumber = serializers.CharField(source='state_id_number', allow_blank=True, required=False)
+
+    class Meta:
+        model = FacilityProfile
+        fields = ['facilityName', 'internalId', 'stateIdNumber', 'address',
+                 'city', 'county', 'state', 'zip', 'country']
+
+    def update(self, instance, validated_data):
+        location_data = validated_data.pop('location', {})
+        for field, value in location_data.items():
+            setattr(instance.location, field, value)
+        instance.location.save()
+
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+        instance.save()
+        return instance
+
+
+class ProfileOperationalInfoSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Operational Information section only
+    """
+    storeOpenDate = serializers.DateField(source='store_open_date', allow_null=True, required=False)
+    operationalRegion = serializers.CharField(source='operational_region', allow_blank=True, required=False)
+    tosPosDate = serializers.DateField(source='tos_pos_date', allow_null=True, required=False)
+    gasBrand = serializers.CharField(source='gas_brand', allow_blank=True, required=False)
+    storeOperatorType = serializers.CharField(source='store_operator_type', allow_blank=True, required=False)
+    operationalDistrict = serializers.CharField(source='operational_district', allow_blank=True, required=False)
+    facilityType = serializers.CharField(source='location.facility_type', required=False)
+    leaseOwn = serializers.CharField(source='lease_own', allow_blank=True, required=False)
+    ownerId = serializers.CharField(source='owner_id', allow_blank=True, required=False)
+    tankOwner = serializers.CharField(source='tank_owner', allow_blank=True, required=False)
+    tankOperator = serializers.CharField(source='tank_operator', allow_blank=True, required=False)
+    numAST = serializers.IntegerField(source='num_ast', required=False)
+    numUSTRegistered = serializers.IntegerField(source='num_ust_registered', required=False)
+    numMPDs = serializers.IntegerField(source='num_mpds', required=False)
+    remodelCloseDate = serializers.DateField(source='remodel_close_date', allow_null=True, required=False)
+    remodelOpenDate = serializers.DateField(source='remodel_open_date', allow_null=True, required=False)
+    reasonForRemodel = serializers.CharField(source='reason_for_remodel', allow_blank=True, required=False)
+    channelOfTrade = serializers.CharField(source='channel_of_trade', allow_blank=True, required=False)
+    carServiceCenter = serializers.CharField(source='car_service_center', allow_blank=True, required=False)
+    truckServiceCenter = serializers.CharField(source='truck_service_center', allow_blank=True, required=False)
+    busMaintenance = serializers.CharField(source='bus_maintenance', allow_blank=True, required=False)
+    defuelingSite = serializers.CharField(source='defueling_site', allow_blank=True, required=False)
+    defuelingMethod = serializers.CharField(source='defueling_method', allow_blank=True, required=False)
+
+    class Meta:
+        model = FacilityProfile
+        fields = ['storeOpenDate', 'operationalRegion', 'tosPosDate', 'gasBrand',
+                 'storeOperatorType', 'category', 'operationalDistrict', 'facilityType',
+                 'leaseOwn', 'ownerId', 'tankOwner', 'tankOperator', 'numAST',
+                 'numUSTRegistered', 'numMPDs', 'insured', 'remodelCloseDate',
+                 'remodelOpenDate', 'reasonForRemodel', 'channelOfTrade',
+                 'carServiceCenter', 'truckServiceCenter', 'busMaintenance',
+                 'defuelingSite', 'defuelingMethod']
+
+    def update(self, instance, validated_data):
+        location_data = validated_data.pop('location', {})
+        if location_data:
+            for field, value in location_data.items():
+                setattr(instance.location, field, value)
+            instance.location.save()
+
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+        instance.save()
+        return instance
+
+
+class ProfileContactsSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Facility Contacts section only
+    """
+    complianceManagerName = serializers.CharField(source='compliance_manager_name', allow_blank=True, required=False)
+    complianceManagerPhone = serializers.CharField(source='compliance_manager_phone', allow_blank=True, required=False)
+    complianceManagerEmail = serializers.EmailField(source='compliance_manager_email', allow_blank=True, required=False)
+    storeManagerName = serializers.CharField(source='store_manager_name', allow_blank=True, required=False)
+    storeManagerPhone = serializers.CharField(source='store_manager_phone', allow_blank=True, required=False)
+    storeManagerEmail = serializers.EmailField(source='store_manager_email', allow_blank=True, required=False)
+    testingVendorName = serializers.CharField(source='testing_vendor_name', allow_blank=True, required=False)
+    testingVendorPhone = serializers.CharField(source='testing_vendor_phone', allow_blank=True, required=False)
+    testingVendorEmail = serializers.EmailField(source='testing_vendor_email', allow_blank=True, required=False)
+
+    class Meta:
+        model = FacilityProfile
+        fields = ['complianceManagerName', 'complianceManagerPhone', 'complianceManagerEmail',
+                 'storeManagerName', 'storeManagerPhone', 'storeManagerEmail',
+                 'testingVendorName', 'testingVendorPhone', 'testingVendorEmail']
+
+
+class ProfileOperationHoursSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Operation Hours section only
+    """
+    operatingHours = serializers.JSONField(source='operating_hours', required=False)
+
+    class Meta:
+        model = FacilityProfile
+        fields = ['operatingHours']

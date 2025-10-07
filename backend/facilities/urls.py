@@ -33,4 +33,10 @@ urlpatterns = [
 
     # Facility Profile
     path('locations/<int:location_id>/profile/', views.FacilityProfileView.as_view(), name='facility_profile'),
+
+    # Facility Profile - Section-specific updates
+    path('locations/<int:location_id>/profile/general/', views.ProfileGeneralInfoView.as_view(), name='profile_general'),
+    path('locations/<int:location_id>/profile/operational/', views.ProfileOperationalInfoView.as_view(), name='profile_operational'),
+    path('locations/<int:location_id>/profile/contacts/', views.ProfileContactsView.as_view(), name='profile_contacts'),
+    path('locations/<int:location_id>/profile/operation-hours/', views.ProfileOperationHoursView.as_view(), name='profile_hours'),
 ]

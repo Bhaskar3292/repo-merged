@@ -163,16 +163,80 @@ const [sectionSuccess, setSectionSuccess] = useState({ general: null, operationa
     }
   }, [selectedFacility]);
 
+  const normalizeProfileData = (data: any): FacilityProfileData => {
+    return {
+      // General Information - ensure no null values
+      facilityName: data.facilityName || '',
+      internalId: data.internalId || '',
+      stateIdNumber: data.stateIdNumber || '',
+      address: data.address || '',
+      city: data.city || '',
+      county: data.county || '',
+      state: data.state || '',
+      zip: data.zip || '',
+      country: data.country || 'United States',
+
+      // Operational Information
+      storeOpenDate: data.storeOpenDate || '',
+      operationalRegion: data.operationalRegion || '',
+      tosPosDate: data.tosPosDate || '',
+      gasBrand: data.gasBrand || 'Phillips',
+      storeOperatorType: data.storeOperatorType || '',
+      category: data.category || '',
+      operationalDistrict: data.operationalDistrict || '',
+      facilityType: data.facilityType || '',
+      leaseOwn: data.leaseOwn || '',
+      ownerId: data.ownerId || '',
+      tankOwner: data.tankOwner || '',
+      tankOperator: data.tankOperator || '',
+      numAST: data.numAST || 0,
+      numUSTRegistered: data.numUSTRegistered || 0,
+      numMPDs: data.numMPDs || 0,
+      insured: data.insured || false,
+      remodelCloseDate: data.remodelCloseDate || '',
+      remodelOpenDate: data.remodelOpenDate || '',
+      reasonForRemodel: data.reasonForRemodel || '',
+      channelOfTrade: data.channelOfTrade || '',
+      carServiceCenter: data.carServiceCenter || '',
+      truckServiceCenter: data.truckServiceCenter || '',
+      busMaintenance: data.busMaintenance || '',
+      defuelingSite: data.defuelingSite || '',
+      defuelingMethod: data.defuelingMethod || '',
+
+      // Facility Contacts
+      complianceManagerName: data.complianceManagerName || '',
+      complianceManagerPhone: data.complianceManagerPhone || '',
+      complianceManagerEmail: data.complianceManagerEmail || '',
+      storeManagerName: data.storeManagerName || '',
+      storeManagerPhone: data.storeManagerPhone || '',
+      storeManagerEmail: data.storeManagerEmail || '',
+      testingVendorName: data.testingVendorName || '',
+      testingVendorPhone: data.testingVendorPhone || '',
+      testingVendorEmail: data.testingVendorEmail || '',
+
+      // Operating Hours
+      operatingHours: data.operatingHours || {
+        monday: { closed: false, open: '08:00', close: '18:00' },
+        tuesday: { closed: false, open: '08:00', close: '18:00' },
+        wednesday: { closed: false, open: '08:00', close: '18:00' },
+        thursday: { closed: false, open: '08:00', close: '18:00' },
+        friday: { closed: false, open: '08:00', close: '18:00' },
+        saturday: { closed: false, open: '09:00', close: '17:00' },
+        sunday: { closed: true, open: '09:00', close: '17:00' }
+      }
+    };
+  };
+
   const loadFacilityProfile = async () => {
     try {
       setLoading(true);
       const profile = await apiService.getFacilityProfile(selectedFacility.id);
-      setProfileData(profile);
+      setProfileData(normalizeProfileData(profile));
     } catch (error) {
       // If profile doesn't exist, use default data with facility name
       setProfileData(prev => ({
         ...prev,
-        facilityName: selectedFacility.name,
+        facilityName: selectedFacility.name || '',
         address: selectedFacility.street_address || '',
         city: selectedFacility.city || '',
         state: selectedFacility.state || '',
