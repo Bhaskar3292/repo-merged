@@ -151,7 +151,10 @@ export function FacilityProfile({ selectedFacility }: FacilityProfileProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-
+  // Add these three new state variables
+const [sectionLoading, setSectionLoading] = useState({ general: false, operational: false, contacts: false, hours: false });
+const [sectionError, setSectionError] = useState({ general: null, operational: null, contacts: null, hours: null });
+const [sectionSuccess, setSectionSuccess] = useState({ general: null, operational: null, contacts: null, hours: null });
   const { hasPermission, user } = useAuthContext();
 
   useEffect(() => {

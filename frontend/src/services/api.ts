@@ -553,7 +553,7 @@ class ApiService {
     } catch (error: any) {
       throw new Error(error.response?.data?.error || error.message || 'Failed to update facility profile');
     }
-  },
+  }
 
   /**
    * Update facility profile - General Information section only
@@ -565,7 +565,7 @@ class ApiService {
     } catch (error: any) {
       throw new Error(error.response?.data?.error || error.message || 'Failed to update general information');
     }
-  },
+  }
 
   /**
    * Update facility profile - Operational Information section only
@@ -577,7 +577,7 @@ class ApiService {
     } catch (error: any) {
       throw new Error(error.response?.data?.error || error.message || 'Failed to update operational information');
     }
-  },
+  }
 
   /**
    * Update facility profile - Facility Contacts section only
@@ -589,7 +589,7 @@ class ApiService {
     } catch (error: any) {
       throw new Error(error.response?.data?.error || error.message || 'Failed to update facility contacts');
     }
-  },
+  }
 
   /**
    * Update facility profile - Operation Hours section only
