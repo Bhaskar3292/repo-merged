@@ -553,6 +553,54 @@ class ApiService {
     } catch (error: any) {
       throw new Error(error.response?.data?.error || error.message || 'Failed to update facility profile');
     }
+  },
+
+  /**
+   * Update facility profile - General Information section only
+   */
+  async updateProfileGeneralInfo(locationId: number, data: any): Promise<any> {
+    try {
+      const response = await api.patch(`/api/facilities/locations/${locationId}/profile/general/`, data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to update general information');
+    }
+  },
+
+  /**
+   * Update facility profile - Operational Information section only
+   */
+  async updateProfileOperationalInfo(locationId: number, data: any): Promise<any> {
+    try {
+      const response = await api.patch(`/api/facilities/locations/${locationId}/profile/operational/`, data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to update operational information');
+    }
+  },
+
+  /**
+   * Update facility profile - Facility Contacts section only
+   */
+  async updateProfileContacts(locationId: number, data: any): Promise<any> {
+    try {
+      const response = await api.patch(`/api/facilities/locations/${locationId}/profile/contacts/`, data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to update facility contacts');
+    }
+  },
+
+  /**
+   * Update facility profile - Operation Hours section only
+   */
+  async updateProfileOperationHours(locationId: number, data: any): Promise<any> {
+    try {
+      const response = await api.patch(`/api/facilities/locations/${locationId}/profile/operation-hours/`, data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to update operation hours');
+    }
   }
 
   /**

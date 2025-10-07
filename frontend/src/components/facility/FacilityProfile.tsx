@@ -197,20 +197,127 @@ export function FacilityProfile({ selectedFacility }: FacilityProfileProps) {
     setSuccess(null);
   };
 
-  const handleSave = async (section: keyof typeof editingSections) => {
+  const handleSaveGeneralInfo = async () => {
+    setSectionLoading(prev => ({ ...prev, general: true }));
+    setSectionError(prev => ({ ...prev, general: null }));
+
     try {
-      setLoading(true);
-      await apiService.updateFacilityProfile(selectedFacility.id, profileData);
-      setEditingSections(prev => ({
-        ...prev,
-        [section]: false
-      }));
-      setSuccess(`${section.charAt(0).toUpperCase() + section.slice(1)} information saved successfully`);
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (error) {
-      setError('Failed to save changes');
+      const generalInfoData = {
+        facilityName: profileData.facilityName,
+        internalId: profileData.internalId,
+        stateIdNumber: profileData.stateIdNumber,
+        address: profileData.address,
+        city: profileData.city,
+        county: profileData.county,
+        state: profileData.state,
+        zip: profileData.zip,
+        country: profileData.country
+      };
+
+      await apiService.updateProfileGeneralInfo(selectedFacility.id, generalInfoData);
+
+      setEditingSections(prev => ({ ...prev, general: false }));
+      setSectionSuccess(prev => ({ ...prev, general: 'General Information saved successfully' }));
+      setTimeout(() => setSectionSuccess(prev => ({ ...prev, general: null })), 3000);
+    } catch (error: any) {
+      setSectionError(prev => ({ ...prev, general: error.message || 'Failed to save general information' }));
     } finally {
-      setLoading(false);
+      setSectionLoading(prev => ({ ...prev, general: false }));
+    }
+  };
+
+  const handleSaveOperationalInfo = async () => {
+    setSectionLoading(prev => ({ ...prev, operational: true }));
+    setSectionError(prev => ({ ...prev, operational: null }));
+
+    try {
+      const operationalData = {
+        storeOpenDate: profileData.storeOpenDate,
+        operationalRegion: profileData.operationalRegion,
+        tosPosDate: profileData.tosPosDate,
+        gasBrand: profileData.gasBrand,
+        storeOperatorType: profileData.storeOperatorType,
+        category: profileData.category,
+        operationalDistrict: profileData.operationalDistrict,
+        facilityType: profileData.facilityType,
+        leaseOwn: profileData.leaseOwn,
+        ownerId: profileData.ownerId,
+        tankOwner: profileData.tankOwner,
+        tankOperator: profileData.tankOperator,
+        numAST: profileData.numAST,
+        numUSTRegistered: profileData.numUSTRegistered,
+        numMPDs: profileData.numMPDs,
+        insured: profileData.insured,
+        remodelCloseDate: profileData.remodelCloseDate,
+        remodelOpenDate: profileData.remodelOpenDate,
+        reasonForRemodel: profileData.reasonForRemodel,
+        channelOfTrade: profileData.channelOfTrade,
+        carServiceCenter: profileData.carServiceCenter,
+        truckServiceCenter: profileData.truckServiceCenter,
+        busMaintenance: profileData.busMaintenance,
+        defuelingSite: profileData.defuelingSite,
+        defuelingMethod: profileData.defuelingMethod
+      };
+
+      await apiService.updateProfileOperationalInfo(selectedFacility.id, operationalData);
+
+      setEditingSections(prev => ({ ...prev, operational: false }));
+      setSectionSuccess(prev => ({ ...prev, operational: 'Operational Information saved successfully' }));
+      setTimeout(() => setSectionSuccess(prev => ({ ...prev, operational: null })), 3000);
+    } catch (error: any) {
+      setSectionError(prev => ({ ...prev, operational: error.message || 'Failed to save operational information' }));
+    } finally {
+      setSectionLoading(prev => ({ ...prev, operational: false }));
+    }
+  };
+
+  const handleSaveContacts = async () => {
+    setSectionLoading(prev => ({ ...prev, contacts: true }));
+    setSectionError(prev => ({ ...prev, contacts: null }));
+
+    try {
+      const contactsData = {
+        complianceManagerName: profileData.complianceManagerName,
+        complianceManagerPhone: profileData.complianceManagerPhone,
+        complianceManagerEmail: profileData.complianceManagerEmail,
+        storeManagerName: profileData.storeManagerName,
+        storeManagerPhone: profileData.storeManagerPhone,
+        storeManagerEmail: profileData.storeManagerEmail,
+        testingVendorName: profileData.testingVendorName,
+        testingVendorPhone: profileData.testingVendorPhone,
+        testingVendorEmail: profileData.testingVendorEmail
+      };
+
+      await apiService.updateProfileContacts(selectedFacility.id, contactsData);
+
+      setEditingSections(prev => ({ ...prev, contacts: false }));
+      setSectionSuccess(prev => ({ ...prev, contacts: 'Facility Contacts saved successfully' }));
+      setTimeout(() => setSectionSuccess(prev => ({ ...prev, contacts: null })), 3000);
+    } catch (error: any) {
+      setSectionError(prev => ({ ...prev, contacts: error.message || 'Failed to save facility contacts' }));
+    } finally {
+      setSectionLoading(prev => ({ ...prev, contacts: false }));
+    }
+  };
+
+  const handleSaveOperationHours = async () => {
+    setSectionLoading(prev => ({ ...prev, hours: true }));
+    setSectionError(prev => ({ ...prev, hours: null }));
+
+    try {
+      const hoursData = {
+        operatingHours: profileData.operatingHours
+      };
+
+      await apiService.updateProfileOperationHours(selectedFacility.id, hoursData);
+
+      setEditingSections(prev => ({ ...prev, hours: false }));
+      setSectionSuccess(prev => ({ ...prev, hours: 'Operation Hours saved successfully' }));
+      setTimeout(() => setSectionSuccess(prev => ({ ...prev, hours: null })), 3000);
+    } catch (error: any) {
+      setSectionError(prev => ({ ...prev, hours: error.message || 'Failed to save operation hours' }));
+    } finally {
+      setSectionLoading(prev => ({ ...prev, hours: false }));
     }
   };
 
@@ -308,16 +415,22 @@ export function FacilityProfile({ selectedFacility }: FacilityProfileProps) {
           {editingSections[section] ? (
             <>
               <button
-                onClick={() => handleSave(section)}
-                disabled={loading}
+                onClick={() => {
+                  if (section === 'general') handleSaveGeneralInfo();
+                  else if (section === 'operational') handleSaveOperationalInfo();
+                  else if (section === 'contacts') handleSaveContacts();
+                  else if (section === 'hours') handleSaveOperationHours();
+                }}
+                disabled={sectionLoading[section]}
                 className="flex items-center space-x-1 px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 text-sm"
               >
                 <Save className="h-4 w-4" />
-                <span>Save</span>
+                <span>{sectionLoading[section] ? 'Saving...' : 'Save'}</span>
               </button>
               <button
                 onClick={() => handleCancel(section)}
-                className="flex items-center space-x-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 text-sm"
+                disabled={sectionLoading[section]}
+                className="flex items-center space-x-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 text-sm disabled:opacity-50"
               >
                 <X className="h-4 w-4" />
                 <span>Cancel</span>
@@ -477,7 +590,25 @@ export function FacilityProfile({ selectedFacility }: FacilityProfileProps) {
             <MapPin className="h-5 w-5 text-blue-600" />,
             'general'
           )}
-          
+
+          {sectionSuccess.general && (
+            <div className="mx-6 mt-4 bg-green-50 border border-green-200 rounded-lg p-3">
+              <div className="flex items-center">
+                <Save className="h-4 w-4 text-green-600 mr-2" />
+                <span className="text-sm text-green-800">{sectionSuccess.general}</span>
+              </div>
+            </div>
+          )}
+
+          {sectionError.general && (
+            <div className="mx-6 mt-4 bg-red-50 border border-red-200 rounded-lg p-3">
+              <div className="flex items-center">
+                <X className="h-4 w-4 text-red-600 mr-2" />
+                <span className="text-sm text-red-800">{sectionError.general}</span>
+              </div>
+            </div>
+          )}
+
           {expandedSections.general && (
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -504,7 +635,25 @@ export function FacilityProfile({ selectedFacility }: FacilityProfileProps) {
             <Settings className="h-5 w-5 text-green-600" />,
             'operational'
           )}
-          
+
+          {sectionSuccess.operational && (
+            <div className="mx-6 mt-4 bg-green-50 border border-green-200 rounded-lg p-3">
+              <div className="flex items-center">
+                <Save className="h-4 w-4 text-green-600 mr-2" />
+                <span className="text-sm text-green-800">{sectionSuccess.operational}</span>
+              </div>
+            </div>
+          )}
+
+          {sectionError.operational && (
+            <div className="mx-6 mt-4 bg-red-50 border border-red-200 rounded-lg p-3">
+              <div className="flex items-center">
+                <X className="h-4 w-4 text-red-600 mr-2" />
+                <span className="text-sm text-red-800">{sectionError.operational}</span>
+              </div>
+            </div>
+          )}
+
           {expandedSections.operational && (
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -545,7 +694,25 @@ export function FacilityProfile({ selectedFacility }: FacilityProfileProps) {
             <Users className="h-5 w-5 text-purple-600" />,
             'contacts'
           )}
-          
+
+          {sectionSuccess.contacts && (
+            <div className="mx-6 mt-4 bg-green-50 border border-green-200 rounded-lg p-3">
+              <div className="flex items-center">
+                <Save className="h-4 w-4 text-green-600 mr-2" />
+                <span className="text-sm text-green-800">{sectionSuccess.contacts}</span>
+              </div>
+            </div>
+          )}
+
+          {sectionError.contacts && (
+            <div className="mx-6 mt-4 bg-red-50 border border-red-200 rounded-lg p-3">
+              <div className="flex items-center">
+                <X className="h-4 w-4 text-red-600 mr-2" />
+                <span className="text-sm text-red-800">{sectionError.contacts}</span>
+              </div>
+            </div>
+          )}
+
           {expandedSections.contacts && (
             <div className="p-6">
               <div className="overflow-x-auto">
@@ -699,7 +866,25 @@ export function FacilityProfile({ selectedFacility }: FacilityProfileProps) {
             <Clock className="h-5 w-5 text-orange-600" />,
             'hours'
           )}
-          
+
+          {sectionSuccess.hours && (
+            <div className="mx-6 mt-4 bg-green-50 border border-green-200 rounded-lg p-3">
+              <div className="flex items-center">
+                <Save className="h-4 w-4 text-green-600 mr-2" />
+                <span className="text-sm text-green-800">{sectionSuccess.hours}</span>
+              </div>
+            </div>
+          )}
+
+          {sectionError.hours && (
+            <div className="mx-6 mt-4 bg-red-50 border border-red-200 rounded-lg p-3">
+              <div className="flex items-center">
+                <X className="h-4 w-4 text-red-600 mr-2" />
+                <span className="text-sm text-red-800">{sectionError.hours}</span>
+              </div>
+            </div>
+          )}
+
           {expandedSections.hours && (
             <div className="p-6">
               {editingSections.hours && (
