@@ -624,8 +624,6 @@ const [sectionSuccess, setSectionSuccess] = useState({ general: null, operationa
                 {renderInput('state', 'State', 'select', usStates, editingSections.general)}
                 {renderInput('zip', 'ZIP Code', 'text', undefined, editingSections.general)}
                 {renderInput('country', 'Country', 'text', undefined, editingSections.general)}
-                {renderInput('phone', 'Phone', 'tel', undefined, editingSections.general)}
-                {renderInput('email', 'Email', 'email', undefined, editingSections.general)}
               </div>
             </div>
           )}
