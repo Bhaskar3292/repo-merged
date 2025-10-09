@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, CreditCard as Edit, Trash2, Save, X, Server, CircleAlert as AlertCircle } from 'lucide-react';
+import { Plus, PenBox as Edit, Trash2, Save, X, Server, AlertCircle } from 'lucide-react';
 import { apiService } from '../../services/api';
 
 interface Commander {
@@ -473,27 +473,6 @@ const CommanderInfo = ({ selectedFacility }: CommanderInfoProps) => {
                         </label>
                         <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-900">
                           {commander.expiry_date || <span className="text-gray-400 italic">Not set</span>}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Status
-                        </label>
-                        <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-900">
-                          {commander.expiry_date ? (
-                            new Date(commander.expiry_date) < new Date() ? (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                Expired
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                Active
-                              </span>
-                            )
-                          ) : (
-                            <span className="text-gray-400 italic">Not set</span>
-                          )}
                         </div>
                       </div>
                     </div>

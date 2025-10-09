@@ -57,7 +57,7 @@ class PermitAdmin(admin.ModelAdmin):
 
 @admin.register(CommanderInfo)
 class CommanderInfoAdmin(admin.ModelAdmin):
-    list_display = ['location', 'commander_type', 'serial_number', 'asm_subscription', 'issue_date', 'expiry_date']
+    list_display = ['location', 'commander_type', 'serial_number','service_id','payment_processor', 'asm_subscription', 'issue_date', 'expiry_date']
     list_filter = ['asm_subscription', 'issue_date', 'expiry_date']
     search_fields = ['location__name', 'commander_type', 'serial_number']
     readonly_fields = ['created_at', 'updated_at']

@@ -283,6 +283,7 @@ class CommanderInfo(models.Model):
     # Main Fields
     commander_type = models.CharField(max_length=100, blank=True)
     serial_number = models.CharField(max_length=100, blank=True)
+    service_id=models.CharField(max_length=100,blank=True)
     asm_subscription = models.CharField(
         max_length=50,
         choices=[
@@ -293,6 +294,7 @@ class CommanderInfo(models.Model):
     )
     base_software_version = models.CharField(max_length=50, blank=True)
     tunnel_ip = models.CharField(max_length=50, blank=True)
+    payment_processor=models.CharField(max_length=100,blank=True)
     user_id = models.CharField(max_length=100, blank=True)
     password = models.CharField(max_length=255, blank=True)
     
