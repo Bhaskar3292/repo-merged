@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Save, X, Server } from 'lucide-react';
+import { Plus, CreditCard as Edit, Trash2, Save, X, Server } from 'lucide-react';
 import { apiService } from '../../services/api';
 
 interface Commander {
