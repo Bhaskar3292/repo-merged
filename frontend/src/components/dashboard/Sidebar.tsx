@@ -36,7 +36,7 @@ export function Sidebar({ collapsed, activeView, onViewChange, onToggleSidebar }
       collapsed ? 'w-16' : 'w-64'
     } flex flex-col`}>
       <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-left">
           {!collapsed && (
             <div className="flex items-center space-x-3">
               <button
@@ -45,19 +45,17 @@ export function Sidebar({ collapsed, activeView, onViewChange, onToggleSidebar }
               >
                 <Menu className="h-5 w-5 text-gray-600" />
               </button>
-              <Building2 className="h-8 w-8 text-blue-600" />
-              <span className="font-bold text-xl text-gray-900">FacilityOS</span>
+              <span className="font-bold text-xl text-gray-900">Menu</span>
             </div>
           )}
           {collapsed && (
-            <div className="flex items-center space-x-2">
+            <div className="flex items-left space-x-2">
               <button
                 onClick={onToggleSidebar}
                 className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
               >
                 <Menu className="h-4 w-4 text-gray-600" />
               </button>
-              <Building2 className="h-8 w-8 text-blue-600" />
             </div>
           )}
         </div>
