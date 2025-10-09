@@ -356,7 +356,7 @@ class CommanderInfoSerializer(serializers.ModelSerializer):
         model = CommanderInfo
         fields = [
             'id', 'location', 'location_name', 'commander_type', 'serial_number','service_id',
-            'asm_subscription', 'base_software_version', 'tunnel_ip','payment processor',
+            'asm_subscription', 'base_software_version', 'tunnel_ip','payment_processor',
             'user_id', 'password', 'issue_date', 'expiry_date',
             'created_at', 'updated_at'
         ]

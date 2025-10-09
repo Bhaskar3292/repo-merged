@@ -6,9 +6,11 @@ interface Commander {
   id?: number;
   commander_type: string;
   serial_number: string;
+  service_id:string;
   asm_subscription: string;
   base_software_version: string;
   tunnel_ip: string;
+  payment_processor:string;
   user_id: string;
   password: string;
   issue_date: string;
@@ -32,9 +34,11 @@ const CommanderInfo = ({ selectedFacility }: CommanderInfoProps) => {
   const [formData, setFormData] = useState<Commander>({
     commander_type: '',
     serial_number: '',
+    service_id:'',
     asm_subscription: 'Own',
     base_software_version: '',
     tunnel_ip: '',
+    payment_processor:'',
     user_id: '',
     password: '',
     issue_date: '',
@@ -78,9 +82,11 @@ const CommanderInfo = ({ selectedFacility }: CommanderInfoProps) => {
     setFormData({
       commander_type: '',
       serial_number: '',
+      service_id:'',
       asm_subscription: 'Own',
       base_software_version: '',
       tunnel_ip: '',
+      payment_processor:'',
       user_id: '',
       password: '',
       issue_date: '',
@@ -94,9 +100,11 @@ const CommanderInfo = ({ selectedFacility }: CommanderInfoProps) => {
     setFormData({
       commander_type: commander.commander_type || '',
       serial_number: commander.serial_number || '',
+      service_id:commander.service_id || '',
       asm_subscription: commander.asm_subscription || 'Own',
       base_software_version: commander.base_software_version || '',
       tunnel_ip: commander.tunnel_ip || '',
+      payment_processor: commander.payment_processor || '',
       user_id: commander.user_id || '',
       password: commander.password || '',
       issue_date: commander.issue_date || '',
@@ -110,9 +118,11 @@ const CommanderInfo = ({ selectedFacility }: CommanderInfoProps) => {
     setFormData({
       commander_type: '',
       serial_number: '',
+      service_id: '',
       asm_subscription: 'Own',
       base_software_version: '',
       tunnel_ip: '',
+      payment_processor:'',
       user_id: '',
       password: '',
       issue_date: '',
@@ -224,7 +234,7 @@ const CommanderInfo = ({ selectedFacility }: CommanderInfoProps) => {
             {isCreating ? 'New Commander' : 'Edit Commander'}
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Commander Type
@@ -251,6 +261,18 @@ const CommanderInfo = ({ selectedFacility }: CommanderInfoProps) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
+                Service ID
+              </label>
+              <input
+                type="text"
+                value={formData.service_id}
+                onChange={(e) => updateField('service_id', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 ASM Subscription
               </label>
               <select
@@ -271,6 +293,18 @@ const CommanderInfo = ({ selectedFacility }: CommanderInfoProps) => {
                 type="text"
                 value={formData.base_software_version}
                 onChange={(e) => updateField('base_software_version', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Payment Processor
+              </label>
+              <input
+                type="text"
+                value={formData.payment_processor}
+                onChange={(e) => updateField('payment_processor', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
