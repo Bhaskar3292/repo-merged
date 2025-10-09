@@ -234,139 +234,153 @@ const CommanderInfo = ({ selectedFacility }: CommanderInfoProps) => {
             {isCreating ? 'New Commander' : 'Edit Commander'}
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Commander Type
-              </label>
-              <input
-                type="text"
-                value={formData.commander_type}
-                onChange={(e) => updateField('commander_type', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              <h4 className="text-sm font-semibold text-gray-700 mb-3 pb-2 border-b border-gray-200">
+                Basic Information
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Commander Type
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.commander_type}
+                    onChange={(e) => updateField('commander_type', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Serial Number
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.serial_number}
+                    onChange={(e) => updateField('serial_number', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Service ID
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.service_id}
+                    onChange={(e) => updateField('service_id', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Base Software Version
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.base_software_version}
+                    onChange={(e) => updateField('base_software_version', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Payment Processor
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.payment_processor}
+                    onChange={(e) => updateField('payment_processor', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tunnel IP
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.tunnel_ip}
+                    onChange={(e) => updateField('tunnel_ip', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    C-Store User ID
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.user_id}
+                    onChange={(e) => updateField('user_id', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => updateField('password', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Serial Number
-              </label>
-              <input
-                type="text"
-                value={formData.serial_number}
-                onChange={(e) => updateField('serial_number', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+              <h4 className="text-sm font-semibold text-gray-700 mb-3 pb-2 border-b border-gray-200">
+                Subscription & Dates
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    ASM Subscription
+                  </label>
+                  <select
+                    value={formData.asm_subscription}
+                    onChange={(e) => updateField('asm_subscription', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="Own">Own</option>
+                    <option value="Brand Operated">Brand Operated</option>
+                  </select>
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Service ID
-              </label>
-              <input
-                type="text"
-                value={formData.service_id}
-                onChange={(e) => updateField('service_id', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Issue Date
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.issue_date}
+                    onChange={(e) => updateField('issue_date', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                ASM Subscription
-              </label>
-              <select
-                value={formData.asm_subscription}
-                onChange={(e) => updateField('asm_subscription', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="Own">Own</option>
-                <option value="Brand Operated">Brand Operated</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Base Software Version
-              </label>
-              <input
-                type="text"
-                value={formData.base_software_version}
-                onChange={(e) => updateField('base_software_version', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Payment Processor
-              </label>
-              <input
-                type="text"
-                value={formData.payment_processor}
-                onChange={(e) => updateField('payment_processor', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tunnel IP
-              </label>
-              <input
-                type="text"
-                value={formData.tunnel_ip}
-                onChange={(e) => updateField('tunnel_ip', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                C-Store User ID
-              </label>
-              <input
-                type="text"
-                value={formData.user_id}
-                onChange={(e) => updateField('user_id', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Password
-              </label>
-              <input
-                type="password"
-                value={formData.password}
-                onChange={(e) => updateField('password', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Issue Date
-              </label>
-              <input
-                type="date"
-                value={formData.issue_date}
-                onChange={(e) => updateField('issue_date', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Expiry Date
-              </label>
-              <input
-                type="date"
-                value={formData.expiry_date}
-                onChange={(e) => updateField('expiry_date', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Expiry Date
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.expiry_date}
+                    onChange={(e) => updateField('expiry_date', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
