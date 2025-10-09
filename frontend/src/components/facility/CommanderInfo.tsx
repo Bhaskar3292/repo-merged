@@ -323,7 +323,7 @@ const CommanderInfo = ({ selectedFacility }: CommanderInfoProps) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                User ID
+                C-Store User ID
               </label>
               <input
                 type="text"
@@ -485,7 +485,7 @@ const CommanderInfo = ({ selectedFacility }: CommanderInfoProps) => {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          User ID
+                          C-Store User ID
                         </label>
                         <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-900">
                           {commander.user_id || <span className="text-gray-400 italic">Not set</span>}
