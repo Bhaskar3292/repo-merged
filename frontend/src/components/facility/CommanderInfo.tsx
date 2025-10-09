@@ -388,14 +388,14 @@ const CommanderInfo = ({ selectedFacility }: CommanderInfoProps) => {
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => handleEdit(commander)}
-                          className="flex items-center space-x-1 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                          className="flex items-center space-x-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 text-sm"
                         >
                           <Edit className="h-4 w-4" />
                           <span>Edit</span>
                         </button>
                         <button
                           onClick={() => commander.id && handleDelete(commander.id)}
-                          className="flex items-center space-x-1 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                          className="flex items-center space-x-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 text-sm text-red-600"
                         >
                           <Trash2 className="h-4 w-4" />
                           <span>Delete</span>
@@ -403,84 +403,84 @@ const CommanderInfo = ({ selectedFacility }: CommanderInfoProps) => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                           Commander Type
                         </label>
-                        <p className="text-sm text-gray-900">
-                          {commander.commander_type || '-'}
-                        </p>
+                        <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-900">
+                          {commander.commander_type || <span className="text-gray-400 italic">Not set</span>}
+                        </div>
                       </div>
 
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                           Serial Number
                         </label>
-                        <p className="text-sm text-gray-900">
-                          {commander.serial_number || '-'}
-                        </p>
+                        <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-900">
+                          {commander.serial_number || <span className="text-gray-400 italic">Not set</span>}
+                        </div>
                       </div>
 
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                           ASM Subscription
                         </label>
-                        <p className="text-sm text-gray-900">
-                          {commander.asm_subscription || '-'}
-                        </p>
+                        <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-900">
+                          {commander.asm_subscription || <span className="text-gray-400 italic">Not set</span>}
+                        </div>
                       </div>
 
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                           Base Software Version
                         </label>
-                        <p className="text-sm text-gray-900">
-                          {commander.base_software_version || '-'}
-                        </p>
+                        <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-900">
+                          {commander.base_software_version || <span className="text-gray-400 italic">Not set</span>}
+                        </div>
                       </div>
 
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                           Tunnel IP
                         </label>
-                        <p className="text-sm text-gray-900">
-                          {commander.tunnel_ip || '-'}
-                        </p>
+                        <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-900">
+                          {commander.tunnel_ip || <span className="text-gray-400 italic">Not set</span>}
+                        </div>
                       </div>
 
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                           User ID
                         </label>
-                        <p className="text-sm text-gray-900">
-                          {commander.user_id || '-'}
-                        </p>
+                        <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-900">
+                          {commander.user_id || <span className="text-gray-400 italic">Not set</span>}
+                        </div>
                       </div>
 
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                           Issue Date
                         </label>
-                        <p className="text-sm text-gray-900">
-                          {commander.issue_date || '-'}
-                        </p>
+                        <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-900">
+                          {commander.issue_date || <span className="text-gray-400 italic">Not set</span>}
+                        </div>
                       </div>
 
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                           Expiry Date
                         </label>
-                        <p className="text-sm text-gray-900">
-                          {commander.expiry_date || '-'}
-                        </p>
+                        <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-900">
+                          {commander.expiry_date || <span className="text-gray-400 italic">Not set</span>}
+                        </div>
                       </div>
 
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                           Status
                         </label>
-                        <p className="text-sm">
+                        <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-900">
                           {commander.expiry_date ? (
                             new Date(commander.expiry_date) < new Date() ? (
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
@@ -492,9 +492,9 @@ const CommanderInfo = ({ selectedFacility }: CommanderInfoProps) => {
                               </span>
                             )
                           ) : (
-                            <span className="text-gray-400">-</span>
+                            <span className="text-gray-400 italic">Not set</span>
                           )}
-                        </p>
+                        </div>
                       </div>
                     </div>
                   </div>
