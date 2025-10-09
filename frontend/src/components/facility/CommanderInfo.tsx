@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, CreditCard as Edit, Trash2, Save, X, Server } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, Server, AlertCircle } from 'lucide-react';
 import { apiService } from '../../services/api';
 
 interface Commander {
@@ -16,10 +16,10 @@ interface Commander {
 }
 
 interface CommanderInfoProps {
-  selectedFacility: {
+  selectedFacility?: {
     id: number;
     name: string;
-  };
+  } | null;
 }
 
 const CommanderInfo = ({ selectedFacility }: CommanderInfoProps) => {
@@ -48,13 +48,17 @@ const CommanderInfo = ({ selectedFacility }: CommanderInfoProps) => {
   }, [selectedFacility]);
 
   const loadCommanders = async () => {
+    if (!selectedFacility) return;
+
     try {
       setLoading(true);
       setError(null);
       const data = await apiService.getCommandersByLocation(selectedFacility.id);
-      setCommanders(data);
+      setCommanders(Array.isArray(data) ? data : []);
     } catch (err: any) {
+      console.error('Error loading commanders:', err);
       setError(err.message || 'Failed to load commanders');
+      setCommanders([]);
     } finally {
       setLoading(false);
     }
@@ -157,6 +161,19 @@ const CommanderInfo = ({ selectedFacility }: CommanderInfoProps) => {
     }));
   };
 
+  // State A: No Facility Selected
+  if (!selectedFacility) {
+    return (
+      <div className="flex items-center justify-center min-h-[600px]">
+        <div className="text-center">
+          <AlertCircle className="h-24 w-24 text-gray-400 mx-auto mb-6" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">No Facility Selected</h2>
+          <p className="text-gray-600 text-lg">Please select a facility to view commander information</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -164,7 +181,7 @@ const CommanderInfo = ({ selectedFacility }: CommanderInfoProps) => {
           <Server className="h-6 w-6 text-blue-600" />
           <h2 className="text-2xl font-bold text-gray-900">Commander Info</h2>
         </div>
-        {!isCreating && !editingId && (
+        {!isCreating && !editingId && selectedFacility && (
           <button
             onClick={handleCreate}
             className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
@@ -338,10 +355,10 @@ const CommanderInfo = ({ selectedFacility }: CommanderInfoProps) => {
               <p className="mt-4 text-gray-600">Loading commanders...</p>
             </div>
           ) : commanders.length === 0 ? (
-            <div className="p-8 text-center">
-              <Server className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-600">No commanders found</p>
-              <p className="text-sm text-gray-500 mt-1">Click "Add Commander" to create one</p>
+            <div className="p-12 text-center">
+              <Server className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">No commanders found</h3>
+              <p className="text-gray-600 mb-6">Click "Add Commander" to create one</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
