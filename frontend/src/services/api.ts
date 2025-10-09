@@ -664,9 +664,21 @@ class ApiService {
    */
   async getCommandersByLocation(locationId: number): Promise<any[]> {
     try {
+      console.log(`🌐 API: GET /api/facilities/locations/${locationId}/commanders/`);
       const response = await api.get(`/api/facilities/locations/${locationId}/commanders/`);
-      return response.data;
+      console.log('🌐 API Response:', response.data);
+
+      // Handle both paginated and non-paginated responses
+      if (response.data.results) {
+        console.log('📄 Paginated response detected, extracting results array');
+        return response.data.results;
+      }
+
+      const commanders = Array.isArray(response.data) ? response.data : [];
+      console.log(`📦 Returning ${commanders.length} commanders`);
+      return commanders;
     } catch (error: any) {
+      console.error('🌐 API Error:', error);
       throw new Error(error.response?.data?.error || error.message || 'Failed to get commanders');
     }
   }

@@ -48,15 +48,23 @@ const CommanderInfo = ({ selectedFacility }: CommanderInfoProps) => {
   }, [selectedFacility]);
 
   const loadCommanders = async () => {
-    if (!selectedFacility) return;
+    if (!selectedFacility) {
+      console.log('❌ No facility selected, skipping commander load');
+      return;
+    }
 
     try {
       setLoading(true);
       setError(null);
+      console.log(`🔍 Loading commanders for facility: ${selectedFacility.name} (ID: ${selectedFacility.id})`);
+
       const data = await apiService.getCommandersByLocation(selectedFacility.id);
+      console.log('✅ Commanders loaded:', data);
+      console.log('📊 Number of commanders:', data?.length || 0);
+
       setCommanders(Array.isArray(data) ? data : []);
     } catch (err: any) {
-      console.error('Error loading commanders:', err);
+      console.error('❌ Error loading commanders:', err);
       setError(err.message || 'Failed to load commanders');
       setCommanders([]);
     } finally {

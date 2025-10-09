@@ -491,14 +491,15 @@ class CommanderInfoListCreateView(generics.ListCreateAPIView):
     """
     serializer_class = CommanderInfoSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+    pagination_class = None
+
     def get_queryset(self):
         queryset = CommanderInfo.objects.all()
         location_id = self.kwargs.get('location_id')
         if location_id:
             queryset = queryset.filter(location_id=location_id)
         return queryset
-    
+
     def perform_create(self, serializer):
         location_id = self.request.data.get('location') or self.kwargs.get('location_id')
         if location_id:
