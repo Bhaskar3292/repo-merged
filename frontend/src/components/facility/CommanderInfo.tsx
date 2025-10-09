@@ -356,79 +356,150 @@ const CommanderInfo = ({ selectedFacility }: CommanderInfoProps) => {
       )}
 
       {!isCreating && !editingId && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div>
           {loading && commanders.length === 0 ? (
-            <div className="p-8 text-center">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
               <p className="mt-4 text-gray-600">Loading commanders...</p>
             </div>
           ) : commanders.length === 0 ? (
-            <div className="p-12 text-center">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
               <Server className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No commanders found</h3>
               <p className="text-gray-600 mb-6">Click "Add Commander" to create one</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Commander Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Serial Number
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      ASM Subscription
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Issue Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Expiry Date
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {commanders.map((commander) => (
-                    <tr key={commander.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {commander.commander_type || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {commander.serial_number || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {commander.asm_subscription || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {commander.issue_date || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {commander.expiry_date || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+            <div className="space-y-4">
+              {commanders.map((commander) => (
+                <div key={commander.id} className="bg-white rounded-lg shadow-sm border border-gray-200">
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center space-x-3">
+                        <Server className="h-6 w-6 text-blue-600" />
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            {commander.commander_type || 'Commander'}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            Serial: {commander.serial_number || 'N/A'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
                         <button
                           onClick={() => handleEdit(commander)}
-                          className="text-blue-600 hover:text-blue-900 mr-3"
+                          className="flex items-center space-x-1 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
                         >
                           <Edit className="h-4 w-4" />
+                          <span>Edit</span>
                         </button>
                         <button
                           onClick={() => commander.id && handleDelete(commander.id)}
-                          className="text-red-600 hover:text-red-900"
+                          className="flex items-center space-x-1 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
                         >
                           <Trash2 className="h-4 w-4" />
+                          <span>Delete</span>
                         </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                          Commander Type
+                        </label>
+                        <p className="text-sm text-gray-900">
+                          {commander.commander_type || '-'}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                          Serial Number
+                        </label>
+                        <p className="text-sm text-gray-900">
+                          {commander.serial_number || '-'}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                          ASM Subscription
+                        </label>
+                        <p className="text-sm text-gray-900">
+                          {commander.asm_subscription || '-'}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                          Base Software Version
+                        </label>
+                        <p className="text-sm text-gray-900">
+                          {commander.base_software_version || '-'}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                          Tunnel IP
+                        </label>
+                        <p className="text-sm text-gray-900">
+                          {commander.tunnel_ip || '-'}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                          User ID
+                        </label>
+                        <p className="text-sm text-gray-900">
+                          {commander.user_id || '-'}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                          Issue Date
+                        </label>
+                        <p className="text-sm text-gray-900">
+                          {commander.issue_date || '-'}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                          Expiry Date
+                        </label>
+                        <p className="text-sm text-gray-900">
+                          {commander.expiry_date || '-'}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                          Status
+                        </label>
+                        <p className="text-sm">
+                          {commander.expiry_date ? (
+                            new Date(commander.expiry_date) < new Date() ? (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                Expired
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Active
+                              </span>
+                            )
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
