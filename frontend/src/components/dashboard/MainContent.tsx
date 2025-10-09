@@ -8,6 +8,7 @@ import { PermitsLicenses } from '../facility/PermitsLicenses';
 import { SettingsPanel } from '../settings/SettingsPanel';
 import { ProfilePanel } from '../settings/ProfilePanel';
 import { FacilityProfile } from '../facility/FacilityProfile';
+import CommanderInfo from '../facility/CommanderInfo';
 
 interface MainContentProps {
   activeView: string;
@@ -26,6 +27,8 @@ export function MainContent({ activeView, selectedFacility, refreshKey }: MainCo
         return <FacilityProfile selectedFacility={selectedFacility} />;
       case 'tanks':
         return <TankManagement selectedFacility={selectedFacility} />;
+      case 'commanders':
+        return <CommanderInfo selectedFacility={selectedFacility} />;
       case 'releases':
         return <ReleaseDetection selectedFacility={selectedFacility} />;
       case 'permits':

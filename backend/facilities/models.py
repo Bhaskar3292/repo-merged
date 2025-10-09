@@ -269,3 +269,45 @@ class Permit(models.Model):
             return 'expiring_soon'
         else:
             return 'active'
+
+class CommanderInfo(models.Model):
+    """
+    Commander Information for fuel management systems
+    """
+    location = models.ForeignKey(
+        Location,
+        on_delete=models.CASCADE,
+        related_name='commanders'
+    )
+    
+    # Main Fields
+    commander_type = models.CharField(max_length=100, blank=True)
+    serial_number = models.CharField(max_length=100, blank=True)
+    asm_subscription = models.CharField(
+        max_length=50,
+        choices=[
+            ('Own', 'Own'),
+            ('Brand Operated', 'Brand Operated'),
+        ],
+        blank=True
+    )
+    base_software_version = models.CharField(max_length=50, blank=True)
+    tunnel_ip = models.CharField(max_length=50, blank=True)
+    user_id = models.CharField(max_length=100, blank=True)
+    password = models.CharField(max_length=255, blank=True)
+    
+    # Date Fields
+    issue_date = models.DateField(null=True, blank=True)
+    expiry_date = models.DateField(null=True, blank=True)
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Commander Info'
+        verbose_name_plural = 'Commander Info'
+    
+    def __str__(self):
+        return f"{self.location.name} - {self.commander_type or 'Commander'}"

@@ -13,15 +13,16 @@ from accounts.utils import log_security_event, get_client_ip
 from permissions.decorators import require_permission, require_any_permission
 from permissions.models import check_user_permission
 from .models import (
-    Location, LocationDashboard, DashboardSection, 
-    DashboardSectionData, Tank, Permit, FacilityProfile
+    Location, LocationDashboard, DashboardSection,
+    DashboardSectionData, Tank, Permit, FacilityProfile, CommanderInfo
 )
 from .serializers import (
     LocationSerializer, LocationDetailSerializer, LocationDashboardSerializer,
     DashboardSectionSerializer, DashboardSectionDataSerializer,
     TankSerializer, PermitSerializer, FacilityProfileSerializer,
     ProfileGeneralInfoSerializer, ProfileOperationalInfoSerializer,
-    ProfileContactsSerializer, ProfileOperationHoursSerializer
+    ProfileContactsSerializer, ProfileOperationHoursSerializer,
+    CommanderInfoSerializer
 )
 
 logger = logging.getLogger(__name__)
@@ -482,3 +483,35 @@ class ProfileOperationHoursView(generics.UpdateAPIView):
             'message': 'Operation Hours updated successfully',
             'data': serializer.data
         })
+
+
+class CommanderInfoListCreateView(generics.ListCreateAPIView):
+    """
+    List all commander info or create a new commander info entry
+    """
+    serializer_class = CommanderInfoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        queryset = CommanderInfo.objects.all()
+        location_id = self.kwargs.get('location_id')
+        if location_id:
+            queryset = queryset.filter(location_id=location_id)
+        return queryset
+    
+    def perform_create(self, serializer):
+        location_id = self.request.data.get('location') or self.kwargs.get('location_id')
+        if location_id:
+            location = get_object_or_404(Location, id=location_id, is_active=True)
+            serializer.save(location=location)
+        else:
+            serializer.save()
+
+
+class CommanderInfoDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Retrieve, update or delete a commander info entry
+    """
+    queryset = CommanderInfo.objects.all()
+    serializer_class = CommanderInfoSerializer
+    permission_classes = [permissions.IsAuthenticated]

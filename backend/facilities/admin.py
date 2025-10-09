@@ -2,7 +2,7 @@
 Admin configuration for facilities app
 """
 from django.contrib import admin
-from .models import Location, LocationDashboard, DashboardSection, DashboardSectionData, Tank, Permit, FacilityProfile
+from .models import Location, LocationDashboard, DashboardSection, DashboardSectionData, Tank, Permit, FacilityProfile, CommanderInfo
 
 
 @admin.register(FacilityProfile)
@@ -52,4 +52,12 @@ class PermitAdmin(admin.ModelAdmin):
     list_display = ['permit_number', 'location', 'permit_type', 'status', 'expiry_date']
     list_filter = ['permit_type', 'status', 'expiry_date']
     search_fields = ['permit_number', 'location__name', 'issuing_authority']
+    readonly_fields = ['created_at', 'updated_at']
+
+
+@admin.register(CommanderInfo)
+class CommanderInfoAdmin(admin.ModelAdmin):
+    list_display = ['location', 'commander_type', 'serial_number', 'asm_subscription', 'issue_date', 'expiry_date']
+    list_filter = ['asm_subscription', 'issue_date', 'expiry_date']
+    search_fields = ['location__name', 'commander_type', 'serial_number']
     readonly_fields = ['created_at', 'updated_at']

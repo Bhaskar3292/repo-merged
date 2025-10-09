@@ -658,6 +658,56 @@ class ApiService {
       throw new Error(error.response?.data?.error || error.message || 'Failed to delete permit');
     }
   }
+
+  /**
+   * Get commanders by location
+   */
+  async getCommandersByLocation(locationId: number): Promise<any[]> {
+    try {
+      const response = await api.get(`/api/facilities/locations/${locationId}/commanders/`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to get commanders');
+    }
+  }
+
+  /**
+   * Create commander
+   */
+  async createCommander(locationId: number, data: any): Promise<any> {
+    try {
+      const response = await api.post(`/api/facilities/locations/${locationId}/commanders/`, {
+        ...data,
+        location: locationId
+      });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to create commander');
+    }
+  }
+
+  /**
+   * Update commander
+   */
+  async updateCommander(id: number, data: any): Promise<any> {
+    try {
+      const response = await api.patch(`/api/facilities/commanders/${id}/`, data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to update commander');
+    }
+  }
+
+  /**
+   * Delete commander
+   */
+  async deleteCommander(id: number): Promise<void> {
+    try {
+      await api.delete(`/api/facilities/commanders/${id}/`);
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to delete commander');
+    }
+  }
 }
 
 export const apiService = new ApiService();

@@ -2,7 +2,7 @@
 Serializers for facility management
 """
 from rest_framework import serializers
-from .models import Location, LocationDashboard, DashboardSection, DashboardSectionData, Tank, Permit, FacilityProfile
+from .models import Location, LocationDashboard, DashboardSection, DashboardSectionData, Tank, Permit, FacilityProfile, CommanderInfo
 
 
 class FacilityProfileSerializer(serializers.ModelSerializer):
@@ -344,3 +344,23 @@ class ProfileOperationHoursSerializer(serializers.ModelSerializer):
     class Meta:
         model = FacilityProfile
         fields = ['operatingHours']
+
+
+class CommanderInfoSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Commander Info
+    """
+    location_name = serializers.CharField(source='location.name', read_only=True)
+    
+    class Meta:
+        model = CommanderInfo
+        fields = [
+            'id', 'location', 'location_name', 'commander_type', 'serial_number',
+            'asm_subscription', 'base_software_version', 'tunnel_ip',
+            'user_id', 'password', 'issue_date', 'expiry_date',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['created_at', 'updated_at']
+        extra_kwargs = {
+            'password': {'write_only': True}
+        }

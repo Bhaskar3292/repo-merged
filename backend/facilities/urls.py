@@ -39,4 +39,9 @@ urlpatterns = [
     path('locations/<int:location_id>/profile/operational/', views.ProfileOperationalInfoView.as_view(), name='profile_operational'),
     path('locations/<int:location_id>/profile/contacts/', views.ProfileContactsView.as_view(), name='profile_contacts'),
     path('locations/<int:location_id>/profile/operation-hours/', views.ProfileOperationHoursView.as_view(), name='profile_hours'),
+
+    # Commander Info URLs
+    path('commanders/', views.CommanderInfoListCreateView.as_view(), name='commander_list_create'),
+    path('locations/<int:location_id>/commanders/', views.CommanderInfoListCreateView.as_view(), name='location_commanders'),
+    path('commanders/<int:pk>/', views.CommanderInfoDetailView.as_view(), name='commander_detail'),
 ]
