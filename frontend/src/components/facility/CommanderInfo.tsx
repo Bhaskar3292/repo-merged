@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Box as Edit, Trash2, Save, X, Server, CircleAlert as AlertCircle } from 'lucide-react';
+import { Plus, Box as Edit, Trash2, Save, X, Server, AlertCircle } from 'lucide-react';
 import { apiService } from '../../services/api';
 
 interface Commander {
