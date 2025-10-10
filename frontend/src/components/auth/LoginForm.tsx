@@ -35,8 +35,8 @@ export function LoginForm() {
           totp_token: totpToken 
         });
         if (loginSuccess) {
-          // Redirect to dashboard on successful login
-          navigate('/dashboard', { replace: true });
+          // Redirect to locations on successful login
+          navigate('/locations', { replace: true });
         } else {
           const errorMsg = authError || 'Login failed. Please check your credentials.';
           setError(errorMsg);

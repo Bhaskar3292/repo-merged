@@ -51,7 +51,7 @@ export function ProtectedRoute({
             <strong className="font-bold">Access Denied!</strong>
             <span className="block sm:inline"> You don't have permission to access this page.</span>
           </div>
-          <Navigate to="/dashboard" replace />
+          <Navigate to="/locations" replace />
         </div>
       </div>
     );

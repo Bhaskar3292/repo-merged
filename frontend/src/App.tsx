@@ -15,21 +15,29 @@ function App() {
           <Routes>
             <Route path="/login" element={<LoginForm />} />
             <Route path="/reset-password/:uid/:token" element={<PasswordResetConfirm />} />
-            <Route 
-              path="/dashboard/*" 
+            <Route
+              path="/dashboard/*"
               element={
                 <ProtectedRoute>
                   <Dashboard />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/" 
+            <Route
+              path="/locations"
               element={
                 <ProtectedRoute>
-                  <Navigate to="/dashboard" replace />
+                  <Navigate to="/dashboard" state={{ defaultView: 'locations' }} replace />
                 </ProtectedRoute>
-              } 
+              }
+            />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Navigate to="/locations" replace />
+                </ProtectedRoute>
+              }
             />
           </Routes>
         </div>

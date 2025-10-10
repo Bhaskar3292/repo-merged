@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { TopNavigation } from './TopNavigation';
 import { MainContent } from './MainContent';
@@ -8,9 +8,11 @@ import { useAuthContext } from '../../contexts/AuthContext';
 import { apiService } from '../../services/api';
 
 export function Dashboard() {
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeView, setActiveView] = useState('dashboard');
+  const defaultView = (location.state as any)?.defaultView || 'locations';
+  const [activeView, setActiveView] = useState(defaultView);
   const [selectedFacility, setSelectedFacility] = useState<any>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const { hasPermission, user } = useAuthContext();
