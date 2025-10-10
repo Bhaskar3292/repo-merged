@@ -93,11 +93,11 @@ export function LocationCard({ location, onEdit, onDelete, canEdit, canDelete }:
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-3 flex-1 min-w-0">
-            <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+            <div className=" bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
               <img
                 src={`/assets/location-icons/${location.icon || 'factory.svg'}`}
                 alt={location.name}
-                className="h-5 w-5 text-blue-600"
+                className="h-12 w-12 text-blue-600"
               />
             </div>
             <div className="min-w-0 flex-1">

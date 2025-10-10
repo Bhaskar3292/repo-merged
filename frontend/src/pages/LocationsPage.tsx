@@ -173,12 +173,12 @@ export function LocationsPage() {
   ];
 
   const availableIcons = [
-    { value: 'factory.svg', label: 'Factory' },
-    { value: 'gas-station.svg', label: 'Gas Station' },
-    { value: 'warehouse.svg', label: 'Warehouse' },
-    { value: 'store.svg', label: 'Store' },
-    { value: 'truck.svg', label: 'Truck Stop' },
-    { value: 'building.svg', label: 'Building' }
+    { value: 'pp66.png', label:'PP66'},
+    { value: 'liberty.png', label:'Liberty'},
+    { value: 'sunoco.png', label:'Sunoco'},
+    { value: 'delta.jpg', label:'Delta'},
+    { value: 'valero.png', label:'Valero'},
+    { value: 'apartments.png', label:'Unbrand'}
   ];
 
   const usStates = [
