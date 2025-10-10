@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, Plus, Search, Grid3X3, List, Eye, CreditCard as Edit, Trash2, X, Save, ListFilter as Filter, Building2 } from 'lucide-react';
+import { Zap, Plus, Search, Grid3X3, List, Eye, Edit2Icon as Edit, Trash2, X, Save, ListFilter as Filter, Building2 } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { apiService } from '../../services/api';
 

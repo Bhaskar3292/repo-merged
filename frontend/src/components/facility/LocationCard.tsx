@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, MapPin, Eye, CreditCard as Edit, Trash2, FileCheck, Fuel } from 'lucide-react';
+import { Building2, MapPin, Eye, Edit2Icon as Edit, Trash2, FileCheck, Fuel } from 'lucide-react';
 import { apiService } from '../../services/api';
 
 interface Location {

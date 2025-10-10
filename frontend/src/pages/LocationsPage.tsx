@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Plus, X, Save, CreditCard as Edit } from 'lucide-react';
+import { MapPin, Plus, X, Save, Edit2Icon as Edit } from 'lucide-react';
 import { apiService } from '../services/api';
 import { useAuthContext } from '../contexts/AuthContext';
 import { LocationCard } from '../components/facility/LocationCard';
