@@ -107,13 +107,7 @@ export function LocationCard({ location, onEdit, onDelete, canEdit, canDelete }:
 
           {/* Action Buttons */}
           <div className="flex items-center space-x-1 ml-2">
-            <button
-              onClick={handleViewClick}
-              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              title="View dashboard"
-            >
-              <Eye className="h-4 w-4" />
-            </button>
+        
             {canEdit && (
               <button
                 onClick={handleEditClick}
