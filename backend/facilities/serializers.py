@@ -214,11 +214,11 @@ class LocationDetailSerializer(serializers.ModelSerializer):
     dashboard = LocationDashboardSerializer(read_only=True)
     created_by_username = serializers.CharField(source='created_by.username', read_only=True)
     full_address = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Location
         fields = ['id', 'name', 'street_address', 'city', 'state', 'zip_code',
-                 'country', 'phone', 'email', 'facility_type', 'description',
+                 'country', 'facility_type', 'description',
                  'created_by', 'created_by_username', 'created_at', 'updated_at',
                  'is_active', 'tanks', 'permits', 'dashboard', 'full_address']
         read_only_fields = ['created_by', 'created_at', 'updated_at']
