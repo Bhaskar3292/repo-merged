@@ -270,7 +270,9 @@ class ApiService {
    */
   async createLocation(data: any): Promise<any> {
     try {
-      const response = await api.post('/api/facilities/locations/', data);
+      // Remove phone field if present (Location model doesn't have this field)
+      const { phone, ...validData } = data;
+      const response = await api.post('/api/facilities/locations/', validData);
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.error || error.message || 'Failed to create location');
@@ -282,7 +284,9 @@ class ApiService {
    */
   async updateLocation(id: number, data: any): Promise<any> {
     try {
-      const response = await api.patch(`/api/facilities/locations/${id}/`, data);
+      // Remove phone field if present (Location model doesn't have this field)
+      const { phone, ...validData } = data;
+      const response = await api.patch(`/api/facilities/locations/${id}/`, validData);
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.error || error.message || 'Failed to update location');
