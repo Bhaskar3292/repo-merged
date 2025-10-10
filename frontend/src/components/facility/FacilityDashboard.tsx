@@ -1,45 +1,98 @@
-import React,{ useState} from 'react';
-import { Building2, Zap,  AlertTriangle, FileText, Activity } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Building2, Zap, AlertTriangle, FileText } from 'lucide-react';
+import { apiService } from '../../services/api';
 
 interface FacilityDashboardProps {
   selectedFacility?: any;
+  onViewChange?: (view: string) => void;
 }
 
-export function FacilityDashboard({ selectedFacility }: FacilityDashboardProps) {
-  const stats = [
-    {
-      title: 'Total Facilities',
-      value: '0',
-      change: '0%',
-      icon: Building2,
-      color: 'blue'
-    },
+export function FacilityDashboard({ selectedFacility, onViewChange }: FacilityDashboardProps) {
+  const [stats, setStats] = useState({
+    activeTanks: 0,
+    tankTestingIssues: 0,
+    permitsDue: 0
+  });
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (selectedFacility?.id) {
+      loadStats();
+    }
+  }, [selectedFacility?.id]);
+
+  const loadStats = async () => {
+    if (!selectedFacility?.id) return;
+
+    try {
+      setLoading(true);
+
+      // Fetch tanks for this location
+      const tanksResponse = await apiService.getTanks(selectedFacility.id);
+      const tanks = tanksResponse.results || [];
+      const activeTanks = tanks.filter((tank: any) => tank.status === 'Active' || tank.status === 'active').length;
+
+      // Fetch permits for this location
+      const permitsResponse = await apiService.getPermits(selectedFacility.id);
+      const permits = permitsResponse.results || [];
+
+      // Count permits expiring within 90 days
+      const now = new Date();
+      const ninetyDaysFromNow = new Date(now.getTime() + (90 * 24 * 60 * 60 * 1000));
+      const permitsDue = permits.filter((permit: any) => {
+        if (!permit.expiration_date) return false;
+        const expirationDate = new Date(permit.expiration_date);
+        return expirationDate >= now && expirationDate <= ninetyDaysFromNow;
+      }).length;
+
+      // For tank testing issues, count tanks with track_release_detection = 'Yes' but no recent testing
+      // For now, we'll use a placeholder count
+      const tankTestingIssues = tanks.filter((tank: any) =>
+        tank.track_release_detection === 'Yes' && (!tank.last_test_date ||
+          new Date(tank.last_test_date) < new Date(now.getTime() - (365 * 24 * 60 * 60 * 1000)))
+      ).length;
+
+      setStats({
+        activeTanks,
+        tankTestingIssues,
+        permitsDue
+      });
+    } catch (error) {
+      console.error('Failed to load dashboard stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCardClick = (view: string) => {
+    if (onViewChange) {
+      onViewChange(view);
+    }
+  };
+
+  const metricCards = [
     {
       title: 'Active Tanks',
-      value: '0',
-      change: '0%',
+      value: loading ? '...' : stats.activeTanks.toString(),
       icon: Zap,
-      color: 'green'
+      color: 'green',
+      onClick: () => handleCardClick('tanks')
     },
     {
-      title: 'Pending Issues',
-      value: '0',
-      change: '0%',
+      title: 'Tank Testing Issues',
+      value: loading ? '...' : stats.tankTestingIssues.toString(),
       icon: AlertTriangle,
-      color: 'red'
+      color: 'red',
+      onClick: () => handleCardClick('releases')
     },
     {
       title: 'Permits Due',
-      value: '0',
-      change: '0%',
+      value: loading ? '...' : stats.permitsDue.toString(),
       icon: FileText,
-      color: 'yellow'
+      color: 'yellow',
+      onClick: () => handleCardClick('permits')
     }
   ];
-
-  const [recentActivity, setRecentActivity] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   return (
     <div className="space-y-6">
@@ -66,101 +119,73 @@ export function FacilityDashboard({ selectedFacility }: FacilityDashboardProps) 
       )}
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {metricCards.map((card, index) => {
+          const Icon = card.icon;
           const colorClasses = {
-            blue: 'bg-blue-100 text-blue-600',
             green: 'bg-green-100 text-green-600',
             red: 'bg-red-100 text-red-600',
             yellow: 'bg-yellow-100 text-yellow-600'
           };
 
           return (
-            <div key={index} className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <button
+              key={index}
+              onClick={card.onClick}
+              disabled={!selectedFacility}
+              className={`bg-white rounded-lg p-6 shadow-sm border border-gray-200 text-left transition-all ${
+                selectedFacility
+                  ? 'hover:shadow-md hover:border-gray-300 cursor-pointer transform hover:-translate-y-0.5'
+                  : 'opacity-50 cursor-not-allowed'
+              }`}
+            >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                  <p className={`text-sm ${stat.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
-                    {stat.change} from last month
-                  </p>
+                  <p className="text-sm font-medium text-gray-600">{card.title}</p>
+                  <p className="text-2xl font-bold text-gray-900">{card.value}</p>
                 </div>
-                <div className={`p-3 rounded-lg ${colorClasses[stat.color as keyof typeof colorClasses]}`}>
+                <div className={`p-3 rounded-lg ${colorClasses[card.color as keyof typeof colorClasses]}`}>
                   <Icon className="h-6 w-6" />
                 </div>
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Activity */}
-        <div className="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-              <Activity className="h-5 w-5 mr-2 text-blue-600" />
-              Recent Activity
-            </h2>
-          </div>
-          <div className="p-6">
-            <div className="text-center py-8">
-              <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">No recent activity to display.</p>
-              <p className="text-sm text-gray-400 mt-2">Activity will appear here as you use the system.</p>
-            </div>
-          </div>
+      {/* Quick Actions */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="p-6 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
         </div>
-
-        {/* Quick Actions & Alerts */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
+        <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+          <button
+            onClick={() => handleCardClick('locations')}
+            className="text-left p-4 rounded-lg hover:bg-gray-50 transition-colors border border-gray-200"
+          >
+            <div className="flex items-center space-x-3">
+              <Building2 className="h-5 w-5 text-blue-600" />
+              <span className="text-sm font-medium">Add New Location</span>
             </div>
-            <div className="p-6 space-y-3">
-              <button className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-200">
-                <div className="flex items-center space-x-3">
-                  <Building2 className="h-5 w-5 text-blue-600" />
-                  <span className="text-sm font-medium">Add New Location</span>
-                </div>
-              </button>
-              <button className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-200">
-                <div className="flex items-center space-x-3">
-                  <Zap className="h-5 w-5 text-green-600" />
-                  <span className="text-sm font-medium">Add Tank</span>
-                </div>
-              </button>
-              <button className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-200">
-                <div className="flex items-center space-x-3">
-                  <FileText className="h-5 w-5 text-purple-600" />
-                  <span className="text-sm font-medium">Add Permit</span>
-                </div>
-              </button>
+          </button>
+          <button
+            onClick={() => handleCardClick('tanks')}
+            className="text-left p-4 rounded-lg hover:bg-gray-50 transition-colors border border-gray-200"
+          >
+            <div className="flex items-center space-x-3">
+              <Zap className="h-5 w-5 text-green-600" />
+              <span className="text-sm font-medium">Add Tank</span>
             </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">System Health</h2>
+          </button>
+          <button
+            onClick={() => handleCardClick('permits')}
+            className="text-left p-4 rounded-lg hover:bg-gray-50 transition-colors border border-gray-200"
+          >
+            <div className="flex items-center space-x-3">
+              <FileText className="h-5 w-5 text-purple-600" />
+              <span className="text-sm font-medium">Add Permit</span>
             </div>
-            <div className="p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">System Status</span>
-                <span className="text-sm font-medium text-green-600">Operational</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Data Sync</span>
-                <span className="text-sm font-medium text-green-600">Up to date</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Alerts</span>
-                <span className="text-sm font-medium text-green-600">0 pending</span>
-              </div>
-            </div>
-          </div>
+          </button>
         </div>
       </div>
     </div>

@@ -202,7 +202,7 @@ export function LocationManager({ selectedFacility }: LocationManagerProps) {
             <div>
               <h4 className="text-lg font-medium text-gray-900 mb-3">Facility Details</h4>
               <div className="space-y-2 text-sm text-gray-600">
-                <p>Use the tabs on the left to view detailed information about tanks, permits, release detection systems, and other facility-specific data.</p>
+                <p>Use the tabs on the left to view detailed information about tanks, permits, tank testing systems, and other facility-specific data.</p>
                 <p className="text-xs text-gray-500 mt-4">
                   All data shown in other tabs will be filtered to show information for this facility only.
                 </p>

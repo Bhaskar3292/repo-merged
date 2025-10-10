@@ -14,13 +14,14 @@ interface MainContentProps {
   activeView: string;
   selectedFacility?: any;
   refreshKey?: number;
+  onViewChange?: (view: string) => void;
 }
 
-export function MainContent({ activeView, selectedFacility, refreshKey }: MainContentProps) {
+export function MainContent({ activeView, selectedFacility, refreshKey, onViewChange }: MainContentProps) {
   const renderContent = () => {
     switch (activeView) {
       case 'dashboard':
-        return <FacilityDashboard selectedFacility={selectedFacility} />;
+        return <FacilityDashboard selectedFacility={selectedFacility} onViewChange={onViewChange} />;
       case 'locations':
         return <LocationsPage key={refreshKey} />;
       case 'facilities':
@@ -38,7 +39,7 @@ export function MainContent({ activeView, selectedFacility, refreshKey }: MainCo
       case 'profile':
         return <ProfilePanel />;
       default:
-        return <FacilityDashboard selectedFacility={selectedFacility} />;
+        return <FacilityDashboard selectedFacility={selectedFacility} onViewChange={onViewChange} />;
     }
   };
 

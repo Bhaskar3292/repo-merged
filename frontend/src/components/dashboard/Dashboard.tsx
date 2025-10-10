@@ -104,10 +104,11 @@ export function Dashboard() {
           {activeView === 'admin' && (user?.is_superuser || hasPermission('manage_users')) ? (
             <AdminDashboard />
           ) : (
-            <MainContent 
-              activeView={activeView} 
+            <MainContent
+              activeView={activeView}
               selectedFacility={selectedFacility}
               refreshKey={refreshKey}
+              onViewChange={handleViewChange}
             />
           )}
         </main>

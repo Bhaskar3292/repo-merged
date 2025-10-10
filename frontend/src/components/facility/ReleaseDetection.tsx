@@ -10,7 +10,7 @@ export function ReleaseDetection({ selectedFacility }: ReleaseDetectionProps) {
   const [activeTab, setActiveTab] = useState('monitoring');
 
   const tabs = [
-    { id: 'monitoring', label: 'Release Detection' },
+    { id: 'monitoring', label: 'Tank Testing' },
     { id: 'alerts', label: 'Alerts & Incidents' },
     { id: 'reports', label: 'Reports' }
   ];
@@ -155,7 +155,7 @@ export function ReleaseDetection({ selectedFacility }: ReleaseDetectionProps) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            {selectedFacility ? `${selectedFacility.name} - Release Detection` : 'Release Detection'}
+            {selectedFacility ? `${selectedFacility.name} - Tank Testing` : 'Tank Testing'}
           </h1>
           {selectedFacility && (
             <p className="text-sm text-gray-500 mt-1">{selectedFacility.address}</p>
@@ -167,7 +167,7 @@ export function ReleaseDetection({ selectedFacility }: ReleaseDetectionProps) {
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
           <Shield className="h-12 w-12 text-blue-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-blue-900 mb-2">No Facility Selected</h3>
-          <p className="text-blue-700">Please select a facility from the search bar above to view release detection systems.</p>
+          <p className="text-blue-700">Please select a facility from the search bar above to view tank testing systems.</p>
         </div>
       )}
 
