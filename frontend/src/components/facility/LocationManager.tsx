@@ -9,6 +9,7 @@ interface Location {
   name: string;
   address: string;
   description: string;
+  icon?: string;
   created_by_username: string;
   created_at: string;
   is_active: boolean;

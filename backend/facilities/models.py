@@ -99,6 +99,7 @@ class Location(models.Model):
         ],
         default='gas_station'
     )
+    icon = models.CharField(max_length=100, blank=True, default='factory.svg', help_text='Filename of the location icon')
     description = models.TextField(blank=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_locations')
     created_at = models.DateTimeField(auto_now_add=True)

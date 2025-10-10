@@ -12,6 +12,7 @@ interface Location {
   zip_code: string;
   country: string;
   facility_type: string;
+  icon?: string;
   created_by_username: string;
   created_at: string;
   is_active: boolean;
@@ -93,7 +94,11 @@ export function LocationCard({ location, onEdit, onDelete, canEdit, canDelete }:
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-3 flex-1 min-w-0">
             <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
-              <Building2 className="h-5 w-5 text-blue-600" />
+              <img
+                src={`/assets/location-icons/${location.icon || 'factory.svg'}`}
+                alt={location.name}
+                className="h-5 w-5 text-blue-600"
+              />
             </div>
             <div className="min-w-0 flex-1">
               <h3 className="text-lg font-semibold text-gray-900 truncate group-hover:text-blue-600 transition-colors">

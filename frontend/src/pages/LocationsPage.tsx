@@ -13,6 +13,7 @@ interface Location {
   zip_code: string;
   country: string;
   facility_type: string;
+  icon?: string;
   created_by_username: string;
   created_at: string;
   is_active: boolean;
@@ -28,6 +29,7 @@ interface NewLocationData {
   zip_code: string;
   country: string;
   facility_type: string;
+  icon: string;
 }
 
 export function LocationsPage() {
@@ -45,7 +47,8 @@ export function LocationsPage() {
     state: '',
     zip_code: '',
     country: 'United States',
-    facility_type: 'gas_station'
+    facility_type: 'gas_station',
+    icon: 'factory.svg'
   });
   
   const { hasPermission, user: currentUser } = useAuthContext();
@@ -116,7 +119,8 @@ export function LocationsPage() {
         state: location.state,
         zip_code: location.zip_code,
         country: location.country,
-        facility_type: location.facility_type
+        facility_type: location.facility_type,
+        icon: location.icon || 'factory.svg'
       });
       
       setLocations(prev => prev.map(loc => 
@@ -166,6 +170,15 @@ export function LocationsPage() {
     { value: 'distribution_center', label: 'Distribution Center' },
     { value: 'terminal', label: 'Terminal' },
     { value: 'convenience_store', label: 'Convenience Store' }
+  ];
+
+  const availableIcons = [
+    { value: 'factory.svg', label: 'Factory' },
+    { value: 'gas-station.svg', label: 'Gas Station' },
+    { value: 'warehouse.svg', label: 'Warehouse' },
+    { value: 'store.svg', label: 'Store' },
+    { value: 'truck.svg', label: 'Truck Stop' },
+    { value: 'building.svg', label: 'Building' }
   ];
 
   const usStates = [
@@ -322,6 +335,30 @@ export function LocationsPage() {
                         <option key={type.value} value={type.value}>{type.label}</option>
                       ))}
                     </select>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Icon
+                    </label>
+                    <div className="flex items-center gap-4">
+                      <select
+                        value={newLocation.icon}
+                        onChange={(e) => updateNewLocationField('icon', e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      >
+                        {availableIcons.map(icon => (
+                          <option key={icon.value} value={icon.value}>{icon.label}</option>
+                        ))}
+                      </select>
+                      <div className="w-12 h-12 flex items-center justify-center border border-gray-300 rounded-md bg-gray-50">
+                        <img
+                          src={`/assets/location-icons/${newLocation.icon}`}
+                          alt="Selected icon"
+                          className="w-8 h-8 text-gray-600"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -484,6 +521,30 @@ export function LocationsPage() {
                         <option key={type.value} value={type.value}>{type.label}</option>
                       ))}
                     </select>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Icon
+                    </label>
+                    <div className="flex items-center gap-4">
+                      <select
+                        value={editingLocation.icon || 'factory.svg'}
+                        onChange={(e) => setEditingLocation({...editingLocation, icon: e.target.value})}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        {availableIcons.map(icon => (
+                          <option key={icon.value} value={icon.value}>{icon.label}</option>
+                        ))}
+                      </select>
+                      <div className="w-12 h-12 flex items-center justify-center border border-gray-300 rounded-md bg-gray-50">
+                        <img
+                          src={`/assets/location-icons/${editingLocation.icon || 'factory.svg'}`}
+                          alt="Selected icon"
+                          className="w-8 h-8 text-gray-600"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
