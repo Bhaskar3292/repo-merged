@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Zap, AlertTriangle, FileText } from 'lucide-react';
+import { Building2, Zap, AlertTriangle, FileText, RefreshCw } from 'lucide-react';
 import { apiService } from '../../services/api';
 
 interface FacilityDashboardProps {
@@ -14,10 +14,19 @@ export function FacilityDashboard({ selectedFacility, onViewChange }: FacilityDa
     permitsDue: 0
   });
   const [loading, setLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   useEffect(() => {
     if (selectedFacility?.id) {
       loadStats();
+    } else {
+      // Reset stats when no facility is selected
+      setStats({
+        activeTanks: 0,
+        tankTestingIssues: 0,
+        permitsDue: 0
+      });
+      setLastUpdated(null);
     }
   }, [selectedFacility?.id]);
 
@@ -27,13 +36,18 @@ export function FacilityDashboard({ selectedFacility, onViewChange }: FacilityDa
     try {
       setLoading(true);
 
-      // Fetch tanks for this location
-      const tanksResponse = await apiService.getTanks(selectedFacility.id);
+      // Fetch tanks for this location using the correct method
+      const tanksResponse = await apiService.getTanksByFacility(selectedFacility.id);
       const tanks = tanksResponse.results || [];
-      const activeTanks = tanks.filter((tank: any) => tank.status === 'Active' || tank.status === 'active').length;
+
+      // Count active tanks
+      const activeTanks = tanks.filter((tank: any) => {
+        const status = tank.status?.toLowerCase();
+        return status === 'active' || status === 'operational';
+      }).length;
 
       // Fetch permits for this location
-      const permitsResponse = await apiService.getPermits(selectedFacility.id);
+      const permitsResponse = await apiService.getPermitsByLocation(selectedFacility.id);
       const permits = permitsResponse.results || [];
 
       // Count permits expiring within 90 days
@@ -45,23 +59,33 @@ export function FacilityDashboard({ selectedFacility, onViewChange }: FacilityDa
         return expirationDate >= now && expirationDate <= ninetyDaysFromNow;
       }).length;
 
-      // For tank testing issues, count tanks with track_release_detection = 'Yes' but no recent testing
-      // For now, we'll use a placeholder count
-      const tankTestingIssues = tanks.filter((tank: any) =>
-        tank.track_release_detection === 'Yes' && (!tank.last_test_date ||
-          new Date(tank.last_test_date) < new Date(now.getTime() - (365 * 24 * 60 * 60 * 1000)))
-      ).length;
+      // Count tank testing issues: tanks with testing enabled but no recent test
+      const tankTestingIssues = tanks.filter((tank: any) => {
+        const trackTesting = tank.track_release_detection === 'Yes' || tank.track_release_detection === true;
+        if (!trackTesting) return false;
+
+        if (!tank.last_test_date) return true;
+
+        const lastTestDate = new Date(tank.last_test_date);
+        const oneYearAgo = new Date(now.getTime() - (365 * 24 * 60 * 60 * 1000));
+        return lastTestDate < oneYearAgo;
+      }).length;
 
       setStats({
         activeTanks,
         tankTestingIssues,
         permitsDue
       });
+      setLastUpdated(new Date());
     } catch (error) {
       console.error('Failed to load dashboard stats:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRefresh = () => {
+    loadStats();
   };
 
   const handleCardClick = (view: string) => {
@@ -105,8 +129,23 @@ export function FacilityDashboard({ selectedFacility, onViewChange }: FacilityDa
             <p className="text-sm text-gray-500 mt-1">{selectedFacility.address}</p>
           )}
         </div>
-        <div className="text-sm text-gray-500">
-          Last updated: {new Date().toLocaleString()}
+        <div className="flex items-center space-x-4">
+          {lastUpdated && (
+            <div className="text-sm text-gray-500">
+              Last updated: {lastUpdated.toLocaleTimeString()}
+            </div>
+          )}
+          {selectedFacility && (
+            <button
+              onClick={handleRefresh}
+              disabled={loading}
+              className="flex items-center space-x-2 px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              title="Refresh dashboard data"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
+            </button>
+          )}
         </div>
       </div>
 
