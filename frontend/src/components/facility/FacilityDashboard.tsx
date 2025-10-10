@@ -50,26 +50,15 @@ export function FacilityDashboard({ selectedFacility, onViewChange }: FacilityDa
       const permitsResponse = await apiService.getPermitsByLocation(selectedFacility.id);
       const permits = permitsResponse.results || [];
 
-      // Count permits expiring within 90 days
-      const now = new Date();
-      const ninetyDaysFromNow = new Date(now.getTime() + (90 * 24 * 60 * 60 * 1000));
-      const permitsDue = permits.filter((permit: any) => {
-        if (!permit.expiration_date) return false;
-        const expirationDate = new Date(permit.expiration_date);
-        return expirationDate >= now && expirationDate <= ninetyDaysFromNow;
-      }).length;
+      // Count permits with "expiring_soon" status (backend calculates this as within 30 days)
+      const permitsDue = permits.filter((permit: any) =>
+        permit.calculated_status === 'expiring_soon'
+      ).length;
 
-      // Count tank testing issues: tanks with testing enabled but no recent test
-      const tankTestingIssues = tanks.filter((tank: any) => {
-        const trackTesting = tank.track_release_detection === 'Yes' || tank.track_release_detection === true;
-        if (!trackTesting) return false;
-
-        if (!tank.last_test_date) return true;
-
-        const lastTestDate = new Date(tank.last_test_date);
-        const oneYearAgo = new Date(now.getTime() - (365 * 24 * 60 * 60 * 1000));
-        return lastTestDate < oneYearAgo;
-      }).length;
+      // Tank Testing Issues: Currently no tank testing data system exists
+      // The Tank Testing page shows placeholder UI with no real data
+      // Count remains 0 until a tank testing system is implemented
+      const tankTestingIssues = 0;
 
       setStats({
         activeTanks,
