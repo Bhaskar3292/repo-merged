@@ -38,7 +38,7 @@ class LocationListCreateView(generics.ListCreateAPIView):
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
     
-    @require_permission('add_location')
+    @require_permission('create_locations')
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
     
@@ -98,11 +98,11 @@ class LocationDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
     
-    @require_permission('edit_location')
+    @require_permission('edit_locations')
     def patch(self, request, *args, **kwargs):
         return super().patch(request, *args, **kwargs)
     
-    @require_permission('delete_location')
+    @require_permission('delete_locations')
     def delete(self, request, *args, **kwargs):
         return super().delete(request, *args, **kwargs)
     
@@ -195,11 +195,11 @@ class TankListCreateView(generics.ListCreateAPIView):
     serializer_class = TankSerializer
     permission_classes = [permissions.IsAuthenticated]
     
-    @require_permission('view_tank_data')
+    @require_permission('view_tanks')
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
-    
-    @require_permission('add_tank')
+
+    @require_permission('create_tanks')
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
     
@@ -226,15 +226,15 @@ class TankDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
     queryset = Tank.objects.all()
     
-    @require_permission('view_tank_data')
+    @require_permission('view_tanks')
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
-    
-    @require_permission('edit_tank')
+
+    @require_permission('edit_tanks')
     def patch(self, request, *args, **kwargs):
         return super().patch(request, *args, **kwargs)
-    
-    @require_permission('delete_tank')
+
+    @require_permission('delete_tanks')
     def delete(self, request, *args, **kwargs):
         return super().delete(request, *args, **kwargs)
 
@@ -249,8 +249,8 @@ class PermitListCreateView(generics.ListCreateAPIView):
     @require_permission('view_permits')
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
-    
-    @require_permission('add_permit')
+
+    @require_permission('create_permits')
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
     
@@ -280,12 +280,12 @@ class PermitDetailView(generics.RetrieveUpdateDestroyAPIView):
     @require_permission('view_permits')
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
-    
-    @require_permission('edit_permit')
+
+    @require_permission('edit_permits')
     def patch(self, request, *args, **kwargs):
         return super().patch(request, *args, **kwargs)
-    
-    @require_permission('delete_permit')
+
+    @require_permission('delete_permits')
     def delete(self, request, *args, **kwargs):
         return super().delete(request, *args, **kwargs)
 

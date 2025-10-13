@@ -32,6 +32,14 @@ function App() {
               }
             />
             <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <Navigate to="/dashboard" state={{ defaultView: 'admin' }} replace />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/"
               element={
                 <ProtectedRoute>
