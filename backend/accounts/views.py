@@ -445,30 +445,74 @@ class CreateUserView(generics.CreateAPIView):
         return super().post(request, *args, **kwargs)
     
     def create(self, request, *args, **kwargs):
+        from django.db import transaction
+        from facilities.models import Location
+        from accounts.models import UserLocation
+
         serializer = self.get_serializer(data=request.data)
-        
+
         try:
             serializer.is_valid(raise_exception=True)
-            user = serializer.save()
+
+            # Extract location_ids from request data
+            location_ids = request.data.get('location_ids', [])
+
+            # Validate locations exist
+            if location_ids:
+                existing_locations = Location.objects.filter(
+                    id__in=location_ids,
+                    is_active=True
+                ).values_list('id', flat=True)
+
+                invalid_ids = set(location_ids) - set(existing_locations)
+                if invalid_ids:
+                    return Response({
+                        'error': 'Invalid location IDs provided',
+                        'invalid_ids': list(invalid_ids)
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Create user and assign locations in transaction
+            with transaction.atomic():
+                user = serializer.save()
+
+                # Assign locations to user
+                if location_ids:
+                    location_assignments = [
+                        UserLocation(
+                            user=user,
+                            location_id=loc_id,
+                            created_by=request.user
+                        )
+                        for loc_id in location_ids
+                    ]
+                    UserLocation.objects.bulk_create(location_assignments)
+
         except Exception as e:
             return Response(
-                {'error': str(e)}, 
+                {'error': str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Log user creation
         log_security_event(
             user=request.user,
             action='user_created',
-            description=f'Created user: {user.username} with role: {user.role}',
+            description=f'Created user: {user.username} with role: {user.role}, assigned {len(location_ids)} locations',
             ip_address=get_client_ip(request),
             user_agent=request.META.get('HTTP_USER_AGENT', ''),
-            metadata={'created_user_id': user.id, 'created_user_role': user.role}
+            metadata={
+                'created_user_id': user.id,
+                'created_user_role': user.role,
+                'user_type': user.user_type,
+                'location_ids': location_ids,
+                'expires_at': user.expires_at.isoformat() if user.expires_at else None
+            }
         )
-        
+
         return Response({
             'message': 'User created successfully',
-            'user': UserListSerializer(user).data
+            'user': UserListSerializer(user).data,
+            'assigned_locations': len(location_ids)
         }, status=status.HTTP_201_CREATED)
     
 

@@ -99,7 +99,18 @@ class LoginSerializer(serializers.Serializer):
                 raise serializers.ValidationError('Invalid credentials')
             if not user.is_active:
                 raise serializers.ValidationError('User account is disabled')
-            
+
+            # Check if temporary user has expired
+            if user.user_type == 'temporary':
+                if user.check_expiration():
+                    raise serializers.ValidationError('User account has expired')
+
+                # Warn if expiring soon (within 24 hours)
+                if user.expires_at:
+                    time_remaining = user.expires_at - timezone.now()
+                    if time_remaining.total_seconds() < 86400:
+                        user.expiring_soon = True
+
             # Check 2FA if enabled
             if user.two_factor_enabled:
                 if not totp_token:
@@ -179,36 +190,77 @@ class TwoFactorVerifySerializer(serializers.Serializer):
 class CreateUserSerializer(serializers.ModelSerializer):
     """
     Serializer for creating new users (admin only)
+    Supports temporary users and location assignment
     """
     password = serializers.CharField(write_only=True, min_length=12)
-    
+    user_type = serializers.ChoiceField(
+        choices=['permanent', 'temporary'],
+        default='permanent'
+    )
+    expires_at = serializers.DateTimeField(required=False, allow_null=True)
+    location_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=False,
+        write_only=True
+    )
+
     class Meta:
         model = User
-        fields = ['username', 'password', 'role', 'first_name', 'last_name', 'email']
+        fields = ['username', 'password', 'role', 'first_name', 'last_name', 'email',
+                  'user_type', 'expires_at', 'location_ids']
         extra_kwargs = {
-            'email': {'required': True},  # Make email required for user creation
+            'email': {'required': False},  # Email optional for temporary users
         }
-    
+
+    def validate(self, attrs):
+        """Cross-field validation"""
+        user_type = attrs.get('user_type', 'permanent')
+        email = attrs.get('email')
+        expires_at = attrs.get('expires_at')
+
+        # Permanent users must have email
+        if user_type == 'permanent' and not email:
+            raise serializers.ValidationError({
+                'email': 'Email is required for permanent users'
+            })
+
+        # Temporary users must have expiration date
+        if user_type == 'temporary' and not expires_at:
+            raise serializers.ValidationError({
+                'expires_at': 'Expiration date is required for temporary users'
+            })
+
+        # Expiration date must be in the future
+        if expires_at and expires_at <= timezone.now():
+            raise serializers.ValidationError({
+                'expires_at': 'Expiration date must be in the future'
+            })
+
+        return attrs
+
     def validate_password(self, value):
         try:
             validate_password(value)
         except DjangoValidationError as e:
             raise serializers.ValidationError(list(e.messages))
         return value
-    
+
     def validate_username(self, value):
         """Validate username uniqueness"""
         if User.objects.filter(username=value).exists():
             raise serializers.ValidationError('A user with this username already exists.')
         return value
-    
+
     def validate_email(self, value):
         """Validate email uniqueness"""
-        if User.objects.filter(email=value).exists():
+        if value and User.objects.filter(email=value).exists():
             raise serializers.ValidationError('A user with this email already exists.')
         return value
-    
+
     def create(self, validated_data):
+        # Remove location_ids as it's handled in the view
+        validated_data.pop('location_ids', None)
+
         password = validated_data.pop('password')
         user = User.objects.create_user(**validated_data)
         user.set_password(password)
@@ -218,9 +270,25 @@ class CreateUserSerializer(serializers.ModelSerializer):
 
 class UserListSerializer(serializers.ModelSerializer):
     """
-    Simplified serializer for listing users - only username and role
+    Simplified serializer for listing users with location information
     """
-    
+    assigned_locations = serializers.SerializerMethodField()
+    location_count = serializers.SerializerMethodField()
+    is_expired = serializers.BooleanField(read_only=True)
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'role']
+        fields = ['id', 'username', 'role', 'email', 'user_type', 'expires_at',
+                  'is_expired', 'is_active', 'assigned_locations', 'location_count']
+
+    def get_assigned_locations(self, obj):
+        """Get assigned location names"""
+        locations = obj.get_assigned_locations()
+        return [{'id': ul.location.id, 'name': ul.location.name} for ul in locations[:5]]
+
+    def get_location_count(self, obj):
+        """Get total count of assigned locations"""
+        if obj.is_superuser or obj.role == 'admin':
+            from facilities.models import Location
+            return Location.objects.filter(is_active=True).count()
+        return obj.user_locations.filter(location__is_active=True).count()

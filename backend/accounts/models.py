@@ -9,19 +9,44 @@ import pyotp
 
 class User(AbstractUser):
     """
-    Custom User model with role-based access control
+    Custom User model with role-based access control and location-based access
     """
     ROLE_CHOICES = [
         ('admin', 'Administrator'),
         ('contributor', 'Contributor'),
         ('viewer', 'Viewer'),
     ]
-    
+
+    USER_TYPE_CHOICES = [
+        ('permanent', 'Permanent'),
+        ('temporary', 'Temporary'),
+    ]
+
     role = models.CharField(
         max_length=20,
         choices=ROLE_CHOICES,
         default='viewer',
         help_text='User role determines access permissions'
+    )
+
+    user_type = models.CharField(
+        max_length=20,
+        choices=USER_TYPE_CHOICES,
+        default='permanent',
+        help_text='User account type'
+    )
+
+    expires_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Expiration datetime for temporary users',
+        db_index=True
+    )
+
+    is_expired = models.BooleanField(
+        default=False,
+        help_text='Whether the temporary user has expired',
+        db_index=True
     )
     
     # Two-Factor Authentication
@@ -147,6 +172,42 @@ class User(AbstractUser):
     def can_view_facility(self, facility=None):
         return True  # All authenticated users can view
 
+    def check_expiration(self):
+        """Check if temporary user has expired and update status"""
+        if self.user_type == 'temporary' and self.expires_at:
+            now = timezone.now()
+            if now >= self.expires_at and not self.is_expired:
+                self.is_expired = True
+                self.is_active = False
+                self.save(update_fields=['is_expired', 'is_active'])
+                return True
+        return self.is_expired
+
+    def is_valid_user(self):
+        """Check if user is valid (active and not expired)"""
+        if not self.is_active:
+            return False
+        if self.user_type == 'temporary':
+            return not self.check_expiration()
+        return True
+
+    def get_assigned_locations(self):
+        """Get all locations assigned to this user"""
+        return self.user_locations.filter(location__is_active=True).select_related('location')
+
+    def has_location_access(self, location_id):
+        """Check if user has access to a specific location"""
+        if self.is_superuser or self.role == 'admin':
+            return True
+        return self.user_locations.filter(location_id=location_id, location__is_active=True).exists()
+
+    def get_accessible_location_ids(self):
+        """Get list of location IDs user can access"""
+        if self.is_superuser or self.role == 'admin':
+            from facilities.models import Location
+            return list(Location.objects.filter(is_active=True).values_list('id', flat=True))
+        return list(self.user_locations.filter(location__is_active=True).values_list('location_id', flat=True))
+
 
 class AuditLog(models.Model):
     """
@@ -214,3 +275,38 @@ class LoginAttempt(models.Model):
     def __str__(self):
         status = "Success" if self.success else "Failed"
         return f"{self.username} - {status} from {self.ip_address}"
+
+
+class UserLocation(models.Model):
+    """
+    Junction table for user-location many-to-many relationship
+    """
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='user_locations'
+    )
+    location = models.ForeignKey(
+        'facilities.Location',
+        on_delete=models.CASCADE,
+        related_name='location_users'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='location_assignments_created'
+    )
+
+    class Meta:
+        db_table = 'user_locations'
+        unique_together = [('user', 'location')]
+        indexes = [
+            models.Index(fields=['user'], name='ul_user_idx'),
+            models.Index(fields=['location'], name='ul_location_idx'),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} -> {self.location.name}"

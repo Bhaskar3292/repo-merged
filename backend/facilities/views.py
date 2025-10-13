@@ -44,10 +44,22 @@ class LocationListCreateView(generics.ListCreateAPIView):
     
     def get_queryset(self):
         from django.db.models import Count
-        queryset = Location.objects.filter(is_active=True).annotate(
+        user = self.request.user
+
+        # Filter locations based on user's assigned locations
+        queryset = Location.objects.filter(is_active=True)
+
+        # Admins and superusers see all locations
+        if not (user.is_superuser or user.role == 'admin'):
+            # Filter by user's assigned locations
+            accessible_ids = user.get_accessible_location_ids()
+            queryset = queryset.filter(id__in=accessible_ids)
+
+        queryset = queryset.annotate(
             tank_count=Count('tanks', distinct=True),
             permit_count=Count('permits', distinct=True)
         ).order_by('name')
+
         return queryset
     
     def list(self, request, *args, **kwargs):
@@ -107,7 +119,15 @@ class LocationDetailView(generics.RetrieveUpdateDestroyAPIView):
         return super().delete(request, *args, **kwargs)
     
     def get_queryset(self):
-        return Location.objects.filter(is_active=True)
+        user = self.request.user
+        queryset = Location.objects.filter(is_active=True)
+
+        # Filter by user's assigned locations
+        if not (user.is_superuser or user.role == 'admin'):
+            accessible_ids = user.get_accessible_location_ids()
+            queryset = queryset.filter(id__in=accessible_ids)
+
+        return queryset
     
     def perform_update(self, serializer):
         old_name = self.get_object().name
