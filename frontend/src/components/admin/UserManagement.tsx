@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Trash2, AlertTriangle,CheckCircle } from 'lucide-react';
+import { Users, Plus, Trash2, AlertTriangle, CheckCircle, UserPlus } from 'lucide-react';
 import { apiService } from '../../services/api';
 import { useAuthContext } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface User {
   id: number;
@@ -29,6 +30,7 @@ export function UserManagement() {
   });
   
   const { hasPermission, user: currentUser } = useAuthContext();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (currentUser) {
@@ -199,13 +201,22 @@ export function UserManagement() {
         </div>
         
         {hasPermission('add_user') && (
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Create User</span>
-          </button>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Quick Create</span>
+            </button>
+            <button
+              onClick={() => navigate('/admin/users/new')}
+              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            >
+              <UserPlus className="h-4 w-4" />
+              <span>Enhanced Form</span>
+            </button>
+          </div>
         )}
       </div>
 
