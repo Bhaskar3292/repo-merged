@@ -9,6 +9,7 @@ interface Location {
 interface UserCreationFormProps {
   locations: Location[];
   onSubmit?: (userData: UserFormData) => void;
+  onClose?: () => void;
 }
 
 interface UserFormData {
@@ -21,7 +22,7 @@ interface UserFormData {
   expirationDateTime?: string;
 }
 
-export function UserCreationForm({ locations, onSubmit }: UserCreationFormProps) {
+export function UserCreationForm({ locations, onSubmit, onClose }: UserCreationFormProps) {
   const [userType, setUserType] = useState<'permanent' | 'temporary'>('permanent');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -115,12 +116,16 @@ export function UserCreationForm({ locations, onSubmit }: UserCreationFormProps)
     if (onSubmit) {
       onSubmit(formData);
     }
+
+    if (onClose) {
+      onClose();
+    }
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-6">
-      <div className="bg-white rounded-xl shadow-lg p-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-6">Create New User</h2>
+    <div className="w-full">
+      <div className="bg-white rounded-lg">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Create New User</h2>
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* User Type Toggle */}

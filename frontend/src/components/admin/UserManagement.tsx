@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Trash2, AlertTriangle, CheckCircle, UserPlus } from 'lucide-react';
+import { Users, Plus, Trash2, AlertTriangle, CheckCircle, X } from 'lucide-react';
 import { apiService } from '../../services/api';
 import { useAuthContext } from '../../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { UserCreationForm } from './UserCreationForm';
 
 interface User {
   id: number;
@@ -16,6 +16,8 @@ export function UserManagement() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEnhancedModal, setShowEnhancedModal] = useState(false);
+  const [locations, setLocations] = useState<any[]>([]);
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; user?: User }>({
     isOpen: false
   });
@@ -28,13 +30,13 @@ export function UserManagement() {
     first_name: '',
     last_name: ''
   });
-  
+
   const { hasPermission, user: currentUser } = useAuthContext();
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (currentUser) {
       loadUsers();
+      loadLocations();
     }
   }, [currentUser]);
 
@@ -49,6 +51,17 @@ export function UserManagement() {
       setUsers([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadLocations = async () => {
+    try {
+      const data = await apiService.getLocations();
+      const locationData = data.results || data;
+      setLocations(Array.isArray(locationData) ? locationData : []);
+    } catch (error) {
+      console.error('Failed to load locations:', error);
+      setLocations([]);
     }
   };
 
@@ -130,6 +143,36 @@ export function UserManagement() {
     setDeleteConfirm({ isOpen: true, user });
   };
 
+  const handleEnhancedFormSubmit = async (userData: any) => {
+    try {
+      setFormLoading(true);
+      setError(null);
+      setSuccess(null);
+
+      const userPayload = {
+        username: userData.username,
+        email: userData.email,
+        password: userData.password,
+        role: userData.role,
+        first_name: '',
+        last_name: '',
+        is_temporary: userData.userType === 'temporary',
+        expiration_datetime: userData.expirationDateTime,
+        location_ids: userData.selectedLocationIds
+      };
+
+      await apiService.createUser(userPayload);
+      await loadUsers();
+      setSuccess('User created successfully!');
+      setTimeout(() => setSuccess(null), 3000);
+      setShowEnhancedModal(false);
+    } catch (error: any) {
+      setError(error.response?.data?.detail || 'Failed to create user');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
   const closeDeleteConfirm = () => {
     setDeleteConfirm({ isOpen: false });
   };
@@ -201,22 +244,13 @@ export function UserManagement() {
         </div>
         
         {hasPermission('add_user') && (
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Quick Create</span>
-            </button>
-            <button
-              onClick={() => navigate('/admin/users/new')}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-            >
-              <UserPlus className="h-4 w-4" />
-              <span>Enhanced Form</span>
-            </button>
-          </div>
+          <button
+            onClick={() => setShowEnhancedModal(true)}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Create User</span>
+          </button>
         )}
       </div>
 
@@ -488,6 +522,39 @@ export function UserManagement() {
               >
                 Delete User
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Enhanced User Creation Modal */}
+      {showEnhancedModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadeIn"
+          onClick={() => setShowEnhancedModal(false)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto animate-scaleIn"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-xl z-10">
+              <h2 className="text-2xl font-bold text-gray-900">Create New User</h2>
+              <button
+                onClick={() => setShowEnhancedModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="h-6 w-6 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6">
+              <UserCreationForm
+                locations={locations}
+                onSubmit={handleEnhancedFormSubmit}
+                onClose={() => setShowEnhancedModal(false)}
+              />
             </div>
           </div>
         </div>

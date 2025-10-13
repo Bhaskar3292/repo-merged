@@ -6,7 +6,6 @@ import { LoginForm } from './components/auth/LoginForm';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { PasswordResetConfirm } from "./components/auth/PasswordResetConfirm";
-import { UserCreationPage } from './pages/UserCreationPage';
 
 function App() {
   return (
@@ -29,14 +28,6 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Navigate to="/dashboard" state={{ defaultView: 'locations' }} replace />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/users/new"
-              element={
-                <ProtectedRoute>
-                  <UserCreationPage />
                 </ProtectedRoute>
               }
             />
