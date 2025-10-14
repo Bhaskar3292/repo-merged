@@ -34,12 +34,18 @@ class LocationListCreateView(generics.ListCreateAPIView):
     serializer_class = LocationSerializer
     permission_classes = [permissions.IsAuthenticated]
     
-    @require_permission('view_locations')
     def get(self, request, *args, **kwargs):
+        # Any authenticated user can view locations
         return super().get(request, *args, **kwargs)
-    
-    @require_permission('create_locations')
+
     def post(self, request, *args, **kwargs):
+        # Check role manually for creation
+        user = request.user
+        if not (user.is_superuser or user.role in ['admin', 'contributor']):
+            return Response(
+                {'error': 'Only admins and contributors can create locations'},
+                status=status.HTTP_403_FORBIDDEN
+            )
         return super().post(request, *args, **kwargs)
     
     def get_queryset(self):
@@ -106,16 +112,28 @@ class LocationDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = LocationDetailSerializer
     permission_classes = [permissions.IsAuthenticated]
     
-    @require_permission('view_locations')
     def get(self, request, *args, **kwargs):
+        # Any authenticated user can view locations
         return super().get(request, *args, **kwargs)
-    
-    @require_permission('edit_locations')
+
     def patch(self, request, *args, **kwargs):
+        # Check role manually for editing
+        user = request.user
+        if not (user.is_superuser or user.role in ['admin', 'contributor']):
+            return Response(
+                {'error': 'Only admins and contributors can edit locations'},
+                status=status.HTTP_403_FORBIDDEN
+            )
         return super().patch(request, *args, **kwargs)
-    
-    @require_permission('delete_locations')
+
     def delete(self, request, *args, **kwargs):
+        # Check role manually for deletion
+        user = request.user
+        if not (user.is_superuser or user.role == 'admin'):
+            return Response(
+                {'error': 'Only admins can delete locations'},
+                status=status.HTTP_403_FORBIDDEN
+            )
         return super().delete(request, *args, **kwargs)
     
     def get_queryset(self):
@@ -215,12 +233,18 @@ class TankListCreateView(generics.ListCreateAPIView):
     serializer_class = TankSerializer
     permission_classes = [permissions.IsAuthenticated]
     
-    @require_permission('view_tanks')
     def get(self, request, *args, **kwargs):
+        # Any authenticated user can view tanks
         return super().get(request, *args, **kwargs)
 
-    @require_permission('create_tanks')
     def post(self, request, *args, **kwargs):
+        # Check role manually for creation
+        user = request.user
+        if not (user.is_superuser or user.role in ['admin', 'contributor']):
+            return Response(
+                {'error': 'Only admins and contributors can create tanks'},
+                status=status.HTTP_403_FORBIDDEN
+            )
         return super().post(request, *args, **kwargs)
     
     def get_queryset(self):
@@ -246,16 +270,28 @@ class TankDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
     queryset = Tank.objects.all()
     
-    @require_permission('view_tanks')
     def get(self, request, *args, **kwargs):
+        # Any authenticated user can view tanks
         return super().get(request, *args, **kwargs)
 
-    @require_permission('edit_tanks')
     def patch(self, request, *args, **kwargs):
+        # Check role manually for editing
+        user = request.user
+        if not (user.is_superuser or user.role in ['admin', 'contributor']):
+            return Response(
+                {'error': 'Only admins and contributors can edit tanks'},
+                status=status.HTTP_403_FORBIDDEN
+            )
         return super().patch(request, *args, **kwargs)
 
-    @require_permission('delete_tanks')
     def delete(self, request, *args, **kwargs):
+        # Check role manually for deletion
+        user = request.user
+        if not (user.is_superuser or user.role == 'admin'):
+            return Response(
+                {'error': 'Only admins can delete tanks'},
+                status=status.HTTP_403_FORBIDDEN
+            )
         return super().delete(request, *args, **kwargs)
 
 
@@ -266,12 +302,18 @@ class PermitListCreateView(generics.ListCreateAPIView):
     serializer_class = PermitSerializer
     permission_classes = [permissions.IsAuthenticated]
     
-    @require_permission('view_permits')
     def get(self, request, *args, **kwargs):
+        # Any authenticated user can view permits
         return super().get(request, *args, **kwargs)
 
-    @require_permission('create_permits')
     def post(self, request, *args, **kwargs):
+        # Check role manually for creation
+        user = request.user
+        if not (user.is_superuser or user.role in ['admin', 'contributor']):
+            return Response(
+                {'error': 'Only admins and contributors can create permits'},
+                status=status.HTTP_403_FORBIDDEN
+            )
         return super().post(request, *args, **kwargs)
     
     def get_queryset(self):
@@ -297,24 +339,37 @@ class PermitDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
     queryset = Permit.objects.all()
     
-    @require_permission('view_permits')
     def get(self, request, *args, **kwargs):
+        # Any authenticated user can view permits
         return super().get(request, *args, **kwargs)
 
-    @require_permission('edit_permits')
     def patch(self, request, *args, **kwargs):
+        # Check role manually for editing
+        user = request.user
+        if not (user.is_superuser or user.role in ['admin', 'contributor']):
+            return Response(
+                {'error': 'Only admins and contributors can edit permits'},
+                status=status.HTTP_403_FORBIDDEN
+            )
         return super().patch(request, *args, **kwargs)
 
-    @require_permission('delete_permits')
     def delete(self, request, *args, **kwargs):
+        # Check role manually for deletion
+        user = request.user
+        if not (user.is_superuser or user.role == 'admin'):
+            return Response(
+                {'error': 'Only admins can delete permits'},
+                status=status.HTTP_403_FORBIDDEN
+            )
         return super().delete(request, *args, **kwargs)
 
 
 @api_view(['GET'])
-@require_permission('view_dashboard')
+@permission_classes([permissions.IsAuthenticated])
 def dashboard_stats(request):
     """
     Get dashboard statistics
+    Any authenticated user can view dashboard stats
     """
     stats = {
         'total_locations': Location.objects.filter(is_active=True).count(),
