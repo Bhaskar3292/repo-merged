@@ -35,64 +35,85 @@ export const PermissionMatrix: React.FC = () => {
   }, []);
 
   const loadPermissions = async () => {
-    try {
-      setLoading(true);
-      const [permsResponse, rolePermsResponse] = await Promise.all([
-        api.get('/api/permissions/permissions/'),
-        api.get('/api/permissions/role-permissions/'),
-      ]);
+  try {
+    setLoading(true);
+    const [permsResponse, rolePermsResponse] = await Promise.all([
+      api.get('/api/permissions/permissions/'),
+      api.get('/api/permissions/role-permissions/'),
+    ]);
 
-      // Group permissions by category
-      const grouped: { [key: string]: Permission[] } = {};
-      permsResponse.data.forEach((perm: Permission) => {
-        if (!grouped[perm.category]) {
-          grouped[perm.category] = [];
-        }
-        grouped[perm.category].push(perm);
-      });
+    // Debug: Check the actual response structure
+    console.log('Permissions response:', permsResponse);
+    console.log('Role permissions response:', rolePermsResponse);
 
-      // Create category structure with icons
-      const categoryIcons: { [key: string]: string } = {
-        'Locations': '📍',
-        'Facilities': '🏢',
-        'Tanks': '🛢️',
-        'Permits': '📄',
-        'Testing': '🧪',
-        'Commander': '👤',
-        'Settings': '⚙️',
-        'Admin': '🔐',
-      };
+    // FIX: Handle different response structures
+    const permissionsData = permsResponse.data.results || permsResponse.data.permissions || permsResponse.data;
+    const rolePermissionsData = rolePermsResponse.data.results || rolePermsResponse.data.role_permissions || rolePermsResponse.data;
 
-      const cats: PermissionCategory[] = Object.keys(grouped).map(catName => ({
-        name: catName,
-        icon: categoryIcons[catName] || '📋',
-        permissions: grouped[catName].sort((a, b) => a.code.localeCompare(b.code)),
-      }));
-
-      setCategories(cats);
-
-      // Map role permissions
-      const rpMap = new Map<string, RolePermission[]>();
-      rolePermsResponse.data.forEach((rp: RolePermission) => {
-        const key = rp.permission_code;
-        if (!rpMap.has(key)) {
-          rpMap.set(key, []);
-        }
-        rpMap.get(key)!.push(rp);
-      });
-
-      setRolePermissions(rpMap);
-
-      // Expand all categories by default
-      setExpandedCategories(new Set(cats.map(c => c.name)));
-    } catch (error: any) {
-      console.error('Failed to load permissions:', error);
-      const errorMessage = error.response?.data?.error || error.message || 'Failed to load permissions';
-      showMessage('error', errorMessage);
-    } finally {
-      setLoading(false);
+    // Ensure we're working with arrays
+    if (!Array.isArray(permissionsData)) {
+      console.error('Permissions data is not an array:', permissionsData);
+      showMessage('error', 'Invalid permissions data format');
+      return;
     }
-  };
+
+    if (!Array.isArray(rolePermissionsData)) {
+      console.error('Role permissions data is not an array:', rolePermissionsData);
+      showMessage('error', 'Invalid role permissions data format');
+      return;
+    }
+
+    // Group permissions by category
+    const grouped: { [key: string]: Permission[] } = {};
+    permissionsData.forEach((perm: Permission) => {
+      if (!grouped[perm.category]) {
+        grouped[perm.category] = [];
+      }
+      grouped[perm.category].push(perm);
+    });
+
+    // Create category structure with icons
+    const categoryIcons: { [key: string]: string } = {
+      'Locations': '📍',
+      'Facilities': '🏢',
+      'Tanks': '🛢️',
+      'Permits': '📄',
+      'Testing': '🧪',
+      'Commander': '👤',
+      'Settings': '⚙️',
+      'Admin': '🔐',
+    };
+
+    const cats: PermissionCategory[] = Object.keys(grouped).map(catName => ({
+      name: catName,
+      icon: categoryIcons[catName] || '📋',
+      permissions: grouped[catName].sort((a, b) => a.code.localeCompare(b.code)),
+    }));
+
+    setCategories(cats);
+
+    // Map role permissions
+    const rpMap = new Map<string, RolePermission[]>();
+    rolePermissionsData.forEach((rp: RolePermission) => {
+      const key = rp.permission_code;
+      if (!rpMap.has(key)) {
+        rpMap.set(key, []);
+      }
+      rpMap.get(key)!.push(rp);
+    });
+
+    setRolePermissions(rpMap);
+
+    // Expand all categories by default
+    setExpandedCategories(new Set(cats.map(c => c.name)));
+  } catch (error: any) {
+    console.error('Failed to load permissions:', error);
+    const errorMessage = error.response?.data?.error || error.message || 'Failed to load permissions';
+    showMessage('error', errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const toggleCategory = (categoryName: string) => {
     const newExpanded = new Set(expandedCategories);
