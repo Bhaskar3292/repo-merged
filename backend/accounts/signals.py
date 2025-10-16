@@ -8,6 +8,34 @@ from .models import User
 from .utils import get_client_ip, log_security_event
 
 
+def ensure_admin_permissions():
+    """
+    Ensure all permissions exist for the admin role
+    Creates RolePermission entries with is_granted=True for all permissions
+    """
+    try:
+        from permissions.models import Permission, RolePermission
+
+        # Get all permissions
+        all_permissions = Permission.objects.all()
+
+        # Create or update RolePermission for admin role
+        for permission in all_permissions:
+            RolePermission.objects.update_or_create(
+                role='admin',
+                permission=permission,
+                defaults={'is_granted': True}
+            )
+
+        return True
+    except Exception as e:
+        # Log error but don't fail user creation
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Failed to ensure admin permissions: {str(e)}')
+        return False
+
+
 @receiver(post_save, sender=User)
 def user_post_save(sender, instance, created, **kwargs):
     """
@@ -43,6 +71,10 @@ def user_post_save(sender, instance, created, **kwargs):
             })
 
     if created:
+        # Ensure admin role has all permissions
+        if instance.role == 'admin':
+            ensure_admin_permissions()
+
         # Log user creation
         log_security_event(
             user=instance,

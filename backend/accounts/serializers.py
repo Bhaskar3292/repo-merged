@@ -18,26 +18,36 @@ class UserSerializer(serializers.ModelSerializer):
     is_account_locked = serializers.SerializerMethodField()
     is_superuser = serializers.BooleanField(read_only=True)
     effective_role = serializers.SerializerMethodField()
-    
+    permissions = serializers.SerializerMethodField()
+    accessible_locations = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 
-                 'role', 'is_active', 'created_at', 'password', 
+        fields = ['id', 'username', 'email', 'first_name', 'last_name',
+                 'role', 'is_active', 'created_at', 'password',
                  'two_factor_enabled', 'is_account_locked', 'last_login',
-                 'is_superuser', 'effective_role']
+                 'is_superuser', 'effective_role', 'permissions', 'accessible_locations']
         extra_kwargs = {
             'password': {'write_only': True},
             'created_at': {'read_only': True},
         }
-    
+
     def get_is_account_locked(self, obj):
         return obj.is_account_locked()
-    
+
     def get_effective_role(self, obj):
         """Return effective role considering superuser status"""
         if obj.is_superuser:
             return 'admin'
         return obj.role
+
+    def get_permissions(self, obj):
+        """Get all permissions for the user"""
+        return obj.get_permissions()
+
+    def get_accessible_locations(self, obj):
+        """Get all accessible location IDs for the user"""
+        return obj.get_accessible_location_ids()
     
     def validate_password(self, value):
         """Validate password using Django's password validators"""
