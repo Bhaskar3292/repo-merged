@@ -17,7 +17,6 @@ urlpatterns = [
     # Legacy endpoints (for backwards compatibility)
     path('roles/<str:role>/permissions/', views.RolePermissionListView.as_view(), name='role_permissions'),
     path('role-permissions/<int:pk>/', views.RolePermissionUpdateView.as_view(), name='role_permission_update'),
-    path('role-permissions/update/', views.update_role_permission, name='update_role_permission_legacy'),
     path('roles/permissions/bulk-update/', views.bulk_update_role_permissions, name='bulk_update_role_permissions'),
     path('roles/permissions/matrix/', views.get_role_permissions_matrix, name='role_permissions_matrix'),
 

@@ -50,60 +50,90 @@ class RolePermissionListView(generics.ListAPIView):
 def update_role_permission(request):
     """
     Update a single role permission
+    Accepts: {role: string, permission_code: string, is_granted: boolean}
     """
     role = request.data.get('role')
     permission_code = request.data.get('permission_code')
-    is_granted = request.data.get('is_granted', False)
+    is_granted = request.data.get('is_granted')
 
-    if not role or not permission_code:
+    # Validate required fields
+    if not role:
         return Response(
-            {'error': 'role and permission_code are required'},
+            {'error': 'role is required', 'field': 'role'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    try:
-        permission = Permission.objects.get(code=permission_code)
-    except Permission.DoesNotExist:
+    if not permission_code:
         return Response(
-            {'error': 'Permission not found'},
-            status=status.HTTP_404_NOT_FOUND
+            {'error': 'permission_code is required', 'field': 'permission_code'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if is_granted is None:
+        return Response(
+            {'error': 'is_granted is required', 'field': 'is_granted'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Validate role value
+    valid_roles = ['admin', 'contributor', 'viewer']
+    if role not in valid_roles:
+        return Response(
+            {'error': f'Invalid role. Must be one of: {", ".join(valid_roles)}', 'field': 'role'},
+            status=status.HTTP_400_BAD_REQUEST
         )
 
     # Admin permissions are always granted and cannot be changed
     if role == 'admin':
         return Response(
-            {'error': 'Admin permissions cannot be modified'},
+            {'error': 'Admin permissions cannot be modified', 'field': 'role'},
             status=status.HTTP_403_FORBIDDEN
         )
 
+    # Find permission by code
+    try:
+        permission = Permission.objects.get(code=permission_code)
+    except Permission.DoesNotExist:
+        return Response(
+            {'error': f'Permission with code "{permission_code}" not found', 'field': 'permission_code'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
     # Update or create role permission
-    role_perm, created = RolePermission.objects.update_or_create(
-        role=role,
-        permission=permission,
-        defaults={'is_granted': is_granted}
-    )
+    try:
+        role_perm, created = RolePermission.objects.update_or_create(
+            role=role,
+            permission=permission,
+            defaults={'is_granted': is_granted}
+        )
 
-    # Log the change
-    log_security_event(
-        user=request.user,
-        action='permission_updated',
-        description=f'Updated {role} permission for {permission_code}: {is_granted}',
-        ip_address=get_client_ip(request),
-        user_agent=request.META.get('HTTP_USER_AGENT', ''),
-        metadata={
-            'role': role,
-            'permission_code': permission_code,
-            'is_granted': is_granted,
-            'action': 'created' if created else 'updated'
-        }
-    )
+        # Log the change
+        log_security_event(
+            user=request.user,
+            action='permission_updated',
+            description=f'Updated {role} permission for {permission_code}: {is_granted}',
+            ip_address=get_client_ip(request),
+            user_agent=request.META.get('HTTP_USER_AGENT', ''),
+            metadata={
+                'role': role,
+                'permission_code': permission_code,
+                'is_granted': is_granted,
+                'action': 'created' if created else 'updated'
+            }
+        )
 
-    return Response({
-        'role': role_perm.role,
-        'permission_code': permission.code,
-        'is_granted': role_perm.is_granted,
-        'message': f'Permission {"granted" if is_granted else "revoked"} successfully'
-    })
+        return Response({
+            'role': role_perm.role,
+            'permission_code': permission.code,
+            'is_granted': role_perm.is_granted,
+            'message': f'Permission {"granted" if is_granted else "revoked"} successfully'
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to update permission: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 @api_view(['POST'])
@@ -362,69 +392,3 @@ def get_role_permissions_matrix(request):
     return Response(matrix)
 
 
-@api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
-def update_role_permission(request):
-    """
-    Update a specific role permission
-    """
-    # Check if user is admin or superuser
-    if not (request.user.role == 'admin' or request.user.is_superuser):
-        return Response(
-            {'error': 'Only administrators can update permissions'}, 
-            status=status.HTTP_403_FORBIDDEN
-        )
-    
-    role = request.data.get('role')
-    permission_id = request.data.get('permission_id')
-    is_granted = request.data.get('is_granted', False)
-    
-    if not role or not permission_id:
-        return Response(
-            {'error': 'Role and permission_id are required'}, 
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    try:
-        permission = Permission.objects.get(id=permission_id)
-        role_permission, created = RolePermission.objects.get_or_create(
-            role=role,
-            permission=permission,
-            defaults={'is_granted': is_granted}
-        )
-        
-        if not created:
-            role_permission.is_granted = is_granted
-            role_permission.save()
-        
-        # Log permission change
-        log_security_event(
-            user=request.user,
-            action='permission_granted' if is_granted else 'permission_revoked',
-            description=f'Permission {permission.name} {"granted to" if is_granted else "revoked from"} {role} role',
-            ip_address=get_client_ip(request),
-            user_agent=request.META.get('HTTP_USER_AGENT', ''),
-            metadata={
-                'permission_id': permission.id,
-                'permission_code': permission.code,
-                'role': role,
-                'granted': is_granted
-            }
-        )
-        
-        return Response({
-            'message': f'Permission updated for {role} role',
-            'permission': permission.name,
-            'granted': is_granted
-        })
-        
-    except Permission.DoesNotExist:
-        return Response(
-            {'error': 'Permission not found'}, 
-            status=status.HTTP_404_NOT_FOUND
-        )
-    except Exception as e:
-        return Response(
-            {'error': str(e)}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
