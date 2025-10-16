@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PermissionToggle } from './PermissionToggle';
-import { apiService } from '../../services/api';
+import api from '../../api/axios';
 
 interface Permission {
   code: string;
@@ -38,8 +38,8 @@ export const PermissionMatrix: React.FC = () => {
     try {
       setLoading(true);
       const [permsResponse, rolePermsResponse] = await Promise.all([
-        apiService.get('/api/permissions/permissions/'),
-        apiService.get('/api/permissions/role-permissions/'),
+        api.get('/api/permissions/permissions/'),
+        api.get('/api/permissions/role-permissions/'),
       ]);
 
       // Group permissions by category
@@ -85,9 +85,10 @@ export const PermissionMatrix: React.FC = () => {
 
       // Expand all categories by default
       setExpandedCategories(new Set(cats.map(c => c.name)));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load permissions:', error);
-      showMessage('error', 'Failed to load permissions');
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to load permissions';
+      showMessage('error', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -125,16 +126,17 @@ export const PermissionMatrix: React.FC = () => {
     setRolePermissions(newMap);
 
     try {
-      await apiService.post('/api/permissions/update-role-permission/', {
+      await api.post('/api/permissions/update-role-permission/', {
         role,
         permission_code: permissionCode,
         is_granted: granted,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update permission:', error);
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to update permission';
       // Revert on error
       loadPermissions();
-      showMessage('error', 'Failed to update permission');
+      showMessage('error', errorMessage);
     }
   };
 
@@ -153,11 +155,12 @@ export const PermissionMatrix: React.FC = () => {
         });
       });
 
-      await apiService.post('/api/permissions/bulk-update/', { permissions: updates });
+      await api.post('/api/permissions/bulk-update/', { permissions: updates });
       showMessage('success', 'All permissions saved successfully');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save permissions:', error);
-      showMessage('error', 'Failed to save permissions');
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to save permissions';
+      showMessage('error', errorMessage);
     } finally {
       setSaving(false);
     }
