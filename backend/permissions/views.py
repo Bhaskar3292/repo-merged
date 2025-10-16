@@ -141,60 +141,112 @@ def update_role_permission(request):
 def bulk_update_permissions(request):
     """
     Bulk update multiple role permissions
+    Accepts: {permissions: [{role: string, permission_code: string, is_granted: boolean}]}
     """
-    permissions_data = request.data.get('permissions', [])
+    import logging
+    logger = logging.getLogger(__name__)
 
-    if not permissions_data:
-        return Response(
-            {'error': 'No permissions provided'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+    try:
+        permissions_data = request.data.get('permissions', [])
 
-    updated_count = 0
-    errors = []
+        # Validate input
+        if not permissions_data:
+            return Response(
+                {'error': 'No permissions provided', 'field': 'permissions'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-    with transaction.atomic():
-        for perm_data in permissions_data:
-            role = perm_data.get('role')
-            permission_code = perm_data.get('permission_code')
-            is_granted = perm_data.get('is_granted', False)
+        if not isinstance(permissions_data, list):
+            return Response(
+                {'error': 'permissions must be an array', 'field': 'permissions'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-            # Skip admin permissions
-            if role == 'admin':
-                continue
+        updated_count = 0
+        skipped_count = 0
+        errors = []
+        valid_roles = ['admin', 'contributor', 'viewer']
 
-            try:
-                permission = Permission.objects.get(code=permission_code)
-                RolePermission.objects.update_or_create(
-                    role=role,
-                    permission=permission,
-                    defaults={'is_granted': is_granted}
-                )
-                updated_count += 1
-            except Permission.DoesNotExist:
-                errors.append(f'Permission {permission_code} not found')
-            except Exception as e:
-                errors.append(f'Error updating {permission_code}: {str(e)}')
+        with transaction.atomic():
+            for idx, perm_data in enumerate(permissions_data):
+                # Validate each permission entry
+                if not isinstance(perm_data, dict):
+                    errors.append(f'Item {idx}: Invalid format, must be an object')
+                    continue
 
-    # Log bulk update
-    log_security_event(
-        user=request.user,
-        action='bulk_permission_update',
-        description=f'Bulk updated {updated_count} permissions',
-        ip_address=get_client_ip(request),
-        user_agent=request.META.get('HTTP_USER_AGENT', ''),
-        metadata={
+                role = perm_data.get('role')
+                permission_code = perm_data.get('permission_code')
+                is_granted = perm_data.get('is_granted')
+
+                # Validate required fields
+                if not role:
+                    errors.append(f'Item {idx}: role is required')
+                    continue
+
+                if not permission_code:
+                    errors.append(f'Item {idx}: permission_code is required')
+                    continue
+
+                if is_granted is None:
+                    errors.append(f'Item {idx}: is_granted is required')
+                    continue
+
+                # Validate role value
+                if role not in valid_roles:
+                    errors.append(f'Item {idx}: Invalid role "{role}". Must be one of: {", ".join(valid_roles)}')
+                    continue
+
+                # Skip admin permissions
+                if role == 'admin':
+                    skipped_count += 1
+                    continue
+
+                try:
+                    permission = Permission.objects.get(code=permission_code)
+                    RolePermission.objects.update_or_create(
+                        role=role,
+                        permission=permission,
+                        defaults={'is_granted': is_granted}
+                    )
+                    updated_count += 1
+                except Permission.DoesNotExist:
+                    errors.append(f'Item {idx}: Permission "{permission_code}" not found')
+                except Exception as e:
+                    logger.error(f'Error updating permission {permission_code}: {str(e)}', exc_info=True)
+                    errors.append(f'Item {idx}: Error updating "{permission_code}": {str(e)}')
+
+        # Log bulk update (with error handling)
+        try:
+            log_security_event(
+                user=request.user,
+                action='bulk_permission_update',
+                description=f'Bulk updated {updated_count} permissions',
+                ip_address=get_client_ip(request),
+                user_agent=request.META.get('HTTP_USER_AGENT', ''),
+                metadata={
+                    'updated_count': updated_count,
+                    'skipped_count': skipped_count,
+                    'total_attempted': len(permissions_data),
+                    'error_count': len(errors)
+                }
+            )
+        except Exception as log_error:
+            logger.error(f'Failed to log security event: {str(log_error)}', exc_info=True)
+
+        return Response({
+            'message': f'Successfully updated {updated_count} permissions',
             'updated_count': updated_count,
+            'skipped_count': skipped_count,
             'total_attempted': len(permissions_data),
-            'errors': errors
-        }
-    )
+            'errors': errors if errors else None
+        }, status=status.HTTP_200_OK)
 
-    return Response({
-        'message': f'Successfully updated {updated_count} permissions',
-        'updated_count': updated_count,
-        'errors': errors if errors else None
-    })
+    except Exception as e:
+        logger.error(f'Bulk update failed: {str(e)}', exc_info=True)
+        return Response(
+            {'error': f'Bulk update failed: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
     
 
 

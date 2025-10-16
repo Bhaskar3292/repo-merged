@@ -279,6 +279,8 @@ class AuditLog(models.Model):
         ('2fa_failed', '2FA Failed'),
         ('permission_granted', 'Permission Granted'),
         ('permission_revoked', 'Permission Revoked'),
+        ('permission_updated', 'Permission Updated'),
+        ('bulk_permission_update', 'Bulk Permission Update'),
         ('user_created', 'User Created'),
         ('user_updated', 'User Updated'),
         ('user_deleted', 'User Deleted'),
@@ -286,7 +288,7 @@ class AuditLog(models.Model):
     ]
     
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    action = models.CharField(max_length=20, choices=ACTION_TYPES)
+    action = models.CharField(max_length=50, choices=ACTION_TYPES)
     description = models.TextField()
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(blank=True)
