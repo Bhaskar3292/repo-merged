@@ -36,18 +36,135 @@ class PermissionListView(generics.ListAPIView):
 
 class RolePermissionListView(generics.ListAPIView):
     """
-    List permissions for a specific role
+    List all role permissions for permission matrix
     """
     serializer_class = RolePermissionSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    
+    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+
     def get_queryset(self):
-        # Check if user is admin or superuser
-        if not (self.request.user.role == 'admin' or self.request.user.is_superuser):
-            return RolePermission.objects.none()
-        
-        role = self.kwargs.get('role')
-        return RolePermission.objects.filter(role=role).order_by('permission__category__order', 'permission__name')
+        return RolePermission.objects.all().select_related('permission', 'permission__category').order_by('role', 'permission__category__order', 'permission__name')
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated, IsAdminUser])
+def update_role_permission(request):
+    """
+    Update a single role permission
+    """
+    role = request.data.get('role')
+    permission_code = request.data.get('permission_code')
+    is_granted = request.data.get('is_granted', False)
+
+    if not role or not permission_code:
+        return Response(
+            {'error': 'role and permission_code are required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        permission = Permission.objects.get(code=permission_code)
+    except Permission.DoesNotExist:
+        return Response(
+            {'error': 'Permission not found'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    # Admin permissions are always granted and cannot be changed
+    if role == 'admin':
+        return Response(
+            {'error': 'Admin permissions cannot be modified'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    # Update or create role permission
+    role_perm, created = RolePermission.objects.update_or_create(
+        role=role,
+        permission=permission,
+        defaults={'is_granted': is_granted}
+    )
+
+    # Log the change
+    log_security_event(
+        user=request.user,
+        action='permission_updated',
+        description=f'Updated {role} permission for {permission_code}: {is_granted}',
+        ip_address=get_client_ip(request),
+        user_agent=request.META.get('HTTP_USER_AGENT', ''),
+        metadata={
+            'role': role,
+            'permission_code': permission_code,
+            'is_granted': is_granted,
+            'action': 'created' if created else 'updated'
+        }
+    )
+
+    return Response({
+        'role': role_perm.role,
+        'permission_code': permission.code,
+        'is_granted': role_perm.is_granted,
+        'message': f'Permission {"granted" if is_granted else "revoked"} successfully'
+    })
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated, IsAdminUser])
+def bulk_update_permissions(request):
+    """
+    Bulk update multiple role permissions
+    """
+    permissions_data = request.data.get('permissions', [])
+
+    if not permissions_data:
+        return Response(
+            {'error': 'No permissions provided'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    updated_count = 0
+    errors = []
+
+    with transaction.atomic():
+        for perm_data in permissions_data:
+            role = perm_data.get('role')
+            permission_code = perm_data.get('permission_code')
+            is_granted = perm_data.get('is_granted', False)
+
+            # Skip admin permissions
+            if role == 'admin':
+                continue
+
+            try:
+                permission = Permission.objects.get(code=permission_code)
+                RolePermission.objects.update_or_create(
+                    role=role,
+                    permission=permission,
+                    defaults={'is_granted': is_granted}
+                )
+                updated_count += 1
+            except Permission.DoesNotExist:
+                errors.append(f'Permission {permission_code} not found')
+            except Exception as e:
+                errors.append(f'Error updating {permission_code}: {str(e)}')
+
+    # Log bulk update
+    log_security_event(
+        user=request.user,
+        action='bulk_permission_update',
+        description=f'Bulk updated {updated_count} permissions',
+        ip_address=get_client_ip(request),
+        user_agent=request.META.get('HTTP_USER_AGENT', ''),
+        metadata={
+            'updated_count': updated_count,
+            'total_attempted': len(permissions_data),
+            'errors': errors
+        }
+    )
+
+    return Response({
+        'message': f'Successfully updated {updated_count} permissions',
+        'updated_count': updated_count,
+        'errors': errors if errors else None
+    })
     
 
 
