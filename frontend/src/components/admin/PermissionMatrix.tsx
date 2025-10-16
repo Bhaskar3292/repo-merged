@@ -310,7 +310,7 @@ export const PermissionMatrix: React.FC = () => {
                           role="admin"
                           permission={readPermission.code}
                           enabled={true}
-                          locked={true}
+                          locked={false}
                           onChange={() => {}}
                         />
                         <PermissionToggle
@@ -346,7 +346,7 @@ export const PermissionMatrix: React.FC = () => {
                           role="admin"
                           permission={writePermission.code}
                           enabled={true}
-                          locked={true}
+                          locked={false}
                           onChange={() => {}}
                         />
                         <PermissionToggle
