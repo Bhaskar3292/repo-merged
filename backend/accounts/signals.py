@@ -12,16 +12,46 @@ from .utils import get_client_ip, log_security_event
 def user_post_save(sender, instance, created, **kwargs):
     """
     Handle user creation and updates
+    Automatically set admin defaults for Administrator role
     """
+    # Assign admin defaults (only if role is admin)
+    if instance.role == 'admin':
+        update_fields = []
+
+        # Ensure admin is active and staff
+        if not instance.is_active:
+            instance.is_active = True
+            update_fields.append('is_active')
+
+        if not instance.is_staff:
+            instance.is_staff = True
+            update_fields.append('is_staff')
+
+        # Ensure organization is set
+        if not instance.organization_id:
+            from .models import Organization
+            # Try to get default organization
+            default_org = Organization.objects.filter(is_active=True).first()
+            if default_org:
+                instance.organization = default_org
+                update_fields.append('organization')
+
+        # Save if any fields were updated (avoid recursion with update_fields)
+        if update_fields and not kwargs.get('update_fields'):
+            User.objects.filter(pk=instance.pk).update(**{
+                field: getattr(instance, field) for field in update_fields
+            })
+
     if created:
         # Log user creation
         log_security_event(
             user=instance,
             action='user_created',
-            description=f'User account created: {instance.username}',
+            description=f'User account created: {instance.username} (role: {instance.role})',
             metadata={
                 'user_id': instance.id,
                 'role': instance.role,
+                'organization_id': instance.organization_id,
                 'created_via': 'system'
             }
         )

@@ -4,7 +4,31 @@ User models with role-based access control
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
+from django.utils.text import slugify
 import pyotp
+
+
+class Organization(models.Model):
+    """
+    Organization/Tenant model for multi-tenancy
+    """
+    name = models.CharField(max_length=255, unique=True, help_text='Organization name')
+    slug = models.SlugField(max_length=255, unique=True, help_text='URL-friendly identifier')
+    is_active = models.BooleanField(default=True, help_text='Whether organization is active')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'organizations'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
 
 
 class User(AbstractUser):
@@ -48,7 +72,17 @@ class User(AbstractUser):
         help_text='Whether the temporary user has expired',
         db_index=True
     )
-    
+
+    # Organization
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.PROTECT,
+        related_name='users',
+        null=True,
+        blank=True,
+        help_text='Organization this user belongs to'
+    )
+
     # Two-Factor Authentication
     two_factor_enabled = models.BooleanField(default=False)
     totp_secret = models.CharField(max_length=32, blank=True)
@@ -205,8 +239,27 @@ class User(AbstractUser):
         """Get list of location IDs user can access"""
         if self.is_superuser or self.role == 'admin':
             from facilities.models import Location
-            return list(Location.objects.filter(is_active=True).values_list('id', flat=True))
+            queryset = Location.objects.filter(is_active=True)
+            if self.organization:
+                queryset = queryset.filter(organization=self.organization)
+            return list(queryset.values_list('id', flat=True))
         return list(self.user_locations.filter(location__is_active=True).values_list('location_id', flat=True))
+
+    def get_permissions(self):
+        """Get list of permission codes for this user"""
+        from permissions.models import Permission, RolePermission
+
+        # Superusers and admins get all permissions
+        if self.is_superuser or self.role == 'admin':
+            return list(Permission.objects.values_list('code', flat=True))
+
+        # Get permissions for user's role
+        role_permissions = RolePermission.objects.filter(
+            role=self.role,
+            is_granted=True
+        ).select_related('permission')
+
+        return [rp.permission.code for rp in role_permissions]
 
 
 class AuditLog(models.Model):
