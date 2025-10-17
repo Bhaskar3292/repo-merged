@@ -18,8 +18,8 @@ class CustomPasswordValidator:
         errors = []
         
         # Minimum length check (handled by MinimumLengthValidator)
-        if len(password) < 12:
-            errors.append(_("Password must be at least 12 characters long."))
+        if len(password) < 9:
+            errors.append(_("Password must be at least 9 characters long."))
         
         # Character variety requirements
         if not re.search(r'[A-Z]', password):
@@ -68,7 +68,7 @@ class CustomPasswordValidator:
     
     def get_help_text(self):
         return _(
-            "Your password must contain at least 12 characters including "
+            "Your password must contain at least 9 characters including "
             "uppercase and lowercase letters, numbers, and special characters. "
             "It cannot contain personal information or common patterns."
         )

@@ -13,7 +13,7 @@ class UserSerializer(serializers.ModelSerializer):
     """
     Serializer for User model
     """
-    password = serializers.CharField(write_only=True, min_length=12)
+    password = serializers.CharField(write_only=True, min_length=9)
     two_factor_enabled = serializers.BooleanField(read_only=True)
     is_account_locked = serializers.SerializerMethodField()
     is_superuser = serializers.BooleanField(read_only=True)
@@ -141,7 +141,7 @@ class PasswordChangeSerializer(serializers.Serializer):
     Serializer for password change
     """
     current_password = serializers.CharField()
-    new_password = serializers.CharField(min_length=12)
+    new_password = serializers.CharField(min_length=9)
     confirm_password = serializers.CharField()
     
     def validate_current_password(self, value):
@@ -202,7 +202,7 @@ class CreateUserSerializer(serializers.ModelSerializer):
     Serializer for creating new users (admin only)
     Supports temporary users and location assignment
     """
-    password = serializers.CharField(write_only=True, min_length=12)
+    password = serializers.CharField(write_only=True, min_length=9)
     user_type = serializers.ChoiceField(
         choices=['permanent', 'temporary'],
         default='permanent'

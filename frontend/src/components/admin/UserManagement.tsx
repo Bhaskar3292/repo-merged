@@ -87,8 +87,8 @@ export function UserManagement() {
         return;
       }
       
-      if (newUser.password.length < 12) {
-        setError('Password must be at least 12 characters long');
+      if (newUser.password.length < 9) {
+        setError('Password must be at least 9 characters long');
         return;
       }
       
@@ -412,7 +412,7 @@ export function UserManagement() {
                   </div>
                 )}
                 <div className="mt-1 text-xs text-gray-500">
-                  Must be 12+ characters with uppercase, lowercase, numbers, and symbols
+                  Must be 9+ characters with uppercase, lowercase, numbers, and symbols
                 </div>
               </div>
               

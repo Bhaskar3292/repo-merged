@@ -24,8 +24,8 @@ export function PasswordResetConfirm() {
       return;
     }
 
-    if (password.length < 12) {
-      setError('Password must be at least 12 characters long');
+    if (password.length < 9) {
+      setError('Password must be at least 9 characters long');
       return;
     }
 
@@ -140,8 +140,8 @@ export function PasswordResetConfirm() {
                 <div className="mt-1 text-xs text-gray-500">
                   <p>Password must contain:</p>
                   <ul className="list-disc list-inside mt-1 space-y-1">
-                    <li className={password.length >= 12 ? 'text-green-600' : 'text-red-600'}>
-                      At least 12 characters
+                    <li className={password.length >= 9 ? 'text-green-600' : 'text-red-600'}>
+                      At least 9 characters
                     </li>
                     <li className={/[A-Z]/.test(password) ? 'text-green-600' : 'text-red-600'}>
                       Uppercase letter

@@ -195,8 +195,8 @@ export function SecuritySettings() {
                   <div className="mt-2 text-xs text-gray-500">
                     <p>Password must contain:</p>
                     <ul className="list-disc list-inside mt-1 space-y-1">
-                      <li className={passwordData.new_password.length >= 12 ? 'text-green-600' : 'text-red-600'}>
-                        At least 12 characters
+                      <li className={passwordData.new_password.length >= 9 ? 'text-green-600' : 'text-red-600'}>
+                        At least 9 characters
                       </li>
                       <li className={/[A-Z]/.test(passwordData.new_password) ? 'text-green-600' : 'text-red-600'}>
                         Uppercase letter
@@ -274,7 +274,7 @@ export function SecuritySettings() {
             <div className="text-xs text-gray-500">
               <p>Password requirements:</p>
               <ul className="list-disc list-inside mt-1 space-y-1">
-                <li>Minimum 12 characters</li>
+                <li>Minimum 9 characters</li>
                 <li>Uppercase and lowercase letters</li>
                 <li>Numbers and special characters</li>
                 <li>No personal information</li>
