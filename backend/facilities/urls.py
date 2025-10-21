@@ -18,18 +18,12 @@ urlpatterns = [
     path('tanks/', views.TankListCreateView.as_view(), name='tank_list_create'),
     path('locations/<int:location_id>/tanks/', views.TankListCreateView.as_view(), name='location_tanks'),
     path('tanks/<int:pk>/', views.TankDetailView.as_view(), name='tank_detail'),
-    
-    # Permit URLs
-    path('permits/', views.PermitListCreateView.as_view(), name='permit_list_create'),
-    path('locations/<int:location_id>/permits/', views.PermitListCreateView.as_view(), name='location_permits'),
-    path('permits/<int:pk>/', views.PermitDetailView.as_view(), name='permit_detail'),
-    
+
     # Stats
     path('stats/', views.dashboard_stats, name='dashboard_stats'),
 
     # Count endpoints
     path('locations/<int:location_id>/tanks/count/', views.location_tank_count, name='location_tank_count'),
-    path('locations/<int:location_id>/permits/count/', views.location_permit_count, name='location_permit_count'),
 
     # Facility Profile
     path('locations/<int:location_id>/profile/', views.FacilityProfileView.as_view(), name='facility_profile'),

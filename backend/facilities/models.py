@@ -210,67 +210,6 @@ class Tank(models.Model):
         ordering = ['location', 'label']
 
 
-class Permit(models.Model):
-    """
-    Permit model for regulatory compliance
-    """
-    PERMIT_TYPES = [
-        ('operating', 'Operating Permit'),
-        ('environmental', 'Environmental Permit'),
-        ('safety', 'Safety Permit'),
-        ('construction', 'Construction Permit'),
-    ]
-    
-    STATUS_CHOICES = [
-        ('active', 'Active'),
-        ('pending', 'Pending'),
-        ('expired', 'Expired'),
-        ('suspended', 'Suspended'),
-    ]
-    
-    location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='permits')
-    permit_type = models.CharField(max_length=20, choices=PERMIT_TYPES)
-    permit_number = models.CharField(max_length=100)
-    issuing_authority = models.CharField(max_length=200)
-    issue_date = models.DateField()
-    expiry_date = models.DateField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
-    
-    description = models.TextField(blank=True)
-    renewal_required = models.BooleanField(default=True)
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        unique_together = ['location', 'permit_number']
-        ordering = ['location', 'expiry_date']
-    
-    def __str__(self):
-        return f"{self.location.name} - {self.permit_number}"
-    
-    @property
-    def is_expiring_soon(self):
-        return self.expiry_date <= date.today() + timedelta(days=30)
-
-    @property
-    def is_expired(self):
-        return self.expiry_date < date.today()
-
-    @property
-    def calculated_status(self):
-        """
-        Calculate permit status based on expiry date
-        Returns: 'expired', 'expiring_soon', or 'active'
-        """
-        today = date.today()
-        if self.expiry_date < today:
-            return 'expired'
-        elif self.expiry_date <= today + timedelta(days=30):
-            return 'expiring_soon'
-        else:
-            return 'active'
-
 class CommanderInfo(models.Model):
     """
     Commander Information for fuel management systems

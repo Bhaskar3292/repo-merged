@@ -2,7 +2,7 @@
 Admin configuration for facilities app
 """
 from django.contrib import admin
-from .models import Location, LocationDashboard, DashboardSection, DashboardSectionData, Tank, Permit, FacilityProfile, CommanderInfo
+from .models import Location, LocationDashboard, DashboardSection, DashboardSectionData, Tank, FacilityProfile, CommanderInfo
 
 
 @admin.register(FacilityProfile)
@@ -44,14 +44,6 @@ class TankAdmin(admin.ModelAdmin):
     list_display = ['label', 'location', 'product', 'status', 'size', 'tank_material']
     list_filter = ['status', 'location', 'tank_lined']
     search_fields = ['label', 'product', 'location__name', 'tank_material']
-    readonly_fields = ['created_at', 'updated_at']
-
-
-@admin.register(Permit)
-class PermitAdmin(admin.ModelAdmin):
-    list_display = ['permit_number', 'location', 'permit_type', 'status', 'expiry_date']
-    list_filter = ['permit_type', 'status', 'expiry_date']
-    search_fields = ['permit_number', 'location__name', 'issuing_authority']
     readonly_fields = ['created_at', 'updated_at']
 
 

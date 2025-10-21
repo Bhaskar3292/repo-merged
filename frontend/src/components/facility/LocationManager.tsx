@@ -14,7 +14,6 @@ interface Location {
   created_at: string;
   is_active: boolean;
   tank_count?: number;
-  permit_count?: number;
 }
 
 interface LocationManagerProps {

@@ -14,12 +14,12 @@ from permissions.decorators import require_permission, require_any_permission
 from permissions.models import check_user_permission
 from .models import (
     Location, LocationDashboard, DashboardSection,
-    DashboardSectionData, Tank, Permit, FacilityProfile, CommanderInfo
+    DashboardSectionData, Tank, FacilityProfile, CommanderInfo
 )
 from .serializers import (
     LocationSerializer, LocationDetailSerializer, LocationDashboardSerializer,
     DashboardSectionSerializer, DashboardSectionDataSerializer,
-    TankSerializer, PermitSerializer, FacilityProfileSerializer,
+    TankSerializer, FacilityProfileSerializer,
     ProfileGeneralInfoSerializer, ProfileOperationalInfoSerializer,
     ProfileContactsSerializer, ProfileOperationHoursSerializer,
     CommanderInfoSerializer
@@ -62,8 +62,7 @@ class LocationListCreateView(generics.ListCreateAPIView):
             queryset = queryset.filter(id__in=accessible_ids)
 
         queryset = queryset.annotate(
-            tank_count=Count('tanks', distinct=True),
-            permit_count=Count('permits', distinct=True)
+            tank_count=Count('tanks', distinct=True)
         ).order_by('name')
 
         return queryset
@@ -295,75 +294,6 @@ class TankDetailView(generics.RetrieveUpdateDestroyAPIView):
         return super().delete(request, *args, **kwargs)
 
 
-class PermitListCreateView(generics.ListCreateAPIView):
-    """
-    List permits for a location or create a new permit
-    """
-    serializer_class = PermitSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def get(self, request, *args, **kwargs):
-        # Any authenticated user can view permits
-        return super().get(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        # Check role manually for creation
-        user = request.user
-        if not (user.is_superuser or user.role in ['admin', 'contributor']):
-            return Response(
-                {'error': 'Only admins and contributors can create permits'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        return super().post(request, *args, **kwargs)
-    
-    def get_queryset(self):
-        location_id = self.kwargs.get('location_id')
-        if location_id:
-            return Permit.objects.filter(location_id=location_id)
-        return Permit.objects.all()
-    
-    def perform_create(self, serializer):
-        location_id = self.kwargs.get('location_id')
-        if location_id:
-            location = get_object_or_404(Location, id=location_id, is_active=True)
-            serializer.save(location=location)
-        else:
-            serializer.save()
-
-
-class PermitDetailView(generics.RetrieveUpdateDestroyAPIView):
-    """
-    Retrieve, update or delete a permit
-    """
-    serializer_class = PermitSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    queryset = Permit.objects.all()
-    
-    def get(self, request, *args, **kwargs):
-        # Any authenticated user can view permits
-        return super().get(request, *args, **kwargs)
-
-    def patch(self, request, *args, **kwargs):
-        # Check role manually for editing
-        user = request.user
-        if not (user.is_superuser or user.role in ['admin', 'contributor']):
-            return Response(
-                {'error': 'Only admins and contributors can edit permits'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        return super().patch(request, *args, **kwargs)
-
-    def delete(self, request, *args, **kwargs):
-        # Check role manually for deletion
-        user = request.user
-        if not (user.is_superuser or user.role == 'admin'):
-            return Response(
-                {'error': 'Only admins can delete permits'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        return super().delete(request, *args, **kwargs)
-
-
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def dashboard_stats(request):
@@ -375,10 +305,6 @@ def dashboard_stats(request):
         'total_locations': Location.objects.filter(is_active=True).count(),
         'total_tanks': Tank.objects.count(),
         'active_tanks': Tank.objects.filter(status='active').count(),
-        'total_permits': Permit.objects.count(),
-        'expiring_permits': Permit.objects.filter(
-            expiry_date__lte=timezone.now().date() + timezone.timedelta(days=30)
-        ).count(),
     }
 
     return Response(stats)
@@ -397,21 +323,6 @@ def location_tank_count(request, location_id):
     except Exception as e:
         logger.error(f"Error fetching tank count for location {location_id}: {str(e)}")
         return Response({'error': 'Failed to fetch tank count'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-@api_view(['GET'])
-@permission_classes([permissions.IsAuthenticated])
-def location_permit_count(request, location_id):
-    """
-    Get permit count for a specific location
-    """
-    try:
-        location = get_object_or_404(Location, id=location_id, is_active=True)
-        count = Permit.objects.filter(location=location).count()
-        return Response({'count': count})
-    except Exception as e:
-        logger.error(f"Error fetching permit count for location {location_id}: {str(e)}")
-        return Response({'error': 'Failed to fetch permit count'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class FacilityProfileView(generics.RetrieveUpdateAPIView):

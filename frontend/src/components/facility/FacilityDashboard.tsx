@@ -10,8 +10,7 @@ interface FacilityDashboardProps {
 export function FacilityDashboard({ selectedFacility, onViewChange }: FacilityDashboardProps) {
   const [stats, setStats] = useState({
     activeTanks: 0,
-    tankTestingIssues: 0,
-    permitsDue: 0
+    tankTestingIssues: 0
   });
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -23,8 +22,7 @@ export function FacilityDashboard({ selectedFacility, onViewChange }: FacilityDa
       // Reset stats when no facility is selected
       setStats({
         activeTanks: 0,
-        tankTestingIssues: 0,
-        permitsDue: 0
+        tankTestingIssues: 0
       });
       setLastUpdated(null);
     }
@@ -46,15 +44,6 @@ export function FacilityDashboard({ selectedFacility, onViewChange }: FacilityDa
         return status === 'active' || status === 'operational';
       }).length;
 
-      // Fetch permits for this location
-      const permitsResponse = await apiService.getPermitsByLocation(selectedFacility.id);
-      const permits = permitsResponse.results || [];
-
-      // Count permits with "expiring_soon" status (backend calculates this as within 30 days)
-      const permitsDue = permits.filter((permit: any) =>
-        permit.calculated_status === 'expiring_soon'
-      ).length;
-
       // Tank Testing Issues: Currently no tank testing data system exists
       // The Tank Testing page shows placeholder UI with no real data
       // Count remains 0 until a tank testing system is implemented
@@ -62,8 +51,7 @@ export function FacilityDashboard({ selectedFacility, onViewChange }: FacilityDa
 
       setStats({
         activeTanks,
-        tankTestingIssues,
-        permitsDue
+        tankTestingIssues
       });
       setLastUpdated(new Date());
     } catch (error) {
@@ -97,13 +85,6 @@ export function FacilityDashboard({ selectedFacility, onViewChange }: FacilityDa
       icon: AlertTriangle,
       color: 'red',
       onClick: () => handleCardClick('releases')
-    },
-    {
-      title: 'Permits Due',
-      value: loading ? '...' : stats.permitsDue.toString(),
-      icon: FileText,
-      color: 'yellow',
-      onClick: () => handleCardClick('permits')
     }
   ];
 
@@ -147,7 +128,7 @@ export function FacilityDashboard({ selectedFacility, onViewChange }: FacilityDa
       )}
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {metricCards.map((card, index) => {
           const Icon = card.icon;
           const colorClasses = {
@@ -186,7 +167,7 @@ export function FacilityDashboard({ selectedFacility, onViewChange }: FacilityDa
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
         </div>
-        <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-3">
           <button
             onClick={() => handleCardClick('locations')}
             className="text-left p-4 rounded-lg hover:bg-gray-50 transition-colors border border-gray-200"
@@ -203,15 +184,6 @@ export function FacilityDashboard({ selectedFacility, onViewChange }: FacilityDa
             <div className="flex items-center space-x-3">
               <Zap className="h-5 w-5 text-green-600" />
               <span className="text-sm font-medium">Add Tank</span>
-            </div>
-          </button>
-          <button
-            onClick={() => handleCardClick('permits')}
-            className="text-left p-4 rounded-lg hover:bg-gray-50 transition-colors border border-gray-200"
-          >
-            <div className="flex items-center space-x-3">
-              <FileText className="h-5 w-5 text-purple-600" />
-              <span className="text-sm font-medium">Add Permit</span>
             </div>
           </button>
         </div>

@@ -4,7 +4,6 @@ import { LocationsPage } from '../../pages/LocationsPage';
 import { LocationManager } from '../facility/LocationManager';
 import { TankManagement } from '../facility/TankManagement';
 import { ReleaseDetection } from '../facility/ReleaseDetection';
-import { PermitsLicenses } from '../facility/PermitsLicenses';
 import { SettingsPanel } from '../settings/SettingsPanel';
 import { ProfilePanel } from '../settings/ProfilePanel';
 import { FacilityProfile } from '../facility/FacilityProfile';
@@ -32,8 +31,6 @@ export function MainContent({ activeView, selectedFacility, refreshKey, onViewCh
         return <CommanderInfo selectedFacility={selectedFacility} />;
       case 'releases':
         return <ReleaseDetection selectedFacility={selectedFacility} />;
-      case 'permits':
-        return <PermitsLicenses selectedFacility={selectedFacility} />;
       case 'settings':
         return <SettingsPanel />;
       case 'profile':
