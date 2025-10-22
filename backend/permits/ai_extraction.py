@@ -11,6 +11,7 @@ from io import BytesIO
 from PIL import Image
 import PyPDF2
 from openai import OpenAI
+import pdf2image
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -114,12 +115,14 @@ EXAMPLE OUTPUT:
                     try:
                         from pdf2image import convert_from_bytes
                         import pytesseract
-
+                        pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+                        poppler_path = r'C:\Program Files\poppler-25.07.0\Library\bin'
                         images = convert_from_bytes(
                             pdf_bytes,
                             first_page=1,
                             last_page=min(3, len(pdf_reader.pages)),
-                            dpi=300
+                            dpi=300,
+                            poppler_path=poppler_path
                         )
 
                         ocr_text = ""
