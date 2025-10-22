@@ -1,12 +1,15 @@
 """
 AI-powered document extraction for permits using OpenAI API
+AI-powered document extraction for permits using OpenAI Vision API
 """
 import base64
 import json
 import logging
 from io import BytesIO
 from PIL import Image
+
 import PyPDF2  # Added PyPDF2 import
+
 import openai
 from django.conf import settings
 
@@ -62,13 +65,16 @@ Example JSON Response:
             uploaded_file: Django UploadedFile object
 
         Returns:
+
             str or dict: Base64 encoded image string for images, or text dictionary for PDFs
+
         """
         try:
             file_extension = uploaded_file.name.lower().split('.')[-1]
 
             if file_extension == 'pdf':
                 logger.info(f"Processing PDF file: {uploaded_file.name}")
+
 
                 # Read PDF and extract text using PyPDF2
                 pdf_bytes = uploaded_file.read()
@@ -89,11 +95,11 @@ Example JSON Response:
                     "text": text_content,
                     "page_count": len(pdf_reader.pages)
                 }
-
             elif file_extension in ['jpg', 'jpeg', 'png']:
                 logger.info(f"Processing image file: {uploaded_file.name}")
 
                 # Keep existing image processing logic
+
                 image = Image.open(uploaded_file)
 
                 if image.mode == 'RGBA':
@@ -183,7 +189,9 @@ Example JSON Response:
             content = response.choices[0].message.content.strip()
             logger.info(f"Received response from OpenAI: {content}")
 
+
             # Clean JSON response
+
             if content.startswith('```json'):
                 content = content[7:]
             if content.startswith('```'):
@@ -210,14 +218,17 @@ Example JSON Response:
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse JSON from AI response: {str(e)}")
             raise ValueError(f"Invalid JSON response from AI: {str(e)}")
+
         except Exception as e:
             logger.error(f"Error calling OpenAI API: {str(e)}")
             raise
 
     def extract_from_file(self, uploaded_file):
         """
+
         Complete extraction pipeline supporting both PDFs and images
         
+
         Args:
             uploaded_file: Django UploadedFile object
 
