@@ -133,12 +133,13 @@ export function UploadModal({ isOpen, onClose, onUpload, title, subtitle }: Uplo
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50"
+              className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all p-2 rounded-full w-10 h-10 flex items-center justify-center font-bold text-2xl leading-none disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isUploading}
               aria-label="Close modal"
               title={isUploading ? "Cannot close while uploading" : "Close (ESC)"}
+              style={{ marginTop: '-4px' }}
             >
-              <i className="fas fa-times text-xl"></i>
+              <span className="block" style={{ lineHeight: '1' }}>×</span>
             </button>
           </div>
         </div>
