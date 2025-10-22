@@ -52,7 +52,7 @@ Example JSON Response:
         if not self.api_key:
             raise ValueError("OpenAI API key not configured. Set OPENAI_API_KEY in settings.")
 
-        openai.api_key = self.api_key
+        self.client = openai.OpenAI(api_key=self.api_key)
 
     def file_to_base64_image(self, uploaded_file):
         """
@@ -128,12 +128,6 @@ Example JSON Response:
     def extract_data_with_ai(self, input_data):
         """
         Extract permit data from base64 image or PDF text using OpenAI
-        
-        Args:
-            input_data: Can be base64 image string or dictionary with text data
-
-        Returns:
-            dict: Extracted permit data
         """
         try:
             logger.info("Calling OpenAI API for data extraction")
@@ -144,9 +138,10 @@ Example JSON Response:
                 text_content = input_data.get("text", "")
                 
                 # Modify prompt for text extraction
-                text_prompt = self.EXTRACTION_PROMPT + "\n\nExtract information from the following document text:\n" + text_content[:4000]  # Limit text length
+                text_prompt = self.EXTRACTION_PROMPT + "\n\nExtract information from the following document text:\n" + text_content[:4000]
                 
-                response = openai.ChatCompletion.create(
+                # New OpenAI 1.0+ syntax for chat completions
+                response = self.client.chat.completions.create(
                     model="gpt-4",  # Use regular GPT-4 for text
                     messages=[
                         {
@@ -159,10 +154,10 @@ Example JSON Response:
                 )
                 
             else:
-                # Use vision API for images (existing logic)
+                # Use vision API for images with new syntax
                 base64_image = input_data
                 
-                response = openai.ChatCompletion.create(
+                response = self.client.chat.completions.create(
                     model="gpt-4-vision-preview",
                     messages=[
                         {
@@ -186,12 +181,11 @@ Example JSON Response:
                     temperature=0.0
                 )
 
+            # New response access syntax
             content = response.choices[0].message.content.strip()
             logger.info(f"Received response from OpenAI: {content}")
 
-
             # Clean JSON response
-
             if content.startswith('```json'):
                 content = content[7:]
             if content.startswith('```'):
@@ -218,7 +212,6 @@ Example JSON Response:
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse JSON from AI response: {str(e)}")
             raise ValueError(f"Invalid JSON response from AI: {str(e)}")
-
         except Exception as e:
             logger.error(f"Error calling OpenAI API: {str(e)}")
             raise
