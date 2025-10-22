@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Permits & Licenses Dashboard</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-6">
+    <div class="max-w-7xl mx-auto">
+
+        <!-- Main Header -->
+        <div class="flex items-center justify-between mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Permits & Licenses</h1>
+            <button
+                onclick="openUploadModal()"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-md flex items-center gap-2">
+                <i class="fas fa-plus"></i>
+                <span>Add New Permit</span>
+            </button>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Permits -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium">Total Permits</p>
+                        <p id="totalCount" class="text-3xl font-bold text-gray-800 mt-2">0</p>
+                    </div>
+                    <div class="bg-blue-100 p-4 rounded-lg">
+                        <i class="fas fa-file-alt text-blue-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Permits -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium">Active</p>
+                        <p id="activeCount" class="text-3xl font-bold text-green-600 mt-2">0</p>
+                    </div>
+                    <div class="bg-green-100 p-4 rounded-lg">
+                        <i class="fas fa-check-circle text-green-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expiring Soon -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium">Expiring Soon</p>
+                        <p id="expiringCount" class="text-3xl font-bold text-yellow-600 mt-2">0</p>
+                    </div>
+                    <div class="bg-yellow-100 p-4 rounded-lg">
+                        <i class="fas fa-exclamation-triangle text-yellow-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expired -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium">Expired</p>
+                        <p id="expiredCount" class="text-3xl font-bold text-red-600 mt-2">0</p>
+                    </div>
+                    <div class="bg-red-100 p-4 rounded-lg">
+                        <i class="fas fa-times-circle text-red-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="bg-white rounded-lg shadow-md mb-6">
+            <nav class="flex border-b border-gray-200">
+                <button
+                    onclick="setFilter('all')"
+                    id="filter-all"
+                    class="filter-tab px-6 py-4 text-sm font-medium text-blue-600 border-b-2 border-blue-600">
+                    All Permits
+                </button>
+                <button
+                    onclick="setFilter('active')"
+                    id="filter-active"
+                    class="filter-tab px-6 py-4 text-sm font-medium text-gray-600 hover:text-gray-800 border-b-2 border-transparent">
+                    Active
+                </button>
+                <button
+                    onclick="setFilter('expiring')"
+                    id="filter-expiring"
+                    class="filter-tab px-6 py-4 text-sm font-medium text-gray-600 hover:text-gray-800 border-b-2 border-transparent">
+                    Expiring Soon
+                </button>
+                <button
+                    onclick="setFilter('expired')"
+                    id="filter-expired"
+                    class="filter-tab px-6 py-4 text-sm font-medium text-gray-600 hover:text-gray-800 border-b-2 border-transparent">
+                    Expired
+                </button>
+            </nav>
+        </div>
+
+        <!-- Permit List Container -->
+        <div id="permitList" class="space-y-4">
+            <!-- Permit cards will be dynamically rendered here -->
+            <div class="text-center py-12 text-gray-500">
+                <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
+                <p>Loading permits...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Upload Modal -->
+    <div id="uploadModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h2 id="modalTitle" class="text-xl font-bold text-gray-800">Upload New Permit</h2>
+                    <button onclick="closeUploadModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <p id="modalSubtitle" class="text-sm text-gray-600 mt-1"></p>
+            </div>
+
+            <div class="p-6">
+                <!-- File Dropzone -->
+                <div id="dropzone" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors cursor-pointer">
+                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
+                    <p class="text-gray-700 font-medium mb-1">Drop file here or click to upload</p>
+                    <p class="text-sm text-gray-500">Supported formats: PDF, JPG, PNG (Max 10MB)</p>
+                    <input type="file" id="fileInput" class="hidden" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFileSelect(event)">
+                </div>
+
+                <!-- Selected File Display -->
+                <div id="selectedFile" class="hidden mt-4 p-4 bg-gray-50 rounded-lg">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-file text-blue-600 text-xl"></i>
+                            <div>
+                                <p id="fileName" class="text-sm font-medium text-gray-800"></p>
+                                <p id="fileSize" class="text-xs text-gray-500"></p>
+                            </div>
+                        </div>
+                        <button onclick="clearFile()" class="text-red-500 hover:text-red-700">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Upload Progress -->
+                <div id="uploadProgress" class="hidden mt-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm text-gray-600">Uploading...</span>
+                        <span id="progressPercent" class="text-sm font-medium text-blue-600">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex gap-3 mt-6">
+                    <button
+                        onclick="closeUploadModal()"
+                        class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button
+                        id="uploadBtn"
+                        onclick="uploadFile()"
+                        class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled>
+                        Upload
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="historyModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-bold text-gray-800">Permit History</h2>
+                    <button onclick="closeHistoryModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <p id="historyPermitName" class="text-sm text-gray-600 mt-1"></p>
+            </div>
+
+            <div id="historyContent" class="p-6 overflow-y-auto flex-1">
+                <!-- History items will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        const API_BASE_URL = '/api/permits';
+
+        // ============================================
+        // STATE MANAGEMENT
+        // ============================================
+        let allPermits = [];
+        let currentFilter = 'all';
+        let currentUploadContext = null;
+
+        // ============================================
+        // API COMMUNICATION
+        // ============================================
+
+        /**
+         * Fetch all permits from the backend
+         */
+        async function fetchPermits() {
+            try {
+                const response = await fetch(API_BASE_URL);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                allPermits = data;
+
+                updateCounts();
+                renderPermits();
+            } catch (error) {
+                console.error('Error fetching permits:', error);
+                showError('Failed to load permits. Please try again later.');
+            }
+        }
+
+        /**
+         * Upload a new permit file
+         */
+        async function uploadPermitFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                console.error('Error uploading permit:', error);
+                throw error;
+            }
+        }
+
+        /**
+         * Renew an existing permit
+         */
+        async function renewPermit(permitId, file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/${permitId}/renew`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                console.error('Error renewing permit:', error);
+                throw error;
+            }
+        }
+
+        /**
+         * Fetch permit history
+         */
+        async function fetchPermitHistory(permitId) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/${permitId}/history`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const history = await response.json();
+                return history;
+            } catch (error) {
+                console.error('Error fetching permit history:', error);
+                throw error;
+            }
+        }
+
+        // ============================================
+        // BUSINESS LOGIC
+        // ============================================
+
+        /**
+         * Calculate permit status based on expiry date
+         */
+        function calculateStatus(permit) {
+            if (!permit.isActive || permit.status === 'superseded') {
+                return 'superseded';
+            }
+
+            const today = new Date();
+            const expiryDate = new Date(permit.expiryDate);
+            const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+
+            if (daysUntilExpiry < 0) {
+                return 'expired';
+            } else if (daysUntilExpiry <= 30) {
+                return 'expiring';
+            } else {
+                return 'active';
+            }
+        }
+
+        /**
+         * Get status badge styling
+         */
+        function getStatusBadge(status) {
+            const badges = {
+                active: { text: 'Active', class: 'bg-green-100 text-green-800' },
+                expiring: { text: 'Expiring Soon', class: 'bg-yellow-100 text-yellow-800' },
+                expired: { text: 'Expired', class: 'bg-red-100 text-red-800' },
+                superseded: { text: 'Superseded', class: 'bg-gray-100 text-gray-800' }
+            };
+
+            const badge = badges[status] || badges.active;
+            return `<span class="inline-block px-3 py-1 text-xs font-semibold rounded-full ${badge.class}">${badge.text}</span>`;
+        }
+
+        /**
+         * Get border color based on status
+         */
+        function getBorderColor(status) {
+            const colors = {
+                active: 'border-green-500',
+                expiring: 'border-yellow-500',
+                expired: 'border-red-500',
+                superseded: 'border-gray-400'
+            };
+            return colors[status] || colors.active;
+        }
+
+        /**
+         * Format date for display
+         */
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        /**
+         * Update summary counts
+         */
+        function updateCounts() {
+            const counts = {
+                total: allPermits.length,
+                active: 0,
+                expiring: 0,
+                expired: 0
+            };
+
+            allPermits.forEach(permit => {
+                const status = calculateStatus(permit);
+                if (status === 'active') counts.active++;
+                else if (status === 'expiring') counts.expiring++;
+                else if (status === 'expired') counts.expired++;
+            });
+
+            document.getElementById('totalCount').textContent = counts.total;
+            document.getElementById('activeCount').textContent = counts.active;
+            document.getElementById('expiringCount').textContent = counts.expiring;
+            document.getElementById('expiredCount').textContent = counts.expired;
+        }
+
+        // ============================================
+        // UI RENDERING
+        // ============================================
+
+        /**
+         * Render permit cards
+         */
+        function renderPermits() {
+            const permitList = document.getElementById('permitList');
+
+            // Filter permits based on current filter
+            let filteredPermits = allPermits;
+            if (currentFilter !== 'all') {
+                filteredPermits = allPermits.filter(permit => {
+                    const status = calculateStatus(permit);
+                    return status === currentFilter;
+                });
+            }
+
+            // Clear existing content
+            permitList.innerHTML = '';
+
+            // Show empty state if no permits
+            if (filteredPermits.length === 0) {
+                permitList.innerHTML = `
+                    <div class="text-center py-12">
+                        <i class="fas fa-folder-open text-gray-300 text-5xl mb-4"></i>
+                        <p class="text-gray-500 text-lg">No permits found</p>
+                        <p class="text-gray-400 text-sm mt-1">Try adjusting your filters or add a new permit</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Render each permit card
+            filteredPermits.forEach(permit => {
+                const status = calculateStatus(permit);
+                const card = createPermitCard(permit, status);
+                permitList.appendChild(card);
+            });
+        }
+
+        /**
+         * Create a permit card element
+         */
+        function createPermitCard(permit, status) {
+            const card = document.createElement('div');
+            card.className = `bg-white rounded-lg shadow-md border-l-4 ${getBorderColor(status)} p-6`;
+
+            card.innerHTML = `
+                <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                    <!-- Left Side: Permit Info -->
+                    <div class="flex-1">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-800 uppercase">${permit.name}</h3>
+                                <div class="mt-2">${getStatusBadge(status)}</div>
+                            </div>
+                        </div>
+
+                        <!-- Details Grid -->
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                            <div>
+                                <p class="text-xs text-gray-500 font-medium uppercase">License Number</p>
+                                <p class="text-sm text-gray-800 font-semibold mt-1">${permit.licenseNumber}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 font-medium uppercase">Issue Date</p>
+                                <p class="text-sm text-gray-800 font-semibold mt-1">${formatDate(permit.issueDate)}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 font-medium uppercase">Expiry Date</p>
+                                <p class="text-sm text-gray-800 font-semibold mt-1">${formatDate(permit.expiryDate)}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 font-medium uppercase">Issued By</p>
+                                <p class="text-sm text-gray-800 font-semibold mt-1">${permit.issuedBy}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Side: Action Buttons -->
+                    <div class="flex flex-row md:flex-col gap-2 justify-end">
+                        ${permit.documentUrl ? `
+                            <button
+                                onclick="downloadPermit('${permit.documentUrl}')"
+                                class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                title="Download">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        ` : ''}
+
+                        <button
+                            onclick="viewHistory(${permit.id}, '${permit.name}')"
+                            class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors whitespace-nowrap">
+                            View History
+                        </button>
+
+                        ${permit.renewalUrl && (status === 'expiring' || status === 'expired') ? `
+                            <a
+                                href="${permit.renewalUrl}"
+                                target="_blank"
+                                class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center whitespace-nowrap">
+                                Renew Online
+                            </a>
+                        ` : ''}
+
+                        ${(status === 'expiring' || status === 'expired') ? `
+                            <button
+                                onclick="openRenewalModal(${permit.id}, '${permit.name}')"
+                                class="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap">
+                                Upload Renewal
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // ============================================
+        // EVENT HANDLERS
+        // ============================================
+
+        /**
+         * Set filter and update UI
+         */
+        function setFilter(filter) {
+            currentFilter = filter;
+
+            // Update tab styling
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.classList.remove('text-blue-600', 'border-blue-600', 'font-bold');
+                tab.classList.add('text-gray-600', 'border-transparent');
+            });
+
+            const activeTab = document.getElementById(`filter-${filter}`);
+            activeTab.classList.remove('text-gray-600', 'border-transparent');
+            activeTab.classList.add('text-blue-600', 'border-blue-600', 'font-bold');
+
+            renderPermits();
+        }
+
+        /**
+         * Open upload modal for new permit
+         */
+        function openUploadModal() {
+            currentUploadContext = { type: 'new' };
+            document.getElementById('modalTitle').textContent = 'Upload New Permit';
+            document.getElementById('modalSubtitle').textContent = 'Upload a permit document for AI extraction';
+            document.getElementById('uploadModal').classList.remove('hidden');
+        }
+
+        /**
+         * Open upload modal for renewal
+         */
+        function openRenewalModal(permitId, permitName) {
+            currentUploadContext = { type: 'renewal', permitId, permitName };
+            document.getElementById('modalTitle').textContent = 'Upload Renewal Document';
+            document.getElementById('modalSubtitle').textContent = `Renewing: ${permitName}`;
+            document.getElementById('uploadModal').classList.remove('hidden');
+        }
+
+        /**
+         * Close upload modal
+         */
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.add('hidden');
+            clearFile();
+            currentUploadContext = null;
+        }
+
+        /**
+         * Handle file selection
+         */
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file size (10MB max)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size must be less than 10MB');
+                return;
+            }
+
+            // Display selected file
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = formatFileSize(file.size);
+            document.getElementById('selectedFile').classList.remove('hidden');
+            document.getElementById('uploadBtn').disabled = false;
+        }
+
+        /**
+         * Clear selected file
+         */
+        function clearFile() {
+            document.getElementById('fileInput').value = '';
+            document.getElementById('selectedFile').classList.add('hidden');
+            document.getElementById('uploadBtn').disabled = true;
+            document.getElementById('uploadProgress').classList.add('hidden');
+        }
+
+        /**
+         * Upload file to backend
+         */
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (!file) return;
+
+            // Show progress
+            document.getElementById('uploadProgress').classList.remove('hidden');
+            document.getElementById('uploadBtn').disabled = true;
+
+            // Simulate progress (replace with actual progress tracking if backend supports it)
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 10;
+                if (progress <= 90) {
+                    updateProgress(progress);
+                }
+            }, 200);
+
+            try {
+                let result;
+
+                if (currentUploadContext.type === 'new') {
+                    result = await uploadPermitFile(file);
+                } else if (currentUploadContext.type === 'renewal') {
+                    result = await renewPermit(currentUploadContext.permitId, file);
+                }
+
+                clearInterval(progressInterval);
+                updateProgress(100);
+
+                // Wait a moment to show 100%
+                setTimeout(async () => {
+                    closeUploadModal();
+                    await fetchPermits(); // Refresh the permit list
+                    showSuccess('Permit uploaded successfully!');
+                }, 500);
+
+            } catch (error) {
+                clearInterval(progressInterval);
+                document.getElementById('uploadProgress').classList.add('hidden');
+                document.getElementById('uploadBtn').disabled = false;
+                showError('Upload failed. Please try again.');
+            }
+        }
+
+        /**
+         * Update progress bar
+         */
+        function updateProgress(percent) {
+            document.getElementById('progressBar').style.width = percent + '%';
+            document.getElementById('progressPercent').textContent = percent + '%';
+        }
+
+        /**
+         * Download permit document
+         */
+        function downloadPermit(documentUrl) {
+            window.open(documentUrl, '_blank');
+        }
+
+        /**
+         * View permit history
+         */
+        async function viewHistory(permitId, permitName) {
+            document.getElementById('historyPermitName').textContent = permitName;
+            document.getElementById('historyModal').classList.remove('hidden');
+
+            const historyContent = document.getElementById('historyContent');
+            historyContent.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-spinner fa-spin text-3xl text-gray-400 mb-3"></i>
+                    <p class="text-gray-500">Loading history...</p>
+                </div>
+            `;
+
+            try {
+                const history = await fetchPermitHistory(permitId);
+                renderHistory(history);
+            } catch (error) {
+                historyContent.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-exclamation-circle text-3xl text-red-400 mb-3"></i>
+                        <p class="text-red-600">Failed to load history</p>
+                    </div>
+                `;
+            }
+        }
+
+        /**
+         * Close history modal
+         */
+        function closeHistoryModal() {
+            document.getElementById('historyModal').classList.add('hidden');
+        }
+
+        /**
+         * Render permit history
+         */
+        function renderHistory(history) {
+            const historyContent = document.getElementById('historyContent');
+
+            if (!history || history.length === 0) {
+                historyContent.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-history text-3xl text-gray-300 mb-3"></i>
+                        <p class="text-gray-500">No history available</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const historyHTML = history.map((item, index) => `
+                <div class="relative ${index !== history.length - 1 ? 'pb-8' : ''}">
+                    ${index !== history.length - 1 ? '<div class="absolute top-8 left-4 -ml-px h-full w-0.5 bg-gray-200"></div>' : ''}
+                    <div class="relative flex items-start space-x-3">
+                        <div class="relative">
+                            <div class="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-file-alt text-blue-600 text-sm"></i>
+                            </div>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">${item.action}</p>
+                                <p class="text-xs text-gray-500 mt-0.5">${formatDate(item.date)} by ${item.user}</p>
+                            </div>
+                            ${item.notes ? `<p class="text-sm text-gray-600 mt-2">${item.notes}</p>` : ''}
+                            ${item.documentUrl ? `
+                                <a href="${item.documentUrl}" target="_blank" class="text-sm text-blue-600 hover:text-blue-800 mt-2 inline-block">
+                                    <i class="fas fa-download mr-1"></i> View Document
+                                </a>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            historyContent.innerHTML = historyHTML;
+        }
+
+        // ============================================
+        // HELPER FUNCTIONS
+        // ============================================
+
+        /**
+         * Format file size for display
+         */
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        /**
+         * Show success message
+         */
+        function showSuccess(message) {
+            // You can implement a toast notification here
+            alert(message);
+        }
+
+        /**
+         * Show error message
+         */
+        function showError(message) {
+            // You can implement a toast notification here
+            alert(message);
+        }
+
+        // ============================================
+        // DROPZONE FUNCTIONALITY
+        // ============================================
+
+        // Make dropzone clickable
+        document.getElementById('dropzone').addEventListener('click', () => {
+            document.getElementById('fileInput').click();
+        });
+
+        // Drag and drop handlers
+        const dropzone = document.getElementById('dropzone');
+
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('border-blue-500', 'bg-blue-50');
+        });
+
+        dropzone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('border-blue-500', 'bg-blue-50');
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('border-blue-500', 'bg-blue-50');
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('fileInput').files = files;
+                handleFileSelect({ target: { files } });
+            }
+        });
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+
+        // Load permits on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchPermits();
+        });
+    </script>
+</body>
+</html>
