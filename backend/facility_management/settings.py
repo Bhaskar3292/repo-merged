@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'facilities',
     'permissions',
     'security',
+    'permits',
 ]
 SITE_ID=1
 

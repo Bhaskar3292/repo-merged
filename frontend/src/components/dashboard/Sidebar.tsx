@@ -19,6 +19,7 @@ export function Sidebar({ collapsed, activeView, onViewChange, onToggleSidebar }
     { id: 'tanks', label: 'Tank Management', icon: Zap, permission: 'view_tank_management' },
     { id: 'commanders', label: 'Commander Info', icon: Server, permission: 'view_tank_management' },
     { id: 'releases', label: 'Tank Testing', icon: Shield, permission: 'view_release_detection' },
+    { id: 'permits', label: 'Permits & Licenses', icon: FileText, permission: 'view_permits' },
     { id: 'settings', label: 'Settings', icon: Settings, permission: 'view_settings' },
   ];
 
