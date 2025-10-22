@@ -6,10 +6,9 @@ interface PermitCardProps {
   permit: Permit;
   onRenew: (permitId: number, permitName: string) => void;
   onViewFiles: (permitId: number, permitName: string, documentUrl: string | null) => void;
-  onViewHistory: (permitId: number, permitName: string) => void;
 }
 
-export function PermitCard({ permit, onRenew, onViewFiles, onViewHistory }: PermitCardProps) {
+export function PermitCard({ permit, onRenew, onViewFiles }: PermitCardProps) {
   const status = calculateStatus(permit);
   const statusBadge = getStatusBadge(status);
   const borderColor = getBorderColor(status);
@@ -64,17 +63,7 @@ export function PermitCard({ permit, onRenew, onViewFiles, onViewHistory }: Perm
             <span>Documents</span>
           </button>
 
-          {/* Active Permits: Show View History only */}
-          {status === 'active' && (
-            <button
-              onClick={() => onViewHistory(permit.id, permit.name)}
-              className="px-4 py-2 text-sm text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors whitespace-nowrap flex items-center gap-2"
-              title="View permit renewal history"
-            >
-              <i className="fas fa-history"></i>
-              <span>View History</span>
-            </button>
-          )}
+          {/* Active Permits: Show Documents only (no additional buttons) */}
 
           {/* Expiring/Expired Permits: Show Renew Online and Upload Renewal */}
           {(status === 'expiring' || status === 'expired') && (
@@ -95,7 +84,7 @@ export function PermitCard({ permit, onRenew, onViewFiles, onViewHistory }: Perm
               <button
                 onClick={() => onRenew(permit.id, permit.name)}
                 className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap flex items-center gap-2"
-                title="Upload renewal documents after completing application"
+                title="Upload renewed license document to update permit information"
               >
                 <i className="fas fa-upload"></i>
                 <span>Upload Renewal</span>

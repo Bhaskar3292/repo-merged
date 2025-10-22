@@ -198,7 +198,6 @@ export function PermitsDashboard({ selectedFacility }: PermitsDashboardProps) {
         isLoading={isLoading}
         onRenew={handleRenew}
         onViewFiles={handleViewFiles}
-        onViewHistory={handleViewHistory}
       />
 
       <UploadModal

@@ -9,7 +9,6 @@ interface PermitListProps {
   isLoading: boolean;
   onRenew: (permitId: number, permitName: string) => void;
   onViewFiles: (permitId: number, permitName: string, documentUrl: string | null) => void;
-  onViewHistory: (permitId: number, permitName: string) => void;
 }
 
 export function PermitList({
@@ -17,8 +16,7 @@ export function PermitList({
   currentFilter,
   isLoading,
   onRenew,
-  onViewFiles,
-  onViewHistory
+  onViewFiles
 }: PermitListProps) {
   if (isLoading) {
     return (
@@ -53,7 +51,6 @@ export function PermitList({
           permit={permit}
           onRenew={onRenew}
           onViewFiles={onViewFiles}
-          onViewHistory={onViewHistory}
         />
       ))}
     </div>
