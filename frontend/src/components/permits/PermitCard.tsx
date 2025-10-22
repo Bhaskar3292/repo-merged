@@ -6,9 +6,10 @@ interface PermitCardProps {
   permit: Permit;
   onRenew: (permitId: number, permitName: string) => void;
   onViewFiles: (permitId: number, permitName: string, documentUrl: string | null) => void;
+  onViewHistory: (permitId: number, permitName: string) => void;
 }
 
-export function PermitCard({ permit, onRenew, onViewFiles }: PermitCardProps) {
+export function PermitCard({ permit, onRenew, onViewFiles, onViewHistory }: PermitCardProps) {
   const status = calculateStatus(permit);
   const statusBadge = getStatusBadge(status);
   const borderColor = getBorderColor(status);
@@ -53,6 +54,7 @@ export function PermitCard({ permit, onRenew, onViewFiles }: PermitCardProps) {
         </div>
 
         <div className="flex flex-row md:flex-col gap-2 justify-end">
+          {/* Documents button - Always shown for all permits */}
           <button
             onClick={handleViewFiles}
             className="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors whitespace-nowrap flex items-center gap-2"
@@ -62,28 +64,43 @@ export function PermitCard({ permit, onRenew, onViewFiles }: PermitCardProps) {
             <span>Documents</span>
           </button>
 
-          {permit.renewalUrl && (status === 'expiring' || status === 'expired') && (
-            <a
-              href={permit.renewalUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center whitespace-nowrap flex items-center gap-2"
-              title="Apply for renewal on external website"
+          {/* Active Permits: Show View History only */}
+          {status === 'active' && (
+            <button
+              onClick={() => onViewHistory(permit.id, permit.name)}
+              className="px-4 py-2 text-sm text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors whitespace-nowrap flex items-center gap-2"
+              title="View permit renewal history"
             >
-              <i className="fas fa-external-link-alt"></i>
-              <span>Renew Online</span>
-            </a>
+              <i className="fas fa-history"></i>
+              <span>View History</span>
+            </button>
           )}
 
+          {/* Expiring/Expired Permits: Show Renew Online and Upload Renewal */}
           {(status === 'expiring' || status === 'expired') && (
-            <button
-              onClick={() => onRenew(permit.id, permit.name)}
-              className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap flex items-center gap-2"
-              title="Upload renewal documents after completing application"
-            >
-              <i className="fas fa-upload"></i>
-              <span>Upload Renewal</span>
-            </button>
+            <>
+              {permit.renewalUrl && (
+                <a
+                  href={permit.renewalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center whitespace-nowrap flex items-center gap-2"
+                  title="Apply for renewal on external website"
+                >
+                  <i className="fas fa-external-link-alt"></i>
+                  <span>Renew Online</span>
+                </a>
+              )}
+
+              <button
+                onClick={() => onRenew(permit.id, permit.name)}
+                className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap flex items-center gap-2"
+                title="Upload renewal documents after completing application"
+              >
+                <i className="fas fa-upload"></i>
+                <span>Upload Renewal</span>
+              </button>
+            </>
           )}
         </div>
       </div>
