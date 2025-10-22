@@ -58,14 +58,28 @@ class PermitApiService {
   async fetchPermits(facilityId?: number): Promise<Permit[]> {
     try {
       console.log('[PermitAPI] Fetching permits for facility:', facilityId);
-      const params = facilityId ? { facility: facilityId } : {};
+      console.log('[PermitAPI] Facility ID type:', typeof facilityId);
+      console.log('[PermitAPI] Facility ID truthy:', !!facilityId);
+
+      // If no facility is selected, return empty array
+      if (!facilityId) {
+        console.log('[PermitAPI] No facility selected, returning empty permits array');
+        return [];
+      }
+
+      const params = { facility: facilityId };
+      console.log('[PermitAPI] Request params:', params);
+
       const response = await api.get('/api/permits/', { params });
 
       console.log('[PermitAPI] Raw API response:', response.data);
+      console.log('[PermitAPI] Response contains results:', !!response.data.results);
+      console.log('[PermitAPI] Number of permits:', (response.data.results || response.data || []).length);
 
       const rawData = response.data.results || response.data || [];
       const transformedData = rawData.map(transformPermitData);
 
+      console.log('[PermitAPI] Transformed permits count:', transformedData.length);
       console.log('[PermitAPI] Transformed permits:', transformedData);
 
       return transformedData;
@@ -153,11 +167,24 @@ class PermitApiService {
 
   async fetchPermitStats(facilityId?: number): Promise<PermitStats> {
     try {
-      const params = facilityId ? { facility: facilityId } : {};
+      console.log('[PermitAPI] Fetching permit stats for facility:', facilityId);
+
+      // If no facility is selected, return zero stats
+      if (!facilityId) {
+        console.log('[PermitAPI] No facility selected, returning zero stats');
+        return { total: 0, active: 0, expiring: 0, expired: 0 };
+      }
+
+      const params = { facility: facilityId };
+      console.log('[PermitAPI] Stats request params:', params);
+
       const response = await api.get('/api/permits/stats/', { params });
+
+      console.log('[PermitAPI] Stats response:', response.data);
+
       return response.data;
     } catch (error: any) {
-      console.error('Error fetching permit stats:', error);
+      console.error('[PermitAPI] Error fetching permit stats:', error);
       throw new Error(error.response?.data?.error || 'Failed to fetch permit stats');
     }
   }

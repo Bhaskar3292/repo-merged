@@ -39,25 +39,36 @@ export function PermitsDashboard({ selectedFacility }: PermitsDashboardProps) {
   } | null>(null);
 
   useEffect(() => {
+    console.log('[PermitsDashboard] selectedFacility changed:', selectedFacility);
+    console.log('[PermitsDashboard] Facility ID:', selectedFacility?.id);
+    console.log('[PermitsDashboard] Facility name:', selectedFacility?.name);
     fetchPermits();
   }, [selectedFacility]);
 
   const fetchPermits = async () => {
+    console.log('[PermitsDashboard] fetchPermits called');
+    console.log('[PermitsDashboard] Current selectedFacility:', selectedFacility);
+
     setIsLoading(true);
     setError(null);
 
     try {
       const facilityId = selectedFacility?.id;
+      console.log('[PermitsDashboard] Fetching with facility ID:', facilityId);
+
       const [permitsData, statsData] = await Promise.all([
         permitApiService.fetchPermits(facilityId),
         permitApiService.fetchPermitStats(facilityId)
       ]);
 
+      console.log('[PermitsDashboard] Received permits:', permitsData.length);
+      console.log('[PermitsDashboard] Received stats:', statsData);
+
       setPermits(permitsData);
       setStats(statsData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load permits');
-      console.error('Error fetching permits:', err);
+      console.error('[PermitsDashboard] Error fetching permits:', err);
     } finally {
       setIsLoading(false);
     }
@@ -112,6 +123,21 @@ export function PermitsDashboard({ selectedFacility }: PermitsDashboardProps) {
     setHistoryModalOpen(false);
     setCurrentHistoryPermit(null);
   };
+
+  // Show message when no facility is selected
+  if (!selectedFacility) {
+    return (
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 text-center">
+          <i className="fas fa-info-circle text-blue-500 text-4xl mb-4"></i>
+          <h3 className="text-xl font-medium text-blue-900 mb-2">Select a Location</h3>
+          <p className="text-blue-700">
+            Please select a location from the dropdown above to view and manage permits for that facility.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (
