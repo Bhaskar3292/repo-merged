@@ -21,6 +21,18 @@ export function HistoryModal({ isOpen, onClose, permitId, permitName }: HistoryM
     }
   }, [isOpen, permitId]);
 
+  // Add ESC key support
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen, onClose]);
+
   const loadHistory = async () => {
     if (!permitId) return;
 
@@ -39,16 +51,34 @@ export function HistoryModal({ isOpen, onClose, permitId, permitName }: HistoryM
 
   if (!isOpen) return null;
 
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Only close if clicking the overlay itself, not the modal content
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      onClick={handleOverlayClick}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+    >
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-gray-800">Permit History</h2>
+              <h2 id="modal-title" className="text-xl font-bold text-gray-800">Permit History</h2>
               <p className="text-sm text-gray-600 mt-1">{permitName}</p>
             </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-lg hover:bg-gray-100"
+              aria-label="Close modal"
+              title="Close (ESC)"
+            >
               <i className="fas fa-times text-xl"></i>
             </button>
           </div>

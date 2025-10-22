@@ -15,6 +15,18 @@ export function UploadModal({ isOpen, onClose, onUpload, title, subtitle }: Uplo
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Add ESC key support
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen && !isUploading) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen, onClose, isUploading]);
+
   if (!isOpen) return null;
 
   const handleFileSelect = (file: File) => {
@@ -97,19 +109,34 @@ export function UploadModal({ isOpen, onClose, onUpload, title, subtitle }: Uplo
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   };
 
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Only close if clicking the overlay itself and not uploading
+    if (e.target === e.currentTarget && !isUploading) {
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      onClick={handleOverlayClick}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="upload-modal-title"
+    >
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-gray-800">{title}</h2>
+              <h2 id="upload-modal-title" className="text-xl font-bold text-gray-800">{title}</h2>
               {subtitle && <p className="text-sm text-gray-600 mt-1">{subtitle}</p>}
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50"
               disabled={isUploading}
+              aria-label="Close modal"
+              title={isUploading ? "Cannot close while uploading" : "Close (ESC)"}
             >
               <i className="fas fa-times text-xl"></i>
             </button>
