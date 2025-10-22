@@ -1,5 +1,6 @@
 """
 Views for permit management with AI-powered data extraction
+Enhanced with needs_review handling and HTTP 422 responses
 """
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action, api_view, permission_classes
@@ -25,12 +26,7 @@ class PermitUploadView(APIView):
     """
     API view for uploading permit documents with AI-powered data extraction
 
-    Accepts file uploads (PDF, JPG, PNG) and uses OpenAI Vision API to extract:
-    - License type
-    - License number
-    - Issue date
-    - Expiry date
-    - Issuing authority
+    Returns HTTP 422 if extraction needs manual review (e.g., missing expiry date)
 
     POST /api/permits/upload/
     Content-Type: multipart/form-data
@@ -40,9 +36,10 @@ class PermitUploadView(APIView):
         - facility: Facility ID (integer)
 
     Response:
-        - 201 Created: Returns serialized permit data
-        - 400 Bad Request: Missing or invalid data
-        - 500 Internal Server Error: Processing or AI extraction failed
+        - 201 Created: Permit created successfully
+        - 422 Unprocessable Entity: Needs manual review (provides suggested fields)
+        - 400 Bad Request: Missing or invalid request data
+        - 500 Internal Server Error: Unexpected extraction error
     """
 
     parser_classes = [MultiPartParser, FormParser]
@@ -50,13 +47,13 @@ class PermitUploadView(APIView):
 
     def post(self, request, *args, **kwargs):
         """
-        Handle permit document upload and AI extraction
+        Handle permit document upload and AI extraction with graceful degradation
 
         Args:
             request: DRF Request object with file and facility data
 
         Returns:
-            Response: Serialized permit data or error message
+            Response: Serialized permit data, needs_review payload, or error
         """
         try:
             if 'file' not in request.FILES:
@@ -82,6 +79,24 @@ class PermitUploadView(APIView):
             extracted_data = extractor.extract_from_file(uploaded_file)
             logger.info(f"AI extraction complete: {extracted_data}")
 
+            if extracted_data.get('needs_review'):
+                logger.warning(f"Extraction needs review: {extracted_data.get('inference_notes')}")
+
+                return Response(
+                    {
+                        'needs_review': True,
+                        'message': extracted_data.get('inference_notes', 'Some fields could not be extracted'),
+                        'suggested': {
+                            'license_type': extracted_data.get('license_type'),
+                            'license_no': extracted_data.get('license_no'),
+                            'issue_date': extracted_data.get('issue_date'),
+                            'expiry_date': extracted_data.get('expiry_date'),
+                            'issued_by': extracted_data.get('issued_by'),
+                        }
+                    },
+                    status=status.HTTP_422_UNPROCESSABLE_ENTITY
+                )
+
             issue_date = None
             if extracted_data.get('issue_date'):
                 try:
@@ -96,24 +111,28 @@ class PermitUploadView(APIView):
                 except (ValueError, TypeError):
                     logger.error(f"Invalid expiry_date format: {extracted_data.get('expiry_date')}")
                     return Response(
-                        {'error': 'AI could not extract a valid expiry date from the document'},
-                        status=status.HTTP_400_BAD_REQUEST
+                        {
+                            'needs_review': True,
+                            'message': 'Expiry date format is invalid',
+                            'suggested': {
+                                'license_type': extracted_data.get('license_type'),
+                                'license_no': extracted_data.get('license_no'),
+                                'issue_date': extracted_data.get('issue_date'),
+                                'expiry_date': None,
+                                'issued_by': extracted_data.get('issued_by'),
+                            }
+                        },
+                        status=status.HTTP_422_UNPROCESSABLE_ENTITY
                     )
-
-            if not expiry_date:
-                return Response(
-                    {'error': 'Expiry date is required but could not be extracted'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
 
             uploaded_file.seek(0)
 
             permit = Permit.objects.create(
-                name=extracted_data.get('license_type', 'Extracted Permit'),
-                number=extracted_data.get('license_no', f'PERMIT-{Permit.objects.count() + 1}'),
+                name=extracted_data.get('license_type') or 'Extracted Permit',
+                number=extracted_data.get('license_no') or f'PERMIT-{Permit.objects.count() + 1}',
                 issue_date=issue_date,
                 expiry_date=expiry_date,
-                issued_by=extracted_data.get('issued_by', 'Unknown Authority'),
+                issued_by=extracted_data.get('issued_by') or 'Unknown Authority',
                 facility_id=facility_id,
                 uploaded_by=request.user,
                 document=uploaded_file,
@@ -124,7 +143,7 @@ class PermitUploadView(APIView):
                 permit=permit,
                 action='Document uploaded and AI extracted',
                 user=request.user,
-                notes=f'AI extracted data from {uploaded_file.name}',
+                notes=extracted_data.get('inference_notes', f'AI extracted data from {uploaded_file.name}'),
                 document_url=permit.document_url
             )
 
@@ -187,9 +206,10 @@ class PermitViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_path='renew')
     def renew_permit(self, request, pk=None):
         """
-        Upload renewal document for existing permit
+        Upload renewal document for existing permit with AI extraction
 
         Creates new permit with parent relationship and deactivates original
+        Returns HTTP 422 if extraction needs manual review
 
         POST /api/permits/{id}/renew/
         """
@@ -211,6 +231,25 @@ class PermitViewSet(viewsets.ModelViewSet):
             logger.info("Starting AI data extraction for renewal...")
             extracted_data = extractor.extract_from_file(uploaded_file)
             logger.info(f"Renewal AI extraction complete: {extracted_data}")
+
+            if extracted_data.get('needs_review'):
+                logger.warning(f"Renewal extraction needs review: {extracted_data.get('inference_notes')}")
+
+                return Response(
+                    {
+                        'needs_review': True,
+                        'message': extracted_data.get('inference_notes', 'Some fields could not be extracted'),
+                        'original_permit_id': original_permit.id,
+                        'suggested': {
+                            'license_type': extracted_data.get('license_type') or original_permit.name,
+                            'license_no': extracted_data.get('license_no') or original_permit.number,
+                            'issue_date': extracted_data.get('issue_date'),
+                            'expiry_date': extracted_data.get('expiry_date'),
+                            'issued_by': extracted_data.get('issued_by') or original_permit.issued_by,
+                        }
+                    },
+                    status=status.HTTP_422_UNPROCESSABLE_ENTITY
+                )
 
             issue_date = None
             if extracted_data.get('issue_date'):
@@ -236,10 +275,10 @@ class PermitViewSet(viewsets.ModelViewSet):
 
             renewed_permit = Permit.objects.create(
                 name=original_permit.name,
-                number=extracted_data.get('license_no', original_permit.number),
+                number=extracted_data.get('license_no') or original_permit.number,
                 issue_date=issue_date,
                 expiry_date=expiry_date,
-                issued_by=extracted_data.get('issued_by', original_permit.issued_by),
+                issued_by=extracted_data.get('issued_by') or original_permit.issued_by,
                 facility=original_permit.facility,
                 uploaded_by=request.user,
                 document=uploaded_file,
@@ -251,7 +290,7 @@ class PermitViewSet(viewsets.ModelViewSet):
                 permit=renewed_permit,
                 action='Permit renewed with AI extraction',
                 user=request.user,
-                notes=f'Renewed from permit #{original_permit.number}',
+                notes=extracted_data.get('inference_notes', f'Renewed from permit #{original_permit.number}'),
                 document_url=renewed_permit.document_url
             )
 

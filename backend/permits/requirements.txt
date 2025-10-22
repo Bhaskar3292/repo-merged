@@ -1,6 +1,6 @@
 # AI-Powered Permit Extraction Dependencies
 
-# OpenAI API
+# OpenAI API (modern SDK)
 openai>=1.0.0
 
 # Image Processing
@@ -8,9 +8,21 @@ Pillow>=10.0.0
 
 # PDF Processing
 PyPDF2>=3.0.0
+
+# PDF to Image Conversion (for OCR fallback)
 pdf2image>=1.16.0
 
-# Note: pdf2image requires poppler-utils to be installed on the system:
-# Ubuntu/Debian: sudo apt-get install poppler-utils
-# macOS: brew install poppler
-# Windows: Download from https://github.com/oschwartz10612/poppler-windows/releases/
+# OCR Engine
+pytesseract>=0.3.10
+
+# Note: System dependencies required:
+#
+# For pdf2image (poppler-utils):
+# - Ubuntu/Debian: sudo apt-get install poppler-utils
+# - macOS: brew install poppler
+# - Windows: Download from https://github.com/oschwartz10612/poppler-windows/releases/
+#
+# For pytesseract (Tesseract OCR):
+# - Ubuntu/Debian: sudo apt-get install tesseract-ocr
+# - macOS: brew install tesseract
+# - Windows: Download installer from https://github.com/UB-Mannheim/tesseract/wiki

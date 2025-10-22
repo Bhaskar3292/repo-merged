@@ -1,14 +1,16 @@
 """
 AI-powered document extraction for permits using OpenAI API
+Enhanced with OCR fallback, date heuristics, and graceful degradation
 """
 import base64
 import json
 import logging
 import re
+from datetime import datetime, timedelta
 from io import BytesIO
 from PIL import Image
 import PyPDF2
-import openai
+from openai import OpenAI
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -17,28 +19,51 @@ logger = logging.getLogger(__name__)
 class PermitDataExtractor:
     """
     Handles AI-powered data extraction from permit documents using OpenAI API
-    Supports both PDF text extraction and image analysis with robust JSON parsing
+    Features:
+    - PDF text extraction with OCR fallback
+    - Image analysis with GPT-4o Vision
+    - Date inference from text patterns
+    - Policy-based expiry calculation
+    - Graceful degradation (never fails on missing expiry)
     """
 
     EXTRACTION_PROMPT = """You are an expert data extraction system for official documents.
-Analyze the provided document and extract the following fields into a JSON object.
+Analyze the provided document (text or image) and extract the following fields into a JSON object.
 
-REQUIRED FIELDS:
-- license_type: Document type/title (e.g., "Operating Permit", "Business License")
-- license_no: Primary identifier/number
-- issue_date: Issue date in YYYY-MM-DD format (use null if not found)
-- expiry_date: Expiration date in YYYY-MM-DD format (REQUIRED)
-- issued_by: Issuing authority/department
+FIELDS TO EXTRACT:
+- license_type: Document type/title (e.g., "Operating Permit", "Business License", "Fire Safety Permit")
+- license_no: Primary identifier/number (look for "License #", "Permit No.", "ID", etc.)
+- issue_date: Issue/Issuance date in YYYY-MM-DD format (labels: "Issued", "Issue Date", "Date Issued", "Effective")
+- expiry_date: Expiration date in YYYY-MM-DD format (labels: "Expiry", "Expiration", "Expires", "Valid Until", "Valid Through", "Valid Thru", "Through", "Not After", "Expiration Date")
+- issued_by: Issuing authority/department/agency
+
+DATE EXTRACTION RULES:
+- Look for BOTH US format (MM/DD/YYYY) and international (DD/MM/YYYY, YYYY-MM-DD)
+- Look near keywords: "expiry", "expiration", "expires", "valid until", "through", "not after"
+- Normalize ALL dates to YYYY-MM-DD format
+- If only issue_date found, set expiry_date to null (we will infer it)
+- If both dates present, extract both
+- Use null for any field not found
 
 CRITICAL FORMATTING RULES:
 - Return ONLY a valid JSON object
-- No additional text, explanations, or formatting
-- No markdown code blocks
-- Use null for missing optional fields
-- Ensure expiry_date is always provided
+- No additional text, explanations, or markdown
+- All fields are nullable (use null, not empty string)
 
-EXAMPLE RESPONSE (ONLY JSON):
+EXAMPLE OUTPUT:
 {"license_type": "Air Pollution License", "license_no": "APL16-000083", "issue_date": "2021-10-01", "expiry_date": "2021-10-31", "issued_by": "CITY OF PHILADELPHIA DEPARTMENT OF PUBLIC HEALTH"}"""
+
+    PERMIT_POLICY = {
+        'TOBACCO': 365,
+        'MV REPAIR': 365,
+        'MOTOR VEHICLE': 365,
+        'FIRE SAFETY': 1095,
+        'FIRE SAFETY PERMIT': 1095,
+        'OPERATING PERMIT': 365,
+        'BUSINESS LICENSE': 365,
+        'AIR POLLUTION': 365,
+        'ENVIRONMENTAL': 1095,
+    }
 
     def __init__(self, api_key=None):
         """
@@ -51,11 +76,13 @@ EXAMPLE RESPONSE (ONLY JSON):
         if not self.api_key:
             raise ValueError("OpenAI API key not configured. Set OPENAI_API_KEY in settings.")
 
-        self.client = openai.OpenAI(api_key=self.api_key)
+        self.client = OpenAI(api_key=self.api_key)
+        self.model = getattr(settings, 'OPENAI_MODEL', 'gpt-4o-mini')
 
     def file_to_base64_image(self, uploaded_file):
         """
         Convert uploaded file to base64 encoded image string or extract text from PDF
+        Includes OCR fallback for scanned PDFs
 
         Args:
             uploaded_file: Django UploadedFile object
@@ -70,6 +97,8 @@ EXAMPLE RESPONSE (ONLY JSON):
                 logger.info(f"Processing PDF file: {uploaded_file.name}")
 
                 pdf_bytes = uploaded_file.read()
+                uploaded_file.seek(0)
+
                 pdf_reader = PyPDF2.PdfReader(BytesIO(pdf_bytes))
 
                 text_content = ""
@@ -78,18 +107,54 @@ EXAMPLE RESPONSE (ONLY JSON):
                     if text:
                         text_content += f"--- Page {page_num} ---\n{text}\n\n"
 
-                logger.info(f"Successfully extracted text from PDF with {len(pdf_reader.pages)} pages")
+                quality = "text"
+
+                if len(text_content.strip()) < 100:
+                    logger.warning("PDF has minimal text, attempting OCR fallback")
+                    try:
+                        from pdf2image import convert_from_bytes
+                        import pytesseract
+
+                        images = convert_from_bytes(
+                            pdf_bytes,
+                            first_page=1,
+                            last_page=min(3, len(pdf_reader.pages)),
+                            dpi=300
+                        )
+
+                        ocr_text = ""
+                        for page_num, img in enumerate(images, 1):
+                            ocr_text += f"--- Page {page_num} (OCR) ---\n"
+                            ocr_text += pytesseract.image_to_string(img)
+                            ocr_text += "\n\n"
+
+                        if len(ocr_text.strip()) > len(text_content.strip()):
+                            text_content = ocr_text
+                            quality = "ocr"
+                            logger.info(f"OCR extracted {len(ocr_text)} characters")
+
+                    except ImportError:
+                        logger.warning("OCR libraries not available (pdf2image, pytesseract)")
+                    except Exception as e:
+                        logger.warning(f"OCR fallback failed: {str(e)}")
+
+                if len(text_content) > 15000:
+                    text_content = text_content[:15000] + "\n\n(truncated for length)"
+
+                logger.info(f"Successfully extracted text from PDF ({quality}): {len(text_content)} chars")
 
                 return {
                     "type": "pdf_text",
                     "text": text_content,
-                    "page_count": len(pdf_reader.pages)
+                    "page_count": len(pdf_reader.pages),
+                    "quality": quality
                 }
 
             elif file_extension in ['jpg', 'jpeg', 'png']:
                 logger.info(f"Processing image file: {uploaded_file.name}")
 
                 image = Image.open(uploaded_file)
+                uploaded_file.seek(0)
 
                 if image.mode == 'RGBA':
                     background = Image.new('RGB', image.size, (255, 255, 255))
@@ -108,11 +173,152 @@ EXAMPLE RESPONSE (ONLY JSON):
                 return base64_image
 
             else:
-                raise ValueError(f"Unsupported file type: {file_extension}. Supported types: PDF, JPG, JPEG, PNG")
+                raise ValueError(f"Unsupported file type: {file_extension}. Supported: PDF, JPG, JPEG, PNG")
 
         except Exception as e:
-            logger.error(f"Error converting file to base64: {str(e)}")
+            logger.error(f"Error converting file: {str(e)}")
             raise
+
+    def infer_dates_from_text(self, text):
+        """
+        Extract dates from text using regex patterns and heuristics
+
+        Args:
+            text: Extracted text content
+
+        Returns:
+            dict: Dictionary with issue_date and/or expiry_date if found
+        """
+        dates = {}
+
+        expiry_keywords = r'(?:expir(?:y|ation|es)|valid\s+(?:until|thru|through)|through|not\s+after)'
+        issue_keywords = r'(?:issue(?:d)?|effective|date\s+issued)'
+
+        date_patterns = [
+            r'(\d{1,2})[/-](\d{1,2})[/-](\d{4})',
+            r'(\d{4})[/-](\d{1,2})[/-](\d{1,2})',
+            r'(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{4})',
+            r'(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2}),?\s+(\d{4})',
+        ]
+
+        lines = text.split('\n')
+
+        for i, line in enumerate(lines):
+            line_lower = line.lower()
+
+            if re.search(expiry_keywords, line_lower, re.IGNORECASE):
+                context = ' '.join(lines[max(0, i-1):min(len(lines), i+2)])
+
+                for pattern in date_patterns:
+                    matches = re.findall(pattern, context, re.IGNORECASE)
+                    if matches:
+                        try:
+                            normalized = self._normalize_date(matches[-1])
+                            if normalized:
+                                dates['expiry_date'] = normalized
+                                logger.info(f"Found expiry date via heuristic: {normalized} from '{context[:80]}'")
+                                break
+                        except:
+                            pass
+
+            if re.search(issue_keywords, line_lower, re.IGNORECASE):
+                context = ' '.join(lines[max(0, i-1):min(len(lines), i+2)])
+
+                for pattern in date_patterns:
+                    matches = re.findall(pattern, context, re.IGNORECASE)
+                    if matches:
+                        try:
+                            normalized = self._normalize_date(matches[0])
+                            if normalized:
+                                dates['issue_date'] = normalized
+                                logger.info(f"Found issue date via heuristic: {normalized}")
+                                break
+                        except:
+                            pass
+
+        return dates
+
+    def _normalize_date(self, date_tuple):
+        """
+        Normalize date tuple to YYYY-MM-DD format
+
+        Args:
+            date_tuple: Tuple of date components from regex
+
+        Returns:
+            str: Date in YYYY-MM-DD format or None
+        """
+        months = {
+            'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
+            'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12
+        }
+
+        try:
+            if len(date_tuple) == 3:
+                if date_tuple[0].isdigit() and date_tuple[1].isdigit() and date_tuple[2].isdigit():
+                    p1, p2, p3 = int(date_tuple[0]), int(date_tuple[1]), int(date_tuple[2])
+
+                    if p1 > 1900:
+                        year, month, day = p1, p2, p3
+                    elif p3 > 1900:
+                        if p1 > 12:
+                            day, month, year = p1, p2, p3
+                        else:
+                            month, day, year = p1, p2, p3
+                    else:
+                        return None
+
+                    if 1 <= month <= 12 and 1 <= day <= 31:
+                        return f"{year:04d}-{month:02d}-{day:02d}"
+
+                elif isinstance(date_tuple[0], str) and date_tuple[0][:3].lower() in months:
+                    month = months[date_tuple[0][:3].lower()]
+                    day = int(date_tuple[1].replace(',', ''))
+                    year = int(date_tuple[2])
+                    return f"{year:04d}-{month:02d}-{day:02d}"
+
+                elif isinstance(date_tuple[1], str) and date_tuple[1][:3].lower() in months:
+                    day = int(date_tuple[0])
+                    month = months[date_tuple[1][:3].lower()]
+                    year = int(date_tuple[2])
+                    return f"{year:04d}-{month:02d}-{day:02d}"
+
+        except (ValueError, IndexError):
+            pass
+
+        return None
+
+    def apply_policy_fallback(self, extracted_data):
+        """
+        Apply policy-based expiry calculation if only issue_date is present
+
+        Args:
+            extracted_data: Dictionary with extracted fields
+
+        Returns:
+            dict: Updated dictionary with computed expiry_date if applicable
+        """
+        if extracted_data.get('expiry_date'):
+            return extracted_data
+
+        if not extracted_data.get('issue_date'):
+            return extracted_data
+
+        license_type = (extracted_data.get('license_type') or '').upper()
+
+        for policy_key, days in self.PERMIT_POLICY.items():
+            if policy_key in license_type:
+                try:
+                    issue_date = datetime.strptime(extracted_data['issue_date'], '%Y-%m-%d')
+                    expiry_date = issue_date + timedelta(days=days)
+                    extracted_data['expiry_date'] = expiry_date.strftime('%Y-%m-%d')
+                    extracted_data['inference_notes'] = f"Expiry computed via policy: {policy_key} ({days} days)"
+                    logger.info(f"Applied policy fallback: {policy_key} -> {extracted_data['expiry_date']}")
+                    return extracted_data
+                except (ValueError, TypeError):
+                    pass
+
+        return extracted_data
 
     def clean_json_response(self, content):
         """
@@ -179,7 +385,6 @@ EXAMPLE RESPONSE (ONLY JSON):
             extracted_data['expiry_date'] = dates[1]
         elif len(dates) == 1:
             extracted_data['expiry_date'] = dates[0]
-            extracted_data['issue_date'] = None
 
         type_pattern = r'"license_type":\s*"([^"]*)"'
         type_match = re.search(type_pattern, content, re.IGNORECASE)
@@ -191,16 +396,7 @@ EXAMPLE RESPONSE (ONLY JSON):
         if issued_match:
             extracted_data['issued_by'] = issued_match.group(1)
 
-        default_fields = {
-            'license_type': 'Unknown Permit',
-            'license_no': extracted_data.get('license_no', 'Unknown'),
-            'issue_date': extracted_data.get('issue_date'),
-            'expiry_date': extracted_data.get('expiry_date'),
-            'issued_by': 'Unknown Authority'
-        }
-
-        default_fields.update(extracted_data)
-        return default_fields
+        return extracted_data
 
     def validate_and_parse_json(self, content):
         """
@@ -210,11 +406,12 @@ EXAMPLE RESPONSE (ONLY JSON):
             content: Cleaned JSON string
 
         Returns:
-            dict: Parsed and validated data
+            dict: Parsed data (may be partial)
         """
         try:
             extracted_data = json.loads(content)
             logger.info("Successfully parsed JSON on first attempt")
+            return extracted_data
 
         except json.JSONDecodeError as e:
             logger.warning(f"First JSON parse failed: {str(e)}. Attempting fixes...")
@@ -224,82 +421,37 @@ EXAMPLE RESPONSE (ONLY JSON):
                 try:
                     extracted_data = json.loads(json_match.group())
                     logger.info("Successfully extracted JSON using regex")
+                    return extracted_data
                 except json.JSONDecodeError:
-                    logger.warning("Regex extraction failed, using manual extraction")
-                    extracted_data = self.extract_fields_manually(content)
-            else:
-                logger.warning("No JSON pattern found, using manual extraction")
-                extracted_data = self.extract_fields_manually(content)
+                    pass
 
-        return self.ensure_required_fields(extracted_data)
+            logger.warning("All JSON parsing failed, using manual extraction")
+            return self.extract_fields_manually(content)
 
-    def ensure_required_fields(self, extracted_data):
+    def extract_data_with_ai(self, input_data, raw_text=None):
         """
-        Ensure all required fields are present with proper defaults
+        Extract permit data from base64 image or PDF text using OpenAI
 
         Args:
-            extracted_data: Dictionary of extracted data
+            input_data: Either base64 string (for images) or dict with PDF text
+            raw_text: Optional raw text for heuristic fallback
 
         Returns:
-            dict: Validated data with all required fields
+            dict: Extracted permit data with needs_review flag
         """
-        required_fields = {
-            'license_type': 'Unknown Permit',
-            'license_no': 'Unknown',
-            'issue_date': None,
-            'expiry_date': None,
-            'issued_by': 'Unknown Authority'
-        }
-
-        for field, default in required_fields.items():
-            if field not in extracted_data or extracted_data[field] is None or extracted_data[field] == '':
-                extracted_data[field] = default
-                logger.warning(f"Set default value for missing field: {field}")
-
-        if not extracted_data['expiry_date'] or extracted_data['expiry_date'] == 'Unknown':
-            raise ValueError("Expiry date is required but could not be extracted from the document")
-
-        return extracted_data
-
-    def extract_data_with_ai(self, input_data):
-        """Constructs a prompt and calls the AI vision model to extract data."""
-        prompt = """
-            You are an expert data extraction system for official documents. 
-        Analyze the provided image of a permit or license and extract the following fields. 
-        Respond ONLY with a single, clean JSON object.
-        The document may contain text formatted like a table with quotes and commas. You must parse this information correctly.
-
-        1.  **license_type**: Identify the main title or type of the document. The document might be titled "Air Pollution License" or similar.
-        2.  **license_no**: Find the primary identifier. Look for a label like "License#" or "Permit No.". The value might be inside quoted text, like `"APL16-000083\\n"`. Extract the clean number.
-        3.  **issue_date**: Find the date of issue. This might be labeled as "Issue Date" or **"Invoice Date"**. Format it as YYYY-MM-DD. If not available, return null.
-        4.  **expiry_date**: Find the expiration date. This is mandatory. Look for "Expiration Date" or "Valid Until". Format it as YYYY-MM-DD.
-        5.  **issued_by**: Identify the issuing authority, which is usually at the top of the document (e.g., "CITY OF PHILADELPHIA DEPARTMENT OF PUBLIC HEALTH").
-
-        Example JSON Response:
-        {
-          "license_type": "Air Pollution License",
-          "license_no": "APL16-000083",
-          "issue_date": "2021-10-01",
-          "expiry_date": "2021-10-31",
-          "issued_by": "CITY OF PHILADELPHIA DEPARTMENT OF PUBLIC HEALTH"
-        }
-        """
-
         try:
-            logger.info("Calling OpenAI API for data extraction")
-
-            enhanced_prompt = self.EXTRACTION_PROMPT 
+            logger.info(f"Calling OpenAI API ({self.model}) for data extraction")
 
             if isinstance(input_data, dict) and input_data.get("type") == "pdf_text":
                 text_content = input_data.get("text", "")
-                text_prompt = enhanced_prompt + "\n\nDOCUMENT TEXT:\n" + text_content[:4000]
+                text_prompt = self.EXTRACTION_PROMPT + "\n\nDOCUMENT TEXT:\n" + text_content
 
                 response = self.client.chat.completions.create(
-                    model="gpt-4.1",
+                    model=self.model,
                     messages=[
                         {
                             "role": "system",
-                            "content": "You are a JSON data extraction system. Return ONLY valid JSON, no other text."
+                            "content": "You are a JSON data extraction system. Return ONLY valid JSON."
                         },
                         {
                             "role": "user",
@@ -311,22 +463,25 @@ EXAMPLE RESPONSE (ONLY JSON):
                     response_format={"type": "json_object"}
                 )
 
+                extraction_path = f"pdf_text ({input_data.get('quality', 'text')})"
+                raw_text = text_content
+
             else:
                 base64_image = input_data
 
                 response = self.client.chat.completions.create(
-                    model="gpt-4-vision-preview",
+                    model=self.model,
                     messages=[
                         {
                             "role": "system",
-                            "content": "You are a JSON data extraction system. Return ONLY valid JSON, no other text."
+                            "content": "You are a JSON data extraction system. Return ONLY valid JSON."
                         },
                         {
                             "role": "user",
                             "content": [
                                 {
                                     "type": "text",
-                                    "text": enhanced_prompt
+                                    "text": self.EXTRACTION_PROMPT
                                 },
                                 {
                                     "type": "image_url",
@@ -342,20 +497,53 @@ EXAMPLE RESPONSE (ONLY JSON):
                     temperature=0.0
                 )
 
+                extraction_path = "image"
+
             content = response.choices[0].message.content.strip()
-            logger.info(f"Raw AI response: {content[:200]}...")
+            logger.info(f"Raw AI response: {content[:120]}...")
 
             cleaned_content = self.clean_json_response(content)
-            logger.info(f"Cleaned response: {cleaned_content[:200]}...")
-
             extracted_data = self.validate_and_parse_json(cleaned_content)
 
-            logger.info(f"Successfully extracted data: {extracted_data}")
+            logger.info(f"AI extracted via {extraction_path}: {extracted_data}")
+
+            if raw_text and (not extracted_data.get('expiry_date') or not extracted_data.get('issue_date')):
+                logger.info("Running heuristic date extraction on text")
+                heuristic_dates = self.infer_dates_from_text(raw_text)
+
+                if not extracted_data.get('expiry_date') and heuristic_dates.get('expiry_date'):
+                    extracted_data['expiry_date'] = heuristic_dates['expiry_date']
+                    extraction_path += " + heuristic"
+
+                if not extracted_data.get('issue_date') and heuristic_dates.get('issue_date'):
+                    extracted_data['issue_date'] = heuristic_dates['issue_date']
+
+            extracted_data = self.apply_policy_fallback(extracted_data)
+
+            extracted_data['needs_review'] = not bool(extracted_data.get('expiry_date'))
+
+            if extracted_data['needs_review']:
+                if 'inference_notes' not in extracted_data:
+                    extracted_data['inference_notes'] = "Expiry date not found; please enter manually"
+                logger.warning(f"Extraction needs review: {extracted_data['inference_notes']}")
+            else:
+                if 'inference_notes' not in extracted_data:
+                    extracted_data['inference_notes'] = f"Extracted via {extraction_path}"
+
+            logger.info(f"Final extraction result: {extracted_data}")
             return extracted_data
 
         except Exception as e:
             logger.error(f"Error in AI extraction: {str(e)}", exc_info=True)
-            raise ValueError(f"AI extraction failed: {str(e)}")
+            return {
+                'license_type': None,
+                'license_no': None,
+                'issue_date': None,
+                'expiry_date': None,
+                'issued_by': None,
+                'needs_review': True,
+                'inference_notes': f"Extraction failed: {str(e)}"
+            }
 
     def extract_from_file(self, uploaded_file):
         """
@@ -365,10 +553,14 @@ EXAMPLE RESPONSE (ONLY JSON):
             uploaded_file: Django UploadedFile object
 
         Returns:
-            dict: Extracted permit data
+            dict: Extracted permit data with needs_review flag
         """
         input_data = self.file_to_base64_image(uploaded_file)
 
-        extracted_data = self.extract_data_with_ai(input_data)
+        raw_text = None
+        if isinstance(input_data, dict) and input_data.get('type') == 'pdf_text':
+            raw_text = input_data.get('text')
+
+        extracted_data = self.extract_data_with_ai(input_data, raw_text=raw_text)
 
         return extracted_data
