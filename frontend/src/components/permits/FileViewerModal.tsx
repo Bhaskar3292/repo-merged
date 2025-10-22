@@ -126,9 +126,21 @@ export function FileViewerModal({
   };
 
   const handleView = (file: FileItem) => {
+    console.log('[FileViewer] Opening file:', file.name);
+    console.log('[FileViewer] File URL:', file.url);
+    console.log('[FileViewer] File type:', file.type);
+    console.log('[FileViewer] Can preview:', canPreview(file.type));
+
     if (canPreview(file.type)) {
-      setPreviewUrl(file.url);
+      // For PDFs, ensure URL is complete and add toolbar parameter
+      let viewUrl = file.url;
+      if (file.type === 'pdf' && !viewUrl.includes('#toolbar')) {
+        viewUrl = viewUrl + '#toolbar=1&navpanes=1&scrollbar=1';
+      }
+      setPreviewUrl(viewUrl);
+      console.log('[FileViewer] Preview URL set to:', viewUrl);
     } else {
+      console.log('[FileViewer] File type not previewable, downloading instead');
       handleDownload(file);
     }
   };
@@ -172,8 +184,14 @@ export function FileViewerModal({
 
   // Preview mode
   if (previewUrl) {
-    const fileType = previewUrl.split('.').pop()?.toLowerCase() || '';
+    // Extract file type from URL (before query params)
+    const urlWithoutParams = previewUrl.split('#')[0].split('?')[0];
+    const fileType = urlWithoutParams.split('.').pop()?.toLowerCase() || '';
     const isImage = ['jpg', 'jpeg', 'png', 'gif'].includes(fileType);
+
+    console.log('[FileViewer] Preview mode - URL:', previewUrl);
+    console.log('[FileViewer] Preview mode - File type:', fileType);
+    console.log('[FileViewer] Preview mode - Is image:', isImage);
 
     return (
       <div
@@ -184,8 +202,9 @@ export function FileViewerModal({
       >
         <button
           onClick={() => setPreviewUrl(null)}
-          className="absolute top-4 right-4 text-white hover:text-gray-300 bg-black bg-opacity-50 rounded-full p-3 transition-colors"
+          className="absolute top-4 right-4 text-white hover:text-gray-300 bg-black bg-opacity-50 rounded-full p-3 transition-colors z-10"
           aria-label="Close preview"
+          title="Close (ESC)"
         >
           <span className="text-2xl">×</span>
         </button>
@@ -196,12 +215,19 @@ export function FileViewerModal({
               src={previewUrl}
               alt="Document preview"
               className="w-full h-full object-contain"
+              onError={(e) => {
+                console.error('[FileViewer] Image failed to load:', previewUrl);
+                alert('Failed to load image. The file may not be accessible.');
+              }}
             />
           ) : (
             <iframe
               src={previewUrl}
               className="w-full h-full bg-white rounded-lg"
               title="Document preview"
+              onError={(e) => {
+                console.error('[FileViewer] PDF failed to load:', previewUrl);
+              }}
             />
           )}
         </div>

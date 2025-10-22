@@ -7,7 +7,6 @@ interface PermitListProps {
   permits: Permit[];
   currentFilter: PermitFilter;
   isLoading: boolean;
-  onViewHistory: (permitId: number, permitName: string) => void;
   onRenew: (permitId: number, permitName: string) => void;
   onViewFiles: (permitId: number, permitName: string, documentUrl: string | null) => void;
 }
@@ -16,7 +15,6 @@ export function PermitList({
   permits,
   currentFilter,
   isLoading,
-  onViewHistory,
   onRenew,
   onViewFiles
 }: PermitListProps) {
@@ -51,7 +49,6 @@ export function PermitList({
         <PermitCard
           key={permit.id}
           permit={permit}
-          onViewHistory={onViewHistory}
           onRenew={onRenew}
           onViewFiles={onViewFiles}
         />

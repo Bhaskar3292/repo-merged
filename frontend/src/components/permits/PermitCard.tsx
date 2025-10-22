@@ -4,12 +4,11 @@ import { calculateStatus, getStatusBadge, getBorderColor, formatDate } from '../
 
 interface PermitCardProps {
   permit: Permit;
-  onViewHistory: (permitId: number, permitName: string) => void;
   onRenew: (permitId: number, permitName: string) => void;
   onViewFiles: (permitId: number, permitName: string, documentUrl: string | null) => void;
 }
 
-export function PermitCard({ permit, onViewHistory, onRenew, onViewFiles }: PermitCardProps) {
+export function PermitCard({ permit, onRenew, onViewFiles }: PermitCardProps) {
   const status = calculateStatus(permit);
   const statusBadge = getStatusBadge(status);
   const borderColor = getBorderColor(status);
@@ -57,18 +56,10 @@ export function PermitCard({ permit, onViewHistory, onRenew, onViewFiles }: Perm
           <button
             onClick={handleViewFiles}
             className="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors whitespace-nowrap flex items-center gap-2"
-            title="View Documents"
+            title="View and download documents"
           >
             <i className="fas fa-file-alt"></i>
             <span>Documents</span>
-          </button>
-
-          <button
-            onClick={() => onViewHistory(permit.id, permit.name)}
-            className="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors whitespace-nowrap flex items-center gap-2"
-          >
-            <i className="fas fa-history"></i>
-            <span>History</span>
           </button>
 
           {permit.renewalUrl && (status === 'expiring' || status === 'expired') && (
@@ -77,6 +68,7 @@ export function PermitCard({ permit, onViewHistory, onRenew, onViewFiles }: Perm
               target="_blank"
               rel="noopener noreferrer"
               className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center whitespace-nowrap flex items-center gap-2"
+              title="Apply for renewal on external website"
             >
               <i className="fas fa-external-link-alt"></i>
               <span>Renew Online</span>
@@ -87,6 +79,7 @@ export function PermitCard({ permit, onViewHistory, onRenew, onViewFiles }: Perm
             <button
               onClick={() => onRenew(permit.id, permit.name)}
               className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap flex items-center gap-2"
+              title="Upload renewal documents after completing application"
             >
               <i className="fas fa-upload"></i>
               <span>Upload Renewal</span>

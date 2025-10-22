@@ -179,7 +179,11 @@ export function PermitsDashboard({ selectedFacility }: PermitsDashboardProps) {
     <div className="max-w-7xl mx-auto">
       <PermitHeader onAddNew={handleAddNew} />
 
-      <SummaryCards stats={stats} isLoading={isLoading} />
+      <SummaryCards
+        stats={stats}
+        isLoading={isLoading}
+        onFilterChange={setCurrentFilter}
+      />
 
       <FilterTabs
         currentFilter={currentFilter}
@@ -192,7 +196,6 @@ export function PermitsDashboard({ selectedFacility }: PermitsDashboardProps) {
         permits={permits}
         currentFilter={currentFilter}
         isLoading={isLoading}
-        onViewHistory={handleViewHistory}
         onRenew={handleRenew}
         onViewFiles={handleViewFiles}
       />
