@@ -262,33 +262,40 @@ EXAMPLE RESPONSE (ONLY JSON):
         return extracted_data
 
     def extract_data_with_ai(self, input_data):
-        """
-        Extract permit data from base64 image or PDF text using OpenAI
+        """Constructs a prompt and calls the AI vision model to extract data."""
+        prompt = """
+            You are an expert data extraction system for official documents. 
+        Analyze the provided image of a permit or license and extract the following fields. 
+        Respond ONLY with a single, clean JSON object.
+        The document may contain text formatted like a table with quotes and commas. You must parse this information correctly.
 
-        Args:
-            input_data: Either base64 string (for images) or dict with PDF text
+        1.  **license_type**: Identify the main title or type of the document. The document might be titled "Air Pollution License" or similar.
+        2.  **license_no**: Find the primary identifier. Look for a label like "License#" or "Permit No.". The value might be inside quoted text, like `"APL16-000083\\n"`. Extract the clean number.
+        3.  **issue_date**: Find the date of issue. This might be labeled as "Issue Date" or **"Invoice Date"**. Format it as YYYY-MM-DD. If not available, return null.
+        4.  **expiry_date**: Find the expiration date. This is mandatory. Look for "Expiration Date" or "Valid Until". Format it as YYYY-MM-DD.
+        5.  **issued_by**: Identify the issuing authority, which is usually at the top of the document (e.g., "CITY OF PHILADELPHIA DEPARTMENT OF PUBLIC HEALTH").
 
-        Returns:
-            dict: Extracted permit data
+        Example JSON Response:
+        {
+          "license_type": "Air Pollution License",
+          "license_no": "APL16-000083",
+          "issue_date": "2021-10-01",
+          "expiry_date": "2021-10-31",
+          "issued_by": "CITY OF PHILADELPHIA DEPARTMENT OF PUBLIC HEALTH"
+        }
         """
+
         try:
             logger.info("Calling OpenAI API for data extraction")
 
-            enhanced_prompt = self.EXTRACTION_PROMPT + """
-
-CRITICAL INSTRUCTIONS:
-- Return ONLY the JSON object, nothing else
-- No additional text, explanations, or markdown formatting
-- No code blocks or backticks
-- Ensure all dates are in YYYY-MM-DD format
-- If a field cannot be found, use null value"""
+            enhanced_prompt = self.EXTRACTION_PROMPT 
 
             if isinstance(input_data, dict) and input_data.get("type") == "pdf_text":
                 text_content = input_data.get("text", "")
                 text_prompt = enhanced_prompt + "\n\nDOCUMENT TEXT:\n" + text_content[:4000]
 
                 response = self.client.chat.completions.create(
-                    model="gpt-4",
+                    model="gpt-4.1",
                     messages=[
                         {
                             "role": "system",
