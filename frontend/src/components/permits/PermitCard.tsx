@@ -6,17 +6,16 @@ interface PermitCardProps {
   permit: Permit;
   onViewHistory: (permitId: number, permitName: string) => void;
   onRenew: (permitId: number, permitName: string) => void;
+  onViewFiles: (permitId: number, permitName: string, documentUrl: string | null) => void;
 }
 
-export function PermitCard({ permit, onViewHistory, onRenew }: PermitCardProps) {
+export function PermitCard({ permit, onViewHistory, onRenew, onViewFiles }: PermitCardProps) {
   const status = calculateStatus(permit);
   const statusBadge = getStatusBadge(status);
   const borderColor = getBorderColor(status);
 
-  const handleDownload = () => {
-    if (permit.documentUrl) {
-      window.open(permit.documentUrl, '_blank');
-    }
+  const handleViewFiles = () => {
+    onViewFiles(permit.id, permit.name, permit.documentUrl);
   };
 
   return (
@@ -55,21 +54,21 @@ export function PermitCard({ permit, onViewHistory, onRenew }: PermitCardProps) 
         </div>
 
         <div className="flex flex-row md:flex-col gap-2 justify-end">
-          {permit.documentUrl && (
-            <button
-              onClick={handleDownload}
-              className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              title="Download"
-            >
-              <i className="fas fa-download"></i>
-            </button>
-          )}
+          <button
+            onClick={handleViewFiles}
+            className="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors whitespace-nowrap flex items-center gap-2"
+            title="View Documents"
+          >
+            <i className="fas fa-file-alt"></i>
+            <span>Documents</span>
+          </button>
 
           <button
             onClick={() => onViewHistory(permit.id, permit.name)}
-            className="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors whitespace-nowrap"
+            className="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors whitespace-nowrap flex items-center gap-2"
           >
-            View History
+            <i className="fas fa-history"></i>
+            <span>History</span>
           </button>
 
           {permit.renewalUrl && (status === 'expiring' || status === 'expired') && (
@@ -77,18 +76,20 @@ export function PermitCard({ permit, onViewHistory, onRenew }: PermitCardProps) 
               href={permit.renewalUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center whitespace-nowrap"
+              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center whitespace-nowrap flex items-center gap-2"
             >
-              Renew Online
+              <i className="fas fa-external-link-alt"></i>
+              <span>Renew Online</span>
             </a>
           )}
 
           {(status === 'expiring' || status === 'expired') && (
             <button
               onClick={() => onRenew(permit.id, permit.name)}
-              className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap"
+              className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap flex items-center gap-2"
             >
-              Upload Renewal
+              <i className="fas fa-upload"></i>
+              <span>Upload Renewal</span>
             </button>
           )}
         </div>

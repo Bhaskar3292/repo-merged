@@ -7,6 +7,7 @@ import { FilterTabs } from './FilterTabs';
 import { PermitList } from './PermitList';
 import { UploadModal } from './UploadModal';
 import { HistoryModal } from './HistoryModal';
+import { FileViewerModal } from './FileViewerModal';
 
 interface PermitsDashboardProps {
   selectedFacility?: { id: number; name: string };
@@ -27,6 +28,7 @@ export function PermitsDashboard({ selectedFacility }: PermitsDashboardProps) {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [renewalModalOpen, setRenewalModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [fileViewerModalOpen, setFileViewerModalOpen] = useState(false);
 
   const [currentRenewalPermit, setCurrentRenewalPermit] = useState<{
     id: number;
@@ -36,6 +38,12 @@ export function PermitsDashboard({ selectedFacility }: PermitsDashboardProps) {
   const [currentHistoryPermit, setCurrentHistoryPermit] = useState<{
     id: number;
     name: string;
+  } | null>(null);
+
+  const [currentFileViewerPermit, setCurrentFileViewerPermit] = useState<{
+    id: number;
+    name: string;
+    documentUrl: string | null;
   } | null>(null);
 
   useEffect(() => {
@@ -110,6 +118,11 @@ export function PermitsDashboard({ selectedFacility }: PermitsDashboardProps) {
     setHistoryModalOpen(true);
   };
 
+  const handleViewFiles = (permitId: number, permitName: string, documentUrl: string | null) => {
+    setCurrentFileViewerPermit({ id: permitId, name: permitName, documentUrl });
+    setFileViewerModalOpen(true);
+  };
+
   const closeUploadModal = () => {
     setUploadModalOpen(false);
   };
@@ -122,6 +135,11 @@ export function PermitsDashboard({ selectedFacility }: PermitsDashboardProps) {
   const closeHistoryModal = () => {
     setHistoryModalOpen(false);
     setCurrentHistoryPermit(null);
+  };
+
+  const closeFileViewerModal = () => {
+    setFileViewerModalOpen(false);
+    setCurrentFileViewerPermit(null);
   };
 
   // Show message when no facility is selected
@@ -163,7 +181,12 @@ export function PermitsDashboard({ selectedFacility }: PermitsDashboardProps) {
 
       <SummaryCards stats={stats} isLoading={isLoading} />
 
-      <FilterTabs currentFilter={currentFilter} setCurrentFilter={setCurrentFilter} />
+      <FilterTabs
+        currentFilter={currentFilter}
+        setCurrentFilter={setCurrentFilter}
+        stats={stats}
+        isLoading={isLoading}
+      />
 
       <PermitList
         permits={permits}
@@ -171,6 +194,7 @@ export function PermitsDashboard({ selectedFacility }: PermitsDashboardProps) {
         isLoading={isLoading}
         onViewHistory={handleViewHistory}
         onRenew={handleRenew}
+        onViewFiles={handleViewFiles}
       />
 
       <UploadModal
@@ -198,6 +222,14 @@ export function PermitsDashboard({ selectedFacility }: PermitsDashboardProps) {
         onClose={closeHistoryModal}
         permitId={currentHistoryPermit?.id || null}
         permitName={currentHistoryPermit?.name || ''}
+      />
+
+      <FileViewerModal
+        isOpen={fileViewerModalOpen}
+        onClose={closeFileViewerModal}
+        permitId={currentFileViewerPermit?.id || null}
+        permitName={currentFileViewerPermit?.name || ''}
+        mainDocumentUrl={currentFileViewerPermit?.documentUrl || null}
       />
     </div>
   );
