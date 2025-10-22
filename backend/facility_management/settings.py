@@ -298,3 +298,6 @@ EMAIL_SUBJECT_PREFIX = '[Facility Management] '
 # EMAIL_USE_TLS = True
 # EMAIL_HOST_USER = 'your-email@gmail.com'
 # EMAIL_HOST_PASSWORD = 'your-app-password'
+
+
+OPENAI_API_KEY = config('OPENAI_API_KEY')
