@@ -2,6 +2,26 @@ import React, { useEffect, useState } from 'react';
 import { PermitHistory } from '../../types/permit';
 import { permitApiService } from '../../services/permitApi';
 
+// Utility to construct proper media URLs
+const getMediaUrl = (url: string | null): string | null => {
+  if (!url) return null;
+
+  const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/$/, '');
+
+  // If URL is already complete, return it
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+
+  // If URL starts with /, append to base URL
+  if (url.startsWith('/')) {
+    return `${API_BASE_URL}${url}`;
+  }
+
+  // Otherwise, assume it's a relative path and construct media URL
+  return `${API_BASE_URL}/media/${url}`;
+};
+
 interface FileItem {
   id: string;
   name: string;
@@ -31,6 +51,8 @@ export function FileViewerModal({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [downloadProgress, setDownloadProgress] = useState<{ [key: string]: number }>({});
+  const [viewingFile, setViewingFile] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen && permitId) {
@@ -69,16 +91,19 @@ export function FileViewerModal({
         const fileName = mainDocumentUrl.split('/').pop() || 'permit-document';
         const fileExt = fileName.split('.').pop()?.toLowerCase() || '';
         const normalizedUrl = mainDocumentUrl.toLowerCase();
+        const fullUrl = getMediaUrl(mainDocumentUrl);
 
-        filesList.push({
-          id: 'main-doc',
-          name: fileName,
-          url: mainDocumentUrl,
-          type: fileExt,
-          source: 'main',
-          uploadedAt: new Date().toISOString()
-        });
-        seenUrls.add(normalizedUrl);
+        if (fullUrl) {
+          filesList.push({
+            id: 'main-doc',
+            name: fileName,
+            url: fullUrl,
+            type: fileExt,
+            source: 'main',
+            uploadedAt: new Date().toISOString()
+          });
+          seenUrls.add(normalizedUrl);
+        }
       }
 
       // Fetch history to get additional documents
@@ -96,16 +121,19 @@ export function FileViewerModal({
 
           const fileName = item.documentUrl.split('/').pop() || `history-document-${index}`;
           const fileExt = fileName.split('.').pop()?.toLowerCase() || '';
+          const fullUrl = getMediaUrl(item.documentUrl);
 
-          filesList.push({
-            id: `history-${item.id}`,
-            name: fileName,
-            url: item.documentUrl,
-            type: fileExt,
-            source: 'history',
-            uploadedAt: item.createdAt
-          });
-          seenUrls.add(normalizedUrl);
+          if (fullUrl) {
+            filesList.push({
+              id: `history-${item.id}`,
+              name: fileName,
+              url: fullUrl,
+              type: fileExt,
+              source: 'history',
+              uploadedAt: item.createdAt
+            });
+            seenUrls.add(normalizedUrl);
+          }
         }
       });
 
@@ -139,40 +167,82 @@ export function FileViewerModal({
     return ['pdf', 'jpg', 'jpeg', 'png', 'gif'].includes(type);
   };
 
-  const handleView = (file: FileItem) => {
+  const handleView = async (file: FileItem) => {
     console.log('[FileViewer] Opening file:', file.name);
     console.log('[FileViewer] File URL:', file.url);
     console.log('[FileViewer] File type:', file.type);
     console.log('[FileViewer] Can preview:', canPreview(file.type));
 
-    if (canPreview(file.type)) {
+    if (!canPreview(file.type)) {
+      console.log('[FileViewer] File type not previewable, downloading instead');
+      handleDownload(file);
+      return;
+    }
+
+    setViewingFile(file.id);
+    setError(null);
+
+    try {
+      // Verify file is accessible before showing preview
+      const response = await fetch(file.url, { method: 'HEAD' });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('The requested document is not available. It may have been moved or deleted.');
+        } else if (response.status === 403) {
+          throw new Error("You don't have permission to access this file.");
+        } else {
+          throw new Error(`Unable to access file: ${response.statusText}`);
+        }
+      }
+
       // For PDFs, ensure URL is complete and add toolbar parameter
       let viewUrl = file.url;
       if (file.type === 'pdf' && !viewUrl.includes('#toolbar')) {
         viewUrl = viewUrl + '#toolbar=1&navpanes=1&scrollbar=1';
       }
+
       setPreviewUrl(viewUrl);
       console.log('[FileViewer] Preview URL set to:', viewUrl);
-    } else {
-      console.log('[FileViewer] File type not previewable, downloading instead');
-      handleDownload(file);
+    } catch (err) {
+      console.error('[FileViewer] View failed:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Unable to preview this file';
+      setError(errorMessage);
+      alert(errorMessage);
+    } finally {
+      setViewingFile(null);
     }
   };
 
   const handleDownload = async (file: FileItem) => {
+    setError(null);
+    setDownloadProgress({ ...downloadProgress, [file.id]: 0 });
+
     try {
       console.log('[FileViewer] Starting download:', file.name);
+      console.log('[FileViewer] Download URL:', file.url);
 
       // Fetch the file as a blob to ensure proper binary handling
       const response = await fetch(file.url);
 
       if (!response.ok) {
-        throw new Error(`Failed to download file: ${response.statusText}`);
+        if (response.status === 404) {
+          throw new Error('The requested document is not available. It may have been moved or deleted.');
+        } else if (response.status === 403) {
+          throw new Error("You don't have permission to download this file.");
+        } else {
+          throw new Error(`Failed to download file: ${response.statusText}`);
+        }
       }
 
       const blob = await response.blob();
       console.log('[FileViewer] Downloaded blob size:', blob.size, 'bytes');
       console.log('[FileViewer] Downloaded blob type:', blob.type);
+
+      // Validate blob
+      if (blob.size === 0) {
+        throw new Error('The file appears to be empty or damaged.');
+      }
 
       // Create a blob URL for download
       const blobUrl = URL.createObjectURL(blob);
@@ -181,17 +251,50 @@ export function FileViewerModal({
       const link = document.createElement('a');
       link.href = blobUrl;
       link.download = file.name;
+      link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
 
-      // Cleanup
-      document.body.removeChild(link);
-      URL.revokeObjectURL(blobUrl);
+      // Cleanup after a short delay to ensure download started
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      }, 100);
 
+      setDownloadProgress({ ...downloadProgress, [file.id]: 100 });
       console.log('[FileViewer] Download completed:', file.name);
+
+      // Clear progress after 2 seconds
+      setTimeout(() => {
+        setDownloadProgress(prev => {
+          const newProgress = { ...prev };
+          delete newProgress[file.id];
+          return newProgress;
+        });
+      }, 2000);
     } catch (err) {
       console.error('[FileViewer] Download failed:', err);
-      alert(`Failed to download ${file.name}. Please try again or contact support.`);
+
+      let errorMessage = 'Failed to download this file.';
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      }
+
+      // Check for network errors
+      if (errorMessage.includes('NetworkError') || errorMessage.includes('Failed to fetch')) {
+        errorMessage = 'Unable to connect to server. Please check your internet connection.';
+      }
+
+      setError(errorMessage);
+      alert(`${errorMessage}\n\nFile: ${file.name}`);
+
+      setDownloadProgress(prev => {
+        const newProgress = { ...prev };
+        delete newProgress[file.id];
+        return newProgress;
+      });
     }
   };
 
@@ -349,25 +452,60 @@ export function FileViewerModal({
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
-                      {canPreview(file.type) && (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        {canPreview(file.type) && (
+                          <button
+                            onClick={() => handleView(file)}
+                            disabled={viewingFile === file.id}
+                            className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Preview file"
+                          >
+                            {viewingFile === file.id ? (
+                              <>
+                                <i className="fas fa-spinner fa-spin mr-2"></i>
+                                Loading...
+                              </>
+                            ) : (
+                              <>
+                                <i className="fas fa-eye mr-2"></i>
+                                View
+                              </>
+                            )}
+                          </button>
+                        )}
                         <button
-                          onClick={() => handleView(file)}
-                          className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
-                          title="Preview file"
+                          onClick={() => handleDownload(file)}
+                          disabled={downloadProgress[file.id] !== undefined}
+                          className="px-4 py-2 text-sm bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Download file"
                         >
-                          <i className="fas fa-eye mr-2"></i>
-                          View
+                          {downloadProgress[file.id] === 100 ? (
+                            <>
+                              <i className="fas fa-check mr-2"></i>
+                              Downloaded
+                            </>
+                          ) : downloadProgress[file.id] !== undefined ? (
+                            <>
+                              <i className="fas fa-spinner fa-spin mr-2"></i>
+                              Downloading...
+                            </>
+                          ) : (
+                            <>
+                              <i className="fas fa-download mr-2"></i>
+                              Download
+                            </>
+                          )}
                         </button>
+                      </div>
+                      {downloadProgress[file.id] !== undefined && downloadProgress[file.id] < 100 && (
+                        <div className="w-full bg-gray-200 rounded-full h-1.5">
+                          <div
+                            className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
+                            style={{ width: `${downloadProgress[file.id]}%` }}
+                          ></div>
+                        </div>
                       )}
-                      <button
-                        onClick={() => handleDownload(file)}
-                        className="px-4 py-2 text-sm bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors whitespace-nowrap"
-                        title="Download file"
-                      >
-                        <i className="fas fa-download mr-2"></i>
-                        Download
-                      </button>
                     </div>
                   </div>
                 </div>
