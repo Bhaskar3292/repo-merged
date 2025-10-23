@@ -4,6 +4,8 @@ URL configuration for facility_management project.
 from django.contrib import admin
 from django.urls import path, include
 from django.http import JsonResponse
+from django.conf import settings
+from django.conf.urls.static import static
 
 def health_check(request):
     """Simple health check endpoint"""
@@ -21,3 +23,7 @@ urlpatterns = [
     path('api/permissions/', include('permissions.urls')),
     path('api/permits/', include('permits.urls')),
 ]
+
+# Serve media files in development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

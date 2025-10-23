@@ -62,11 +62,13 @@ export function FileViewerModal({
 
     try {
       const filesList: FileItem[] = [];
+      const seenUrls = new Set<string>();
 
       // Add main document if exists
       if (mainDocumentUrl) {
         const fileName = mainDocumentUrl.split('/').pop() || 'permit-document';
         const fileExt = fileName.split('.').pop()?.toLowerCase() || '';
+        const normalizedUrl = mainDocumentUrl.toLowerCase();
 
         filesList.push({
           id: 'main-doc',
@@ -76,6 +78,7 @@ export function FileViewerModal({
           source: 'main',
           uploadedAt: new Date().toISOString()
         });
+        seenUrls.add(normalizedUrl);
       }
 
       // Fetch history to get additional documents
@@ -83,6 +86,14 @@ export function FileViewerModal({
 
       history.forEach((item, index) => {
         if (item.documentUrl) {
+          const normalizedUrl = item.documentUrl.toLowerCase();
+
+          // Skip if we've already added this URL (deduplication)
+          if (seenUrls.has(normalizedUrl)) {
+            console.log('[FileViewer] Skipping duplicate document:', item.documentUrl);
+            return;
+          }
+
           const fileName = item.documentUrl.split('/').pop() || `history-document-${index}`;
           const fileExt = fileName.split('.').pop()?.toLowerCase() || '';
 
@@ -94,12 +105,15 @@ export function FileViewerModal({
             source: 'history',
             uploadedAt: item.createdAt
           });
+          seenUrls.add(normalizedUrl);
         }
       });
 
+      console.log('[FileViewer] Loaded files (after deduplication):', filesList.length);
       setFiles(filesList);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load files');
+      console.error('[FileViewer] Error loading files:', err);
     } finally {
       setIsLoading(false);
     }
@@ -145,14 +159,40 @@ export function FileViewerModal({
     }
   };
 
-  const handleDownload = (file: FileItem) => {
-    const link = document.createElement('a');
-    link.href = file.url;
-    link.download = file.name;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownload = async (file: FileItem) => {
+    try {
+      console.log('[FileViewer] Starting download:', file.name);
+
+      // Fetch the file as a blob to ensure proper binary handling
+      const response = await fetch(file.url);
+
+      if (!response.ok) {
+        throw new Error(`Failed to download file: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      console.log('[FileViewer] Downloaded blob size:', blob.size, 'bytes');
+      console.log('[FileViewer] Downloaded blob type:', blob.type);
+
+      // Create a blob URL for download
+      const blobUrl = URL.createObjectURL(blob);
+
+      // Create download link
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = file.name;
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+
+      console.log('[FileViewer] Download completed:', file.name);
+    } catch (err) {
+      console.error('[FileViewer] Download failed:', err);
+      alert(`Failed to download ${file.name}. Please try again or contact support.`);
+    }
   };
 
   const formatDate = (dateString: string): string => {
