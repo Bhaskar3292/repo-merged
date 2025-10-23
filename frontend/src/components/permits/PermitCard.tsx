@@ -56,7 +56,7 @@ export function PermitCard({ permit, onRenew, onViewFiles }: PermitCardProps) {
           {/* Documents button - Always shown for all permits */}
           <button
             onClick={handleViewFiles}
-            className="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors whitespace-nowrap flex items-center gap-2"
+            className="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors whitespace-nowrap justify-center gap-2"
             title="View and download documents"
           >
             <i className="fas fa-file-alt"></i>
