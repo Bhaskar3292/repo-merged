@@ -1,5 +1,11 @@
-import React from 'react';
 import { PermitStats, PermitFilter } from '../../types/permit';
+import {
+  faFileAlt,             // Total
+  faCheckCircle,         // Active
+  faTriangleExclamation, // Expiring Soon
+  faTimesCircle          // Expired
+} from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 interface SummaryCardsProps {
   stats: PermitStats;
@@ -8,51 +14,43 @@ interface SummaryCardsProps {
 }
 
 export function SummaryCards({ stats, isLoading, onFilterChange }: SummaryCardsProps) {
-  const cards: Array<{
-    title: string;
-    value: number;
-    icon: string;
-    bgColor: string;
-    iconColor: string;
-    textColor: string;
-    filter: PermitFilter;
-  }> = [
+  const cards = [
     {
       title: 'Total Permits',
       value: stats.total,
-      icon: 'fa-file-alt',
+      icon: faFileAlt,
       bgColor: 'bg-blue-100',
       iconColor: 'text-blue-600',
       textColor: 'text-gray-800',
-      filter: 'all'
+      filter: 'all' as PermitFilter,
     },
     {
       title: 'Active',
       value: stats.active,
-      icon: 'fa-check-circle',
+      icon: faCheckCircle,
       bgColor: 'bg-green-100',
       iconColor: 'text-green-600',
       textColor: 'text-green-600',
-      filter: 'active'
+      filter: 'active' as PermitFilter,
     },
     {
       title: 'Expiring Soon',
       value: stats.expiring,
-      icon: 'fa-exclamation-triangle',
+      icon: faTriangleExclamation,
       bgColor: 'bg-yellow-100',
       iconColor: 'text-yellow-600',
       textColor: 'text-yellow-600',
-      filter: 'expiring'
+      filter: 'expiring' as PermitFilter,
     },
     {
       title: 'Expired',
       value: stats.expired,
-      icon: 'fa-times-circle',
+      icon: faTimesCircle,
       bgColor: 'bg-red-100',
       iconColor: 'text-red-600',
       textColor: 'text-red-600',
-      filter: 'expired'
-    }
+      filter: 'expired' as PermitFilter,
+    },
   ];
 
   return (
@@ -71,8 +69,8 @@ export function SummaryCards({ stats, isLoading, onFilterChange }: SummaryCardsP
                 {isLoading ? '...' : card.value}
               </p>
             </div>
-            <div className={`${card.bgColor} p-4 rounded-lg`}>
-              <i className={`fas ${card.icon} ${card.iconColor} text-2xl`}></i>
+            <div className={`${card.bgColor} p-2 rounded-lg`}>
+              <FontAwesomeIcon icon={card.icon} className={`${card.iconColor} text-2xl`} />
             </div>
           </div>
         </button>
