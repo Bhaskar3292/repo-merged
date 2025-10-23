@@ -8,13 +8,39 @@ interface PermitCardProps {
   onViewFiles: (permitId: number, permitName: string, documentUrl: string | null) => void;
 }
 
+const normalizeRenewalUrl = (url: string | null | undefined): string | null => {
+  if (!url) return null;
+
+  const trimmedUrl = url.trim();
+  if (!trimmedUrl) return null;
+
+  // Check if it's a valid URL pattern
+  try {
+    // If it doesn't start with http:// or https://, add https://
+    if (!trimmedUrl.startsWith('http://') && !trimmedUrl.startsWith('https://')) {
+      return `https://${trimmedUrl}`;
+    }
+    return trimmedUrl;
+  } catch {
+    return null;
+  }
+};
+
 export function PermitCard({ permit, onRenew, onViewFiles }: PermitCardProps) {
   const status = calculateStatus(permit);
   const statusBadge = getStatusBadge(status);
   const borderColor = getBorderColor(status);
+  const renewalUrl = normalizeRenewalUrl(permit.renewalUrl);
 
   const handleViewFiles = () => {
     onViewFiles(permit.id, permit.name, permit.documentUrl);
+  };
+
+  const handleRenewOnline = () => {
+    if (renewalUrl) {
+      console.log('[PermitCard] Opening renewal URL:', renewalUrl);
+      window.open(renewalUrl, '_blank', 'noopener,noreferrer');
+    }
   };
 
   return (
@@ -56,7 +82,7 @@ export function PermitCard({ permit, onRenew, onViewFiles }: PermitCardProps) {
           {/* Documents button - Always shown for all permits */}
           <button
             onClick={handleViewFiles}
-            className="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors whitespace-nowrap justify-center gap-2"
+            className="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors whitespace-nowrap flex items-center justify-center gap-2"
             title="View and download documents"
           >
             <i className="fas fa-file-alt"></i>
@@ -68,22 +94,20 @@ export function PermitCard({ permit, onRenew, onViewFiles }: PermitCardProps) {
           {/* Expiring/Expired Permits: Show Renew Online and Upload Renewal */}
           {(status === 'expiring' || status === 'expired') && (
             <>
-              {permit.renewalUrl && (
-                <a
-                  href={permit.renewalUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center whitespace-nowrap flex items-center gap-2"
+              {renewalUrl && (
+                <button
+                  onClick={handleRenewOnline}
+                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
                   title="Apply for renewal on external website"
                 >
                   <i className="fas fa-external-link-alt"></i>
                   <span>Renew Online</span>
-                </a>
+                </button>
               )}
 
               <button
                 onClick={() => onRenew(permit.id, permit.name)}
-                className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap flex items-center gap-2"
+                className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
                 title="Upload renewed license document to update permit information"
               >
                 <i className="fas fa-upload"></i>
