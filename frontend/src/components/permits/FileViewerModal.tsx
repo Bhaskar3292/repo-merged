@@ -167,53 +167,36 @@ export function FileViewerModal({
     return ['pdf', 'jpg', 'jpeg', 'png', 'gif'].includes(type);
   };
 
-  const handleView = async (file: FileItem) => {
-    console.log('[FileViewer] Opening file:', file.name);
-    console.log('[FileViewer] File URL:', file.url);
-    console.log('[FileViewer] File type:', file.type);
-    console.log('[FileViewer] Can preview:', canPreview(file.type));
+ // No longer needs to be 'async'
+const handleView = (file: FileItem) => {
+  console.log('[FileViewer] Opening file:', file.name);
+  console.log('[FileViewer] File URL:', file.url);
+  console.log('[FileViewer] File type:', file.type);
+  console.log('[FileViewer] Can preview:', canPreview(file.type));
 
-    if (!canPreview(file.type)) {
-      console.log('[FileViewer] File type not previewable, downloading instead');
-      handleDownload(file);
-      return;
-    }
+  if (!canPreview(file.type)) {
+    console.log('[FileViewer] File type not previewable, downloading instead');
+    handleDownload(file);
+    return;
+  }
 
-    setViewingFile(file.id);
-    setError(null);
+  // --- THIS IS THE FIX ---
+  // We will open the file in a new tab instead of setting a previewUrl.
+  // This completely bypasses the 'X-Frame-Options' error.
 
-    try {
-      // Verify file is accessible before showing preview
-      const response = await fetch(file.url, { method: 'HEAD' });
+  let viewUrl = file.url;
+  
+  // You can keep your PDF toolbar logic
+  if (file.type === 'pdf' && !viewUrl.includes('#toolbar')) {
+    viewUrl = viewUrl + '#toolbar=1&navpanes=1&scrollbar=1';
+  }
 
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error('The requested document is not available. It may have been moved or deleted.');
-        } else if (response.status === 403) {
-          throw new Error("You don't have permission to access this file.");
-        } else {
-          throw new Error(`Unable to access file: ${response.statusText}`);
-        }
-      }
+  console.log('[FileViewer] Opening URL in new tab:', viewUrl);
+  
+  // Open the file in a new browser tab
+  window.open(viewUrl, '_blank');
 
-      // For PDFs, ensure URL is complete and add toolbar parameter
-      let viewUrl = file.url;
-      if (file.type === 'pdf' && !viewUrl.includes('#toolbar')) {
-        viewUrl = viewUrl + '#toolbar=1&navpanes=1&scrollbar=1';
-      }
-
-      setPreviewUrl(viewUrl);
-      console.log('[FileViewer] Preview URL set to:', viewUrl);
-    } catch (err) {
-      console.error('[FileViewer] View failed:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Unable to preview this file';
-      setError(errorMessage);
-      alert(errorMessage);
-    } finally {
-      setViewingFile(null);
-    }
-  };
-
+};
   const handleDownload = async (file: FileItem) => {
     setError(null);
     setDownloadProgress({ ...downloadProgress, [file.id]: 0 });
