@@ -20,7 +20,7 @@ urlpatterns = [
     path('tanks/<int:pk>/', views.TankDetailView.as_view(), name='tank_detail'),
 
     # Stats
-    path('stats/', views.dashboard_stats, name='dashboard_stats'),
+    path('dashboard-stats/', views.dashboard_stats, name='dashboard_stats'),
 
     # Count endpoints
     path('locations/<int:location_id>/tanks/count/', views.location_tank_count, name='location_tank_count'),
