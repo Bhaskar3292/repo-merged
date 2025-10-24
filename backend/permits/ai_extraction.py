@@ -35,8 +35,9 @@ FIELDS TO EXTRACT:
 - license_type: Document type/title (e.g., "Operating Permit", "Business License", "Fire Safety Permit")
 - license_no: Primary identifier/number (look for "License #", "Permit No.", "ID", etc.)
 - issue_date: Issue/Issuance date in YYYY-MM-DD format (labels: "Issued", "Issue Date", "Date Issued", "Effective")
-- expiry_date: Expiration date in YYYY-MM-DD format (labels: "Expiry", "Expiration", "Expires", "Valid Until", "Valid Through", "Valid Thru", "Through", "Not After", "Expiration Date")
-- issued_by: Issuing authority/department/agency
+- expiry_date: Expiration date in YYYY-MM-DD format (labels: "Expiry", "Expiration", "Expires", "Valid Until", "Valid Thru", "Through", "Not After", "Expiration Date")
+- issued_by: The name of the issuing government agency. **CRITICAL RULE: If no "Issued By" label is present, you MUST extract the official agency name from the document's main header or letterhead.** (e.g., "CITY OF PHILADELPHIA DEPARTMENT OF PUBLIC HEALTH")
+- renewal_url: The full website URL for online renewal (look for "renew online", "www.", "http", etc.)
 
 DATE EXTRACTION RULES:
 - Look for BOTH US format (MM/DD/YYYY) and international (DD/MM/YYYY, YYYY-MM-DD)
@@ -52,8 +53,8 @@ CRITICAL FORMATTING RULES:
 - All fields are nullable (use null, not empty string)
 
 EXAMPLE OUTPUT:
-{"license_type": "Air Pollution License", "license_no": "APL16-000083", "issue_date": "2021-10-01", "expiry_date": "2021-10-31", "issued_by": "CITY OF PHILADELPHIA DEPARTMENT OF PUBLIC HEALTH"}"""
-
+{"license_type": "Air Pollution License", "license_no": "APL16-000083", "issue_date": "2021-10-01", "expiry_date": "2021-10-31", "issued_by": "CITY OF PHILADELPHIA DEPARTMENT OF PUBLIC HEALTH", "renewal_url": "www.citizenserve.com/philadelphia"}"""
+    
     PERMIT_POLICY = {
         'TOBACCO': 365,
         'MV REPAIR': 365,
