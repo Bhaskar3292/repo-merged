@@ -1,6 +1,20 @@
 from django.db import models
 from django.conf import settings
 from datetime import date, timedelta
+import os
+
+
+def permit_upload_path(instance, filename):
+    """
+    Generate upload path for permit documents based on location.
+    Returns: permits/{location_id}-{location_name}/{filename}
+    Example: permits/67266-lowber/air_permit.pdf
+    """
+    if instance.facility:
+        location_name = instance.facility.name.lower().replace(' ', '-')
+        location_folder = f"{instance.facility.id}-{location_name}"
+        return os.path.join('permits', location_folder, filename)
+    return os.path.join('permits', filename)
 
 
 class Permit(models.Model):
@@ -20,7 +34,7 @@ class Permit(models.Model):
     )
 
     renewal_url = models.URLField(max_length=512, null=True, blank=True)
-    document = models.FileField(upload_to='permits/', null=True, blank=True)
+    document = models.FileField(upload_to=permit_upload_path, null=True, blank=True)
 
     facility = models.ForeignKey(
         'facilities.Location',
