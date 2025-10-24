@@ -101,22 +101,20 @@ class FacilityProfileSerializer(serializers.ModelSerializer):
         return instance
 class LocationSerializer(serializers.ModelSerializer):
     """
-    Serializer for Location model
+    Serializer for Location model with efficient count annotations
     """
     created_by_username = serializers.CharField(source='created_by.username', read_only=True)
-    tank_count = serializers.SerializerMethodField()
+    tank_count = serializers.IntegerField(read_only=True)
+    permit_count = serializers.IntegerField(read_only=True)
     full_address = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Location
         fields = ['id', 'name', 'street_address', 'city', 'state', 'zip_code',
                  'country', 'facility_type', 'icon', 'description',
                  'created_by', 'created_by_username', 'created_at', 'updated_at',
-                 'is_active', 'tank_count', 'full_address']
-        read_only_fields = ['created_by', 'created_at', 'updated_at']
-    
-    def get_tank_count(self, obj):
-        return obj.tanks.count()
+                 'is_active', 'tank_count', 'permit_count', 'full_address']
+        read_only_fields = ['created_by', 'created_at', 'updated_at', 'tank_count', 'permit_count']
     
     
     def get_full_address(self, obj):

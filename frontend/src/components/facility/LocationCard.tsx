@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2, MapPin, Eye, Edit2Icon as Edit, Trash2, FileCheck, Fuel } from 'lucide-react';
-import { apiService } from '../../services/api';
 
 interface Location {
   id: number;
@@ -16,6 +15,8 @@ interface Location {
   created_by_username: string;
   created_at: string;
   is_active: boolean;
+  tank_count: number;
+  permit_count: number;
 }
 
 interface LocationCardProps {
@@ -28,31 +29,6 @@ interface LocationCardProps {
 
 export function LocationCard({ location, onEdit, onDelete, canEdit, canDelete }: LocationCardProps) {
   const navigate = useNavigate();
-  const [tankCount, setTankCount] = useState<number>(0);
-  const [permitCount, setPermitCount] = useState<number>(0);
-  const [loadingCounts, setLoadingCounts] = useState(true);
-
-  useEffect(() => {
-    loadCounts();
-  }, [location.id]);
-
-  const loadCounts = async () => {
-    try {
-      setLoadingCounts(true);
-      const [tanks, permits] = await Promise.all([
-        apiService.getTanksByLocationid(location.id),
-        apiService.getPermits(location.id)
-      ]);
-      setTankCount(Array.isArray(tanks) ? tanks.length : 0);
-      setPermitCount(Array.isArray(permits) ? permits.length : 0);
-    } catch (error) {
-      console.error('Failed to load counts:', error);
-      setTankCount(0);
-      setPermitCount(0);
-    } finally {
-      setLoadingCounts(false);
-    }
-  };
 
   const handleCardClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button')) return;
@@ -112,7 +88,7 @@ export function LocationCard({ location, onEdit, onDelete, canEdit, canDelete }:
 
           {/* Action Buttons */}
           <div className="flex items-center space-x-1 ml-2">
-        
+
             {canEdit && (
               <button
                 onClick={handleEditClick}
@@ -159,11 +135,7 @@ export function LocationCard({ location, onEdit, onDelete, canEdit, canDelete }:
           >
             <div className="flex items-center justify-center space-x-2 mb-1">
               <Fuel className="h-4 w-4 text-blue-600 group-hover/tanks:scale-110 transition-transform" />
-              {loadingCounts ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent"></div>
-              ) : (
-                <p className="text-xl font-bold text-blue-600">{tankCount}</p>
-              )}
+              <p className="text-xl font-bold text-blue-600">{location.tank_count || 0}</p>
             </div>
             <p className="text-xs text-gray-600 font-medium">Tanks</p>
           </button>
@@ -175,11 +147,7 @@ export function LocationCard({ location, onEdit, onDelete, canEdit, canDelete }:
           >
             <div className="flex items-center justify-center space-x-2 mb-1">
               <FileCheck className="h-4 w-4 text-green-600 group-hover/permits:scale-110 transition-transform" />
-              {loadingCounts ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-green-600 border-t-transparent"></div>
-              ) : (
-                <p className="text-xl font-bold text-green-600">{permitCount}</p>
-              )}
+              <p className="text-xl font-bold text-green-600">{location.permit_count || 0}</p>
             </div>
             <p className="text-xs text-gray-600 font-medium">Permits</p>
           </button>

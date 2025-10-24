@@ -50,6 +50,7 @@ class LocationListCreateView(generics.ListCreateAPIView):
     
     def get_queryset(self):
         from django.db.models import Count
+        from permits.models import Permit
         user = self.request.user
 
         # Filter locations based on user's assigned locations
@@ -61,8 +62,10 @@ class LocationListCreateView(generics.ListCreateAPIView):
             accessible_ids = user.get_accessible_location_ids()
             queryset = queryset.filter(id__in=accessible_ids)
 
+        # Annotate with counts (efficient single query)
         queryset = queryset.annotate(
-            tank_count=Count('tanks', distinct=True)
+            tank_count=Count('tanks', distinct=True),
+            permit_count=Count('permits', distinct=True)
         ).order_by('name')
 
         return queryset
