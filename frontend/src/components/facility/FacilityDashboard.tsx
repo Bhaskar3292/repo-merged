@@ -17,52 +17,52 @@ export function FacilityDashboard({ selectedFacility, onViewChange }: FacilityDa
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   useEffect(() => {
-    if (selectedFacility?.id) {
-      loadStats();
-    } else {
-      // Reset stats when no facility is selected
+    loadStats();
+  }, [selectedFacility?.id]);
+
+  const loadStats = async () => {
+    try {
+      setLoading(true);
+
+      if (selectedFacility?.id) {
+        // Load location-specific stats
+        const tanksResponse = await apiService.getTanksByFacility(selectedFacility.id);
+        const tanks = tanksResponse.results || [];
+
+        const activeTanks = tanks.filter((tank: any) => {
+          const status = tank.status?.toLowerCase();
+          return status === 'active' || status === 'operational';
+        }).length;
+
+        const tankTestingIssues = 0;
+
+        const dashboardData = await apiService.getLocationDashboard(selectedFacility.id);
+        const permitsDue = dashboardData.permits_due_count || 0;
+
+        setStats({
+          activeTanks,
+          tankTestingIssues,
+          permitsDue
+        });
+      } else {
+        // Load global stats across all locations
+        const globalStats = await apiService.getDashboardStats();
+
+        setStats({
+          activeTanks: globalStats.active_tanks || 0,
+          tankTestingIssues: 0,
+          permitsDue: globalStats.permits_due_count || 0
+        });
+      }
+
+      setLastUpdated(new Date());
+    } catch (error) {
+      console.error('Failed to load dashboard stats:', error);
       setStats({
         activeTanks: 0,
         tankTestingIssues: 0,
         permitsDue: 0
       });
-      setLastUpdated(null);
-    }
-  }, [selectedFacility?.id]);
-
-  const loadStats = async () => {
-    if (!selectedFacility?.id) return;
-
-    try {
-      setLoading(true);
-
-      // Fetch tanks for this location using the correct method
-      const tanksResponse = await apiService.getTanksByFacility(selectedFacility.id);
-      const tanks = tanksResponse.results || [];
-
-      // Count active tanks
-      const activeTanks = tanks.filter((tank: any) => {
-        const status = tank.status?.toLowerCase();
-        return status === 'active' || status === 'operational';
-      }).length;
-
-      // Tank Testing Issues: Currently no tank testing data system exists
-      // The Tank Testing page shows placeholder UI with no real data
-      // Count remains 0 until a tank testing system is implemented
-      const tankTestingIssues = 0;
-
-      // Fetch location dashboard to get permits due count
-      const dashboardData = await apiService.getLocationDashboard(selectedFacility.id);
-      const permitsDue = dashboardData.permits_due_count || 0;
-
-      setStats({
-        activeTanks,
-        tankTestingIssues,
-        permitsDue
-      });
-      setLastUpdated(new Date());
-    } catch (error) {
-      console.error('Failed to load dashboard stats:', error);
     } finally {
       setLoading(false);
     }
@@ -136,8 +136,8 @@ export function FacilityDashboard({ selectedFacility, onViewChange }: FacilityDa
       {!selectedFacility && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
           <Building2 className="h-12 w-12 text-blue-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-blue-900 mb-2">Welcome to Facility Management</h3>
-          <p className="text-blue-700">Select a facility from the search bar above to view detailed dashboard information.</p>
+          <h3 className="text-lg font-medium text-blue-900 mb-2">Global Dashboard</h3>
+          <p className="text-blue-700">Viewing statistics across all locations. Select a facility from the search bar to view location-specific details.</p>
         </div>
       )}
 
@@ -155,20 +155,15 @@ export function FacilityDashboard({ selectedFacility, onViewChange }: FacilityDa
             <button
               key={index}
               onClick={card.onClick}
-              disabled={!selectedFacility}
-              className={`bg-white rounded-lg p-6 shadow-sm border border-gray-200 text-left transition-all ${
-                selectedFacility
-                  ? 'hover:shadow-md hover:border-gray-300 cursor-pointer transform hover:-translate-y-0.5'
-                  : 'opacity-50 cursor-not-allowed'
-              }`}
+              className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 text-left transition-all hover:shadow-lg hover:border-gray-300 cursor-pointer transform hover:-translate-y-1 hover:scale-105"
             >
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">{card.title}</p>
-                  <p className="text-2xl font-bold text-gray-900">{card.value}</p>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-600 mb-2">{card.title}</p>
+                  <p className="text-3xl font-bold text-gray-900">{card.value}</p>
                 </div>
-                <div className={`p-3 rounded-lg ${colorClasses[card.color as keyof typeof colorClasses]}`}>
-                  <Icon className="h-6 w-6" />
+                <div className={`p-4 rounded-xl ${colorClasses[card.color as keyof typeof colorClasses]} ml-4`}>
+                  <Icon className="h-7 w-7" />
                 </div>
               </div>
             </button>

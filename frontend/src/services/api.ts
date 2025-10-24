@@ -502,6 +502,18 @@ class ApiService {
   }
 
   /**
+   * Get global dashboard stats (all locations)
+   */
+  async getDashboardStats(): Promise<any> {
+    try {
+      const response = await api.get('/api/facilities/dashboard-stats/');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to get dashboard stats');
+    }
+  }
+
+  /**
    * Update dashboard section
    */
   async updateDashboardSection(sectionId: number, data: any): Promise<any> {
