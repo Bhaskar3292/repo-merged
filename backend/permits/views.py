@@ -203,17 +203,21 @@ class PermitViewSet(viewsets.ModelViewSet):
             notes='Manual permit creation via API'
         )
 
-    @action(detail=True, methods=['post'], url_path='renew')
+    @action(detail=True, methods=['post', 'patch'], url_path='renew')
     def renew_permit(self, request, pk=None):
         """
         Upload renewal document for existing permit with AI extraction
 
-        Creates new permit with parent relationship and deactivates original
+        UPDATES the existing permit with new data (dates, license number, document)
         Returns HTTP 422 if extraction needs manual review
 
-        POST /api/permits/{id}/renew/
+        POST/PATCH /api/permits/{id}/renew/
+
+        Scenarios:
+        1. Same license number (e.g., Air Pollution): Updates dates only
+        2. New license number (e.g., Tobacco): Updates dates AND license number
         """
-        original_permit = self.get_object()
+        permit = self.get_object()
 
         if 'file' not in request.FILES:
             return Response(
@@ -222,9 +226,11 @@ class PermitViewSet(viewsets.ModelViewSet):
             )
 
         uploaded_file = request.FILES['file']
+        old_number = permit.number
+        old_expiry = permit.expiry_date
 
         try:
-            logger.info(f"Processing renewal for permit {original_permit.id}")
+            logger.info(f"Processing renewal UPDATE for permit {permit.id} (#{permit.number})")
 
             extractor = PermitDataExtractor()
 
@@ -239,74 +245,71 @@ class PermitViewSet(viewsets.ModelViewSet):
                     {
                         'needs_review': True,
                         'message': extracted_data.get('inference_notes', 'Some fields could not be extracted'),
-                        'original_permit_id': original_permit.id,
+                        'permit_id': permit.id,
                         'suggested': {
-                            'license_type': extracted_data.get('license_type') or original_permit.name,
-                            'license_no': extracted_data.get('license_no') or original_permit.number,
+                            'license_type': extracted_data.get('license_type') or permit.name,
+                            'license_no': extracted_data.get('license_no') or permit.number,
                             'issue_date': extracted_data.get('issue_date'),
                             'expiry_date': extracted_data.get('expiry_date'),
-                            'issued_by': extracted_data.get('issued_by') or original_permit.issued_by,
+                            'issued_by': extracted_data.get('issued_by') or permit.issued_by,
                         }
                     },
                     status=status.HTTP_422_UNPROCESSABLE_ENTITY
                 )
 
-            issue_date = None
+            # Parse issue date
+            issue_date = permit.issue_date  # Keep existing if extraction fails
             if extracted_data.get('issue_date'):
                 try:
                     issue_date = datetime.strptime(extracted_data['issue_date'], '%Y-%m-%d').date()
                 except (ValueError, TypeError):
                     logger.warning(f"Invalid issue_date format: {extracted_data.get('issue_date')}")
 
-            expiry_date = None
+            # Parse expiry date
+            expiry_date = permit.expiry_date  # Keep existing if extraction fails
             if extracted_data.get('expiry_date'):
                 try:
                     expiry_date = datetime.strptime(extracted_data['expiry_date'], '%Y-%m-%d').date()
                 except (ValueError, TypeError):
-                    expiry_date = original_permit.expiry_date
+                    logger.warning(f"Invalid expiry_date format: {extracted_data.get('expiry_date')}")
 
-            if not expiry_date:
-                expiry_date = original_permit.expiry_date
+            # Extract license number (may be same or different)
+            new_number = extracted_data.get('license_no') or permit.number
 
-            original_permit.is_active = False
-            original_permit.save()
+            # Extract issuing authority
+            issued_by = extracted_data.get('issued_by') or permit.issued_by
 
-            uploaded_file.seek(0)
+            # UPDATE the existing permit record
+            permit.number = new_number
+            permit.issue_date = issue_date
+            permit.expiry_date = expiry_date
+            permit.issued_by = issued_by
+            permit.document = uploaded_file
+            permit.is_active = True
+            permit.save()
 
-            renewed_permit = Permit.objects.create(
-                name=original_permit.name,
-                number=extracted_data.get('license_no') or original_permit.number,
-                issue_date=issue_date,
-                expiry_date=expiry_date,
-                issued_by=extracted_data.get('issued_by') or original_permit.issued_by,
-                facility=original_permit.facility,
-                uploaded_by=request.user,
-                document=uploaded_file,
-                parent_permit=original_permit,
-                is_active=True
-            )
+            logger.info(f"Permit updated successfully: ID={permit.id}")
+            logger.info(f"  Old license #: {old_number} → New license #: {new_number}")
+            logger.info(f"  Old expiry: {old_expiry} → New expiry: {expiry_date}")
 
-            PermitHistory.objects.create(
-                permit=renewed_permit,
-                action='Permit renewed with AI extraction',
-                user=request.user,
-                notes=extracted_data.get('inference_notes', f'Renewed from permit #{original_permit.number}'),
-                document_url=renewed_permit.document_url
-            )
+            # Create history entry for the renewal
+            if new_number != old_number:
+                history_notes = f'Permit renewed. License number changed from {old_number} to {new_number}. New expiry: {expiry_date}'
+            else:
+                history_notes = f'Permit renewed. License number unchanged. New expiry: {expiry_date}'
 
             PermitHistory.objects.create(
-                permit=original_permit,
-                action='Permit superseded',
+                permit=permit,
+                action='Permit renewed (updated)',
                 user=request.user,
-                notes=f'Superseded by permit #{renewed_permit.number}'
+                notes=history_notes,
+                document_url=permit.document_url
             )
 
-            logger.info(f"Permit renewed successfully: Original={original_permit.id}, New={renewed_permit.id}")
-
-            serializer = PermitSerializer(renewed_permit)
+            serializer = PermitSerializer(permit)
             return Response(
                 serializer.data,
-                status=status.HTTP_201_CREATED
+                status=status.HTTP_200_OK
             )
 
         except Exception as e:

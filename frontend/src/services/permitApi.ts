@@ -120,18 +120,21 @@ class PermitApiService {
   async uploadRenewal(permitId: number, file: File): Promise<Permit> {
     try {
       console.log('[PermitAPI] Uploading renewal for permit:', permitId);
+      console.log('[PermitAPI] This will UPDATE the existing permit record');
 
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('facility', '0');
 
-      const response = await api.post(`/api/permits/${permitId}/renew/`, formData, {
+      // Use PATCH for semantic clarity (updating existing resource)
+      // Backend also accepts POST for backwards compatibility
+      const response = await api.patch(`/api/permits/${permitId}/renew/`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
       console.log('[PermitAPI] Renewal response:', response.data);
+      console.log('[PermitAPI] Permit updated successfully');
 
       const transformed = transformPermitData(response.data);
       console.log('[PermitAPI] Transformed renewal response:', transformed);
@@ -140,7 +143,13 @@ class PermitApiService {
     } catch (error: any) {
       console.error('[PermitAPI] Error uploading renewal:', error);
       console.error('[PermitAPI] Error response:', error.response?.data);
-      throw new Error(error.response?.data?.error || 'Failed to upload renewal');
+
+      // Provide more specific error messages
+      const errorMessage = error.response?.data?.error ||
+                          error.response?.data?.message ||
+                          'Failed to upload renewal';
+
+      throw new Error(errorMessage);
     }
   }
 
