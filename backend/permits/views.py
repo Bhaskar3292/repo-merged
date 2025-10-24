@@ -182,7 +182,7 @@ class PermitViewSet(viewsets.ModelViewSet):
         """
         Filter permits by facility if provided in query params
         """
-        queryset = Permit.objects.filter(is_active=True)
+        queryset = Permit.objects.all()
         facility_id = self.request.query_params.get('facility', None)
 
         if facility_id:

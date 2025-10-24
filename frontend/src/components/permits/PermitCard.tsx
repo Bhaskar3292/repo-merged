@@ -92,7 +92,7 @@ export function PermitCard({ permit, onRenew, onViewFiles }: PermitCardProps) {
           {/* Active Permits: Show Documents only (no additional buttons) */}
 
           {/* Expiring/Expired Permits: Show Renew Online and Upload Renewal */}
-          {(status === 'expiring' || status === 'expired') && (
+          {(status === 'expiring' || status === 'expired' || status === 'superseded') && (
             <>
               {renewalUrl && (
                 <button
