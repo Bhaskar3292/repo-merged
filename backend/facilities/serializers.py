@@ -155,15 +155,41 @@ class DashboardSectionDataSerializer(serializers.ModelSerializer):
 
 class LocationDashboardSerializer(serializers.ModelSerializer):
     """
-    Serializer for LocationDashboard model
+    Serializer for LocationDashboard model with permits due count
     """
     sections = DashboardSectionDataSerializer(many=True, read_only=True)
     location_name = serializers.CharField(source='location.name', read_only=True)
-    
+    permits_due_count = serializers.SerializerMethodField()
+    active_tanks = serializers.SerializerMethodField()
+
     class Meta:
         model = LocationDashboard
-        fields = ['id', 'location', 'location_name', 'sections', 'created_at', 'updated_at']
+        fields = ['id', 'location', 'location_name', 'sections', 'permits_due_count',
+                 'active_tanks', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
+
+    def get_permits_due_count(self, obj):
+        """Calculate permits due for this location (expiring within 30 days)"""
+        from permits.models import Permit
+        from datetime import timedelta
+        from django.utils import timezone
+
+        today = timezone.now().date()
+        due_date = today + timedelta(days=30)
+
+        return Permit.objects.filter(
+            facility=obj.location,
+            expiry_date__lte=due_date,
+            is_active=True
+        ).count()
+
+    def get_active_tanks(self, obj):
+        """Get count of active tanks for this location"""
+        from .models import Tank
+        return Tank.objects.filter(
+            location=obj.location,
+            status='active'
+        ).count()
 
 
 class TankSerializer(serializers.ModelSerializer):

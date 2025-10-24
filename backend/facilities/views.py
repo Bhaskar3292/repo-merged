@@ -304,10 +304,23 @@ def dashboard_stats(request):
     Get dashboard statistics
     Any authenticated user can view dashboard stats
     """
+    from permits.models import Permit
+    from datetime import timedelta
+
+    # Calculate permits due (expiring within 30 days or already expired)
+    today = timezone.now().date()
+    due_date = today + timedelta(days=30)
+
+    permits_due_count = Permit.objects.filter(
+        expiry_date__lte=due_date,
+        is_active=True
+    ).count()
+
     stats = {
         'total_locations': Location.objects.filter(is_active=True).count(),
         'total_tanks': Tank.objects.count(),
         'active_tanks': Tank.objects.filter(status='active').count(),
+        'permits_due_count': permits_due_count,
     }
 
     return Response(stats)

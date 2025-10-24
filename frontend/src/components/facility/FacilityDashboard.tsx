@@ -10,7 +10,8 @@ interface FacilityDashboardProps {
 export function FacilityDashboard({ selectedFacility, onViewChange }: FacilityDashboardProps) {
   const [stats, setStats] = useState({
     activeTanks: 0,
-    tankTestingIssues: 0
+    tankTestingIssues: 0,
+    permitsDue: 0
   });
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -22,7 +23,8 @@ export function FacilityDashboard({ selectedFacility, onViewChange }: FacilityDa
       // Reset stats when no facility is selected
       setStats({
         activeTanks: 0,
-        tankTestingIssues: 0
+        tankTestingIssues: 0,
+        permitsDue: 0
       });
       setLastUpdated(null);
     }
@@ -49,9 +51,14 @@ export function FacilityDashboard({ selectedFacility, onViewChange }: FacilityDa
       // Count remains 0 until a tank testing system is implemented
       const tankTestingIssues = 0;
 
+      // Fetch location dashboard to get permits due count
+      const dashboardData = await apiService.getLocationDashboard(selectedFacility.id);
+      const permitsDue = dashboardData.permits_due_count || 0;
+
       setStats({
         activeTanks,
-        tankTestingIssues
+        tankTestingIssues,
+        permitsDue
       });
       setLastUpdated(new Date());
     } catch (error) {
@@ -85,6 +92,13 @@ export function FacilityDashboard({ selectedFacility, onViewChange }: FacilityDa
       icon: AlertTriangle,
       color: 'red',
       onClick: () => handleCardClick('releases')
+    },
+    {
+      title: 'Permits Due',
+      value: loading ? '...' : stats.permitsDue.toString(),
+      icon: FileText,
+      color: 'yellow',
+      onClick: () => handleCardClick('permits')
     }
   ];
 
@@ -128,7 +142,7 @@ export function FacilityDashboard({ selectedFacility, onViewChange }: FacilityDa
       )}
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {metricCards.map((card, index) => {
           const Icon = card.icon;
           const colorClasses = {
