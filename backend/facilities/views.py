@@ -65,7 +65,7 @@ class LocationListCreateView(generics.ListCreateAPIView):
         # Annotate with counts (efficient single query)
         queryset = queryset.annotate(
             tank_count=Count('tanks', distinct=True),
-            permit_count=Count('permits', distinct=True)
+            permit_count=Count('facility_permits', distinct=True)
         ).order_by('name')
 
         return queryset
