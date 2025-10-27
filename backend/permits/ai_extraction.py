@@ -37,7 +37,17 @@ FIELDS TO EXTRACT:
 - issue_date: Issue/Issuance date in YYYY-MM-DD format (labels: "Issued", "Issue Date", "Date Issued", "Effective")
 - expiry_date: Expiration date in YYYY-MM-DD format (labels: "Expiry", "Expiration", "Expires", "Valid Until", "Valid Thru", "Through", "Not After", "Expiration Date")
 - issued_by: The name of the issuing government agency. **CRITICAL RULE: If no "Issued By" label is present, you MUST extract the official agency name from the document's main header or letterhead.** (e.g., "CITY OF PHILADELPHIA DEPARTMENT OF PUBLIC HEALTH")
-- renewal_url: The full website URL for online renewal (look for "renew online", "www.", "http", etc.)
+- renewal_url: **CRITICAL: Based on the extracted license_type, assign the appropriate PA renewal URL using this exact mapping:**
+  * If license_type contains "AIR" or "AIR POLLUTION" → "https://www4.citizenserve.com/Portal/PortalController?Action=showHomePage&ctzPagePrefix=Portal_&installationID=173"
+  * If license_type contains "AMUSEMENT", "FOOD", or "HAZMAT" → "https://eclipse.phila.gov/phillylmsprod/pub/lms/Login.aspx"
+  * If license_type contains "TOBACCO", "SALES TAX", or "RETAIL" → "https://mypath.pa.gov/"
+  * If license_type contains "UNDERGROUND STORAGE TANK", "UST", or "TANK" → "https://greenport.pa.gov/gpl/"
+  * If no matching license_type found, look for renewal URLs in the document text, otherwise use null
+
+**RENEWAL URL PRIORITY RULES:**
+1. FIRST, use the license_type mapping above (this is the primary method)
+2. ONLY if no license_type match, look for URLs in the document text
+3. If still no URL found, use null
 
 DATE EXTRACTION RULES:
 - Look for BOTH US format (MM/DD/YYYY) and international (DD/MM/YYYY, YYYY-MM-DD)
@@ -53,8 +63,7 @@ CRITICAL FORMATTING RULES:
 - All fields are nullable (use null, not empty string)
 
 EXAMPLE OUTPUT:
-{"license_type": "Air Pollution License", "license_no": "APL16-000083", "issue_date": "2021-10-01", "expiry_date": "2021-10-31", "issued_by": "CITY OF PHILADELPHIA DEPARTMENT OF PUBLIC HEALTH", "renewal_url": "www.citizenserve.com/philadelphia"}"""
-    
+{"license_type": "Air Pollution License", "license_no": "APL16-000083", "issue_date": "2021-10-01", "expiry_date": "2021-10-31", "issued_by": "CITY OF PHILADELPHIA DEPARTMENT OF PUBLIC HEALTH", "renewal_url": "https://www4.citizenserve.com/Portal/PortalController?Action=showHomePage&ctzPagePrefix=Portal_&installationID=173"}"""
     PERMIT_POLICY = {
         'TOBACCO': 365,
         'MV REPAIR': 365,
@@ -324,6 +333,32 @@ EXAMPLE OUTPUT:
 
         return extracted_data
 
+    def assign_renewal_url_based_on_type(self, extracted_data):
+        """
+        Reliably assign renewal URL based on license type (code-based fallback)
+        """
+        license_type = (extracted_data.get('license_type') or '').upper()
+        
+        # Air pollution permits
+        if any(word in license_type for word in ['AIR', 'AIR POLLUTION']):
+            return "https://www4.citizenserve.com/Portal/PortalController?Action=showHomePage&ctzPagePrefix=Portal_&installationID=173"
+        
+        # Amusement, Food, Hazmat permits  
+        elif any(word in license_type for word in ['AMUSEMENT', 'FOOD', 'HAZMAT']):
+            return "https://eclipse.phila.gov/phillylmsprod/pub/lms/Login.aspx"
+        
+        # Tobacco, Sales tax permits
+        elif any(word in license_type for word in ['TOBACCO', 'SALES TAX', 'RETAIL']):
+            return "https://mypath.pa.gov/"
+        
+        # Underground storage tank permits
+        elif any(word in license_type for word in ['UNDERGROUND STORAGE TANK', 'UST', 'TANK']):
+            return "https://greenport.pa.gov/gpl/"
+        
+        # No match - return whatever AI found or None
+        else:
+            return extracted_data.get('renewal_url')
+    
     def clean_json_response(self, content):
         """
         Clean and extract JSON from AI response
@@ -508,6 +543,8 @@ EXAMPLE OUTPUT:
 
             cleaned_content = self.clean_json_response(content)
             extracted_data = self.validate_and_parse_json(cleaned_content)
+
+            extracted_data['renewal_url'] = self.assign_renewal_url_based_on_type(extracted_data)
 
             logger.info(f"AI extracted via {extraction_path}: {extracted_data}")
 
