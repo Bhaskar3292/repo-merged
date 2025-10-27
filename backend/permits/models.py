@@ -33,7 +33,7 @@ class Permit(models.Model):
         related_name='renewals'
     )
 
-    renewal_url = models.URLField(max_length=512, null=True, blank=True)
+    renewal_url = models.URLField(null=True, blank=True)
     document = models.FileField(upload_to=permit_upload_path, null=True, blank=True)
 
     facility = models.ForeignKey(

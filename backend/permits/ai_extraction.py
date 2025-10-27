@@ -31,39 +31,43 @@ class PermitDataExtractor:
     EXTRACTION_PROMPT = """You are an expert data extraction system for official documents.
 Analyze the provided document (text or image) and extract the following fields into a JSON object.
 
-FIELDS TO EXTRACT:
-- license_type: Document type/title (e.g., "Operating Permit", "Business License", "Fire Safety Permit")
-- license_no: Primary identifier/number (look for "License #", "Permit No.", "ID", etc.)
-- issue_date: Issue/Issuance date in YYYY-MM-DD format (labels: "Issued", "Issue Date", "Date Issued", "Effective")
-- expiry_date: Expiration date in YYYY-MM-DD format (labels: "Expiry", "Expiration", "Expires", "Valid Until", "Valid Thru", "Through", "Not After", "Expiration Date")
-- issued_by: The name of the issuing government agency. **CRITICAL RULE: If no "Issued By" label is present, you MUST extract the official agency name from the document's main header or letterhead.** (e.g., "CITY OF PHILADELPHIA DEPARTMENT OF PUBLIC HEALTH")
-- renewal_url: **CRITICAL: Based on the extracted license_type, assign the appropriate PA renewal URL using this exact mapping:**
-  * If license_type contains "AIR" or "AIR POLLUTION" → "https://www4.citizenserve.com/Portal/PortalController?Action=showHomePage&ctzPagePrefix=Portal_&installationID=173"
-  * If license_type contains "AMUSEMENT", "FOOD", or "HAZMAT" → "https://eclipse.phila.gov/phillylmsprod/pub/lms/Login.aspx"
-  * If license_type contains "TOBACCO", "SALES TAX", or "RETAIL" → "https://mypath.pa.gov/"
-  * If license_type contains "UNDERGROUND STORAGE TANK", "UST", or "TANK" → "https://greenport.pa.gov/gpl/"
-  * If no matching license_type found, look for renewal URLs in the document text, otherwise use null
+**CRITICAL LICENSE TYPE RULES:**
+- If document shows "Motor Vehicle Repair / Retail Mobile Dispensing" → license_type MUST be "Motor Vehicle Repair"
+- If document shows "Commercial Activity License" → license_type MUST be "Scales and Scanners"
+- If document header says "SALES TAX LICENSE" → license_type MUST be "Sales Tax License"
+- NEVER use "Retail" as license_type - always use the full descriptive name
 
-**RENEWAL URL PRIORITY RULES:**
-1. FIRST, use the license_type mapping above (this is the primary method)
-2. ONLY if no license_type match, look for URLs in the document text
-3. If still no URL found, use null
+FIELDS TO EXTRACT:
+- license_type: **PRIORITY RULES:**
+  1. Use the specific license type shown in the document (e.g., "Motor Vehicle Repair / Retail Mobile Dispensing" → "Motor Vehicle Repair")
+  2. "Commercial Activity License" → "Scales and Scanners"
+  3. Use descriptive titles over abbreviated codes
+- license_no: Primary identifier/number from "LICENSE NO." field
+- issue_date: From "EFFECTIVE DATE" in YYYY-MM-DD format
+- expiry_date: From "EXPIRATION DATE" in YYYY-MM-DD format  
+- issued_by: **MUST be "City of Philadelphia Department of Licenses & Inspections" for these documents**
+- renewal_url: Based SOLELY on license_type using mapping below
+
+**RENEWAL URL MAPPING - USE THIS EXACT LOGIC:**
+* If license_type contains "MOTOR VEHICLE" or "MV REPAIR" → "https://eclipse.phila.gov/phillylmsprod/pub/lms/Login.aspx"
+* If license_type contains "SCALES AND SCANNERS" or "COMMERCIAL ACTIVITY" → "https://eclipse.phila.gov/phillylmsprod/pub/lms/Login.aspx"
+* If license_type contains "AIR" or "AIR POLLUTION" → "https://www4.citizenserve.com/Portal/PortalController?Action=showHomePage&ctzPagePrefix=Portal_&installationID=173"
+* If license_type contains "AMUSEMENT", "FOOD", or "HAZMAT" → "https://eclipse.phila.gov/phillylmsprod/pub/lms/Login.aspx"
+* If license_type contains "TOBACCO", "SALES TAX", or "RETAIL" → "https://mypath.pa.gov/"
+* If license_type doesn't match any above → null
+
+**IMPORTANT: IGNORE ANY URLs IN THE DOCUMENT TEXT. USE ONLY THE MAPPING ABOVE.**
 
 DATE EXTRACTION RULES:
-- Look for BOTH US format (MM/DD/YYYY) and international (DD/MM/YYYY, YYYY-MM-DD)
-- Look near keywords: "expiry", "expiration", "expires", "valid until", "through", "not after"
-- Normalize ALL dates to YYYY-MM-DD format
-- If only issue_date found, set expiry_date to null (we will infer it)
-- If both dates present, extract both
+- Extract dates from "EXPIRATION DATE" and "EFFECTIVE DATE" fields in table
+- Look for MM/DD/YYYY format and convert to YYYY-MM-DD
 - Use null for any field not found
 
 CRITICAL FORMATTING RULES:
 - Return ONLY a valid JSON object
 - No additional text, explanations, or markdown
-- All fields are nullable (use null, not empty string)
+- All fields are nullable (use null, not empty string)"""
 
-EXAMPLE OUTPUT:
-{"license_type": "Air Pollution License", "license_no": "APL16-000083", "issue_date": "2021-10-01", "expiry_date": "2021-10-31", "issued_by": "CITY OF PHILADELPHIA DEPARTMENT OF PUBLIC HEALTH", "renewal_url": "https://www4.citizenserve.com/Portal/PortalController?Action=showHomePage&ctzPagePrefix=Portal_&installationID=173"}"""
     PERMIT_POLICY = {
         'TOBACCO': 365,
         'MV REPAIR': 365,
@@ -75,6 +79,26 @@ EXAMPLE OUTPUT:
         'AIR POLLUTION': 365,
         'ENVIRONMENTAL': 1095,
     }
+
+    # Enhanced URL mapping with better matching
+    RENEWAL_URL_MAPPING = {
+    'MOTOR VEHICLE': "https://eclipse.phila.gov/phillylmsprod/pub/lms/Login.aspx",
+    'MV REPAIR': "https://eclipse.phila.gov/phillylmsprod/pub/lms/Login.aspx",
+    'SCALES AND SCANNERS': "https://eclipse.phila.gov/phillylmsprod/pub/lms/Login.aspx",
+    'COMMERCIAL ACTIVITY': "https://eclipse.phila.gov/phillylmsprod/pub/lms/Login.aspx",
+    'AIR': "https://www4.citizenserve.com/Portal/PortalController?Action=showHomePage&ctzPagePrefix=Portal_&installationID=173",
+    'AIR POLLUTION': "https://www4.citizenserve.com/Portal/PortalController?Action=showHomePage&ctzPagePrefix=Portal_&installationID=173",
+    'AMUSEMENT': "https://eclipse.phila.gov/phillylmsprod/pub/lms/Login.aspx",
+    'FOOD': "https://eclipse.phila.gov/phillylmsprod/pub/lms/Login.aspx", 
+    'HAZMAT': "https://eclipse.phila.gov/phillylmsprod/pub/lms/Login.aspx",
+    'HAZARDOUS': "https://eclipse.phila.gov/phillylmsprod/pub/lms/Login.aspx",
+    'TOBACCO': "https://mypath.pa.gov/",
+    'SALES TAX': "https://mypath.pa.gov/",
+    'RETAIL': "https://mypath.pa.gov/",
+    'UNDERGROUND STORAGE TANK': "https://greenport.pa.gov/gpl/",
+    'UST': "https://greenport.pa.gov/gpl/",
+    'TANK': "https://greenport.pa.gov/gpl/",
+}
 
     def __init__(self, api_key=None):
         """
@@ -339,26 +363,52 @@ EXAMPLE OUTPUT:
         """
         license_type = (extracted_data.get('license_type') or '').upper()
         
-        # Air pollution permits
-        if any(word in license_type for word in ['AIR', 'AIR POLLUTION']):
-            return "https://www4.citizenserve.com/Portal/PortalController?Action=showHomePage&ctzPagePrefix=Portal_&installationID=173"
+        logger.info(f"🔍 Assigning renewal URL for license_type: {license_type}")
         
-        # Amusement, Food, Hazmat permits  
-        elif any(word in license_type for word in ['AMUSEMENT', 'FOOD', 'HAZMAT']):
-            return "https://eclipse.phila.gov/phillylmsprod/pub/lms/Login.aspx"
+        # Enhanced matching with better logic
+        for keyword, url in self.RENEWAL_URL_MAPPING.items():
+            if keyword in license_type:
+                logger.info(f"✅ Matched '{keyword}' in license_type -> {url}")
+                return url
+            
         
-        # Tobacco, Sales tax permits
-        elif any(word in license_type for word in ['TOBACCO', 'SALES TAX', 'RETAIL']):
-            return "https://mypath.pa.gov/"
-        
-        # Underground storage tank permits
-        elif any(word in license_type for word in ['UNDERGROUND STORAGE TANK', 'UST', 'TANK']):
-            return "https://greenport.pa.gov/gpl/"
-        
-        # No match - return whatever AI found or None
-        else:
-            return extracted_data.get('renewal_url')
+         # ENHANCED: Motor Vehicle Repair mapping
+        if any(word in license_type for word in ['MOTOR VEHICLE', 'MV REPAIR', 'VEHICLE REPAIR']):
+            url = self.RENEWAL_URL_MAPPING['MOTOR VEHICLE']
+            logger.info(f"✅ Matched Motor Vehicle Repair -> {url}")
+            return url
     
+        # ENHANCED: Scales and Scanners mapping  
+        if any(word in license_type for word in ['SCALES AND SCANNERS', 'COMMERCIAL ACTIVITY', 'SCALES', 'SCANNERS']):
+            url = self.RENEWAL_URL_MAPPING['SCALES AND SCANNERS']
+            logger.info(f"✅ Matched Scales and Scanners -> {url}")
+            return url
+            
+        # Special case for generic licenses that might be air pollution
+        if 'LICENSE' in license_type and any(word in license_type for word in ['AIR', 'POLLUTION', 'APL']):
+            url = self.RENEWAL_URL_MAPPING['AIR']
+            logger.info(f"✅ Matched generic license with AIR indicators -> {url}")
+            return url
+        
+        if any(word in license_type for word in ['SALES TAX', 'SALESTAX', 'RETAIL', 'DEPARTMENT OF REVENUE']):
+            url = self.RENEWAL_URL_MAPPING['SALES TAX']
+            logger.info(f"✅ Matched Sales Tax license -> {url}")
+            return url
+            
+        # Special case for generic licenses that might be food related
+        if 'LICENSE' in license_type and any(word in license_type for word in ['FOOD', 'EATING', 'RESTAURANT']):
+            url = self.RENEWAL_URL_MAPPING['FOOD']
+            logger.info(f"✅ Matched generic license with FOOD indicators -> {url}")
+            return url
+        
+        if any(word in license_type for word in ['HAZARDOUS', 'HAZMAT', '3335']):
+            url = self.RENEWAL_URL_MAPPING['HAZARDOUS']
+            logger.info(f"✅ Matched hazardous materials license via fallback -> {url}")
+            return url
+        
+        logger.warning(f"❌ No renewal URL match found for license_type: {license_type}")
+        return None
+
     def clean_json_response(self, content):
         """
         Clean and extract JSON from AI response
@@ -434,6 +484,12 @@ EXAMPLE OUTPUT:
         issued_match = re.search(issued_by_pattern, content, re.IGNORECASE)
         if issued_match:
             extracted_data['issued_by'] = issued_match.group(1)
+
+        # Manual renewal URL extraction
+        renewal_url_pattern = r'"renewal_url":\s*"([^"]*)"'
+        renewal_match = re.search(renewal_url_pattern, content, re.IGNORECASE)
+        if renewal_match:
+            extracted_data['renewal_url'] = renewal_match.group(1)
 
         return extracted_data
 
@@ -539,14 +595,20 @@ EXAMPLE OUTPUT:
                 extraction_path = "image"
 
             content = response.choices[0].message.content.strip()
-            logger.info(f"Raw AI response: {content[:120]}...")
+            logger.info(f"Raw AI response: {content[:200]}...")
 
             cleaned_content = self.clean_json_response(content)
             extracted_data = self.validate_and_parse_json(cleaned_content)
 
-            extracted_data['renewal_url'] = self.assign_renewal_url_based_on_type(extracted_data)
+            # DEBUG: Check what AI returned
+            logger.info(f"🔍 AI returned renewal_url: {extracted_data.get('renewal_url')}")
+            logger.info(f"🔍 AI returned license_type: {extracted_data.get('license_type')}")
 
-            logger.info(f"AI extracted via {extraction_path}: {extracted_data}")
+            # GUARANTEED renewal URL assignment - OVERRIDE whatever AI returned
+            forced_renewal_url = self.assign_renewal_url_based_on_type(extracted_data)
+            extracted_data['renewal_url'] = forced_renewal_url
+            
+            logger.info(f"✅ AFTER FORCED ASSIGNMENT - renewal_url: {extracted_data.get('renewal_url')}")
 
             if raw_text and (not extracted_data.get('expiry_date') or not extracted_data.get('issue_date')):
                 logger.info("Running heuristic date extraction on text")
@@ -561,6 +623,20 @@ EXAMPLE OUTPUT:
 
             extracted_data = self.apply_policy_fallback(extracted_data)
 
+            # FINAL SAFETY CHECK - Ensure renewal_url is always set if possible
+            if not extracted_data.get('renewal_url') and extracted_data.get('license_type'):
+                logger.info("🔄 Running final safety check for renewal URL")
+                final_renewal_url = self.assign_renewal_url_based_on_type(extracted_data)
+                if final_renewal_url:
+                    extracted_data['renewal_url'] = final_renewal_url
+                    logger.info(f"✅ Final safety check assigned renewal_url: {final_renewal_url}")
+                    
+                    # Update inference notes
+                    if 'inference_notes' in extracted_data:
+                        extracted_data['inference_notes'] += " | Renewal URL assigned via final fallback"
+                    else:
+                        extracted_data['inference_notes'] = "Renewal URL assigned via final fallback"
+
             extracted_data['needs_review'] = not bool(extracted_data.get('expiry_date'))
 
             if extracted_data['needs_review']:
@@ -571,7 +647,7 @@ EXAMPLE OUTPUT:
                 if 'inference_notes' not in extracted_data:
                     extracted_data['inference_notes'] = f"Extracted via {extraction_path}"
 
-            logger.info(f"Final extraction result: {extracted_data}")
+            logger.info(f"🎯 FINAL extraction result: {extracted_data}")
             return extracted_data
 
         except Exception as e:
@@ -582,6 +658,7 @@ EXAMPLE OUTPUT:
                 'issue_date': None,
                 'expiry_date': None,
                 'issued_by': None,
+                'renewal_url': None,
                 'needs_review': True,
                 'inference_notes': f"Extraction failed: {str(e)}"
             }
